@@ -1,7 +1,12 @@
 <h1 style="text-align:center; margin-top:40px;">Connexion</h1>
 
 <?php if (!empty($error)): ?>
-    <p style="text-align:center; color:red; font-weight:bold;">
+    <p style="
+        text-align:center;
+        color:#c62828;
+        font-weight:600;
+        margin-top:20px;
+    ">
         <?= htmlspecialchars($error) ?>
     </p>
 <?php endif; ?>
@@ -13,11 +18,10 @@
     flex-direction:column;
     gap:15px;
 ">
-
     <input type="email" name="email" placeholder="Email" required style="padding:10px;">
     
     <input type="password" name="password" placeholder="Mot de passe" required style="padding:10px;">
-    
+
     <button type="submit" style="
         padding:12px;
         background:#FF7A00;
@@ -28,5 +32,4 @@
     ">
         Se connecter
     </button>
-
 </form>
