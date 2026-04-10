@@ -1,4 +1,5 @@
 <?php
+session_start();
 require '../config/database.php';
 require '../app/models/Activity.php';
 require '../app/models/User.php';
@@ -46,13 +47,43 @@ if ($page === 'home' || $page === 'activites') {
     echo '</main>';
 
 } elseif ($page === 'connexion') {
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    echo '<pre>';
-    print_r($_POST);
-    echo '</pre>';
+
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+
+        if (!empty($email) && !empty($password)) {
+
+            $userModel = new User($pdo);
+            $user = $userModel->getByEmail($email);
+
+            if ($user) {
+
+                if ($password === $user['mot_de_passe']) {
+
+                    $_SESSION['user'] = $user;
+
+                    echo "<p>Connexion réussie !</p>";
+                }
+                } else {
+                    echo "<p>Mot de passe incorrect</p>";
+                }
+
+            } else {
+                echo "<p>Aucun utilisateur trouvé avec cet email</p>";
+            }
+
+        } else {
+            echo "<p>Veuillez remplir tous les champs</p>";
+        }
+    }
+
+    require 'pages/connexion.html';
 }
 
-} else {
+
+ else {
     require "pages/$page.html";
 }
 

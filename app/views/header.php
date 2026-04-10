@@ -25,8 +25,17 @@
             <li><a href="/sharetime/public/?page=contact">Contact</a></li>
         </ul>
         <div class="navbar-actions">
-            <a href="/sharetime/public/?page=connexion" class="btn btn-outline">Se connecter</a>
-            <a href="/sharetime/public/?page=connexion#inscription" class="btn btn-orange">S'inscrire</a>
+            <?php if (isset($_SESSION['user'])): ?>
+
+                <span>Bonjour <?= htmlspecialchars($_SESSION['user']['prenom']) ?> 👋</span>
+                <a href="/sharetime/public/?page=logout" class="btn btn-outline">Déconnexion</a>
+
+            <?php else: ?>
+
+                <a href="/sharetime/public/?page=connexion" class="btn btn-outline">Se connecter</a>
+                <a href="/sharetime/public/?page=connexion#inscription" class="btn btn-orange">S'inscrire</a>
+
+            <?php endif; ?>
         </div>
     </div>
 </nav>

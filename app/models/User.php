@@ -7,9 +7,10 @@ class User {
         $this->pdo = $pdo;
     }
 
-    public function findByEmail($email) {
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        return $stmt->fetch();
-    }
+    public function getByEmail($email) {
+    $sql = "SELECT * FROM users WHERE email = :email";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute(['email' => $email]);
+    return $stmt->fetch();
+}
 }
