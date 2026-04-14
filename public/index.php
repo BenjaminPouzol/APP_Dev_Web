@@ -3,6 +3,7 @@ session_start();
 
 require '../config/database.php';
 require '../app/models/Activity.php';
+require '../app/models/User.php';
 
 $page = $_GET['page'] ?? 'home';
 $error = null;
@@ -23,7 +24,7 @@ if ($page === 'connexion' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             'role' => $user['role']
         ];
 
-        header('Location: /sharetime/public/');
+        header('Location: /APP_Dev_Web/public/');
         exit;
     } else {
         $error = "Email ou mot de passe incorrect.";

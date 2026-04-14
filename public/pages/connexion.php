@@ -11,7 +11,7 @@
     </p>
 <?php endif; ?>
 
-<form method="POST" action="/sharetime/public/index.php?page=connexion" style="
+<form method="POST" action="/APP_Dev_Web/public/index.php?page=connexion" style="
     max-width:400px;
     margin:40px auto;
     display:flex;
