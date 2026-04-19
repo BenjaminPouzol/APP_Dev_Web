@@ -101,17 +101,13 @@ if ($page === 'home' || $page === 'activites') {
     echo '</main>';
 
 } elseif ($page === 'connexion') {
-    require 'pages/connexion.html';
+    require 'pages/connexion.php';
 
 } elseif ($page === 'inscription') {
     require 'pages/inscription.php';
 
 } else {
-    if ($page === 'connexion') {
-        require 'pages/connexion.php';
-    } else {
-        require "pages/$page.html";
-    }
+    require "pages/$page.html";
 }
 
 require '../app/views/footer.php';
