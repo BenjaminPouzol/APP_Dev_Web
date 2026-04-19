@@ -1,6 +1,7 @@
 <?php
 require '../config/database.php';
 require '../app/models/Activity.php';
+require '../app/models/User.php';
 
 $page = $_GET['page'] ?? 'home';
 
@@ -12,9 +13,10 @@ if (!in_array($page, $allowed_pages)) {
 
 require '../app/views/header.php';
 
-if ($page === 'activites') {
+if ($page === 'home' || $page === 'activites') {
     $activityModel = new Activity($pdo);
     $activities = $activityModel->getAll();
+
     echo '<main class="container" style="padding: 40px 0;">';
     echo '<h1 style="margin-bottom: 24px;">Activités</h1>';
 
@@ -41,7 +43,26 @@ if ($page === 'activites') {
         echo '</div>';
     }
 
-echo '</main>';
+    echo '</main>';
+
+} elseif ($page === 'connexion') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $userModel = new User($pdo);
+        $user = $userModel->findByEmail($_POST['email']);
+
+        echo '<main class="container" style="padding: 40px 0;">';
+
+        if ($user) {
+            echo '<p>Utilisateur trouvé : ' . htmlspecialchars($user['email']) . '</p>';
+        } else {
+            echo '<p>Aucun utilisateur trouvé avec cet email.</p>';
+        }
+
+        echo '</main>';
+    } else {
+        require "pages/connexion.html";
+    }
+
 } else {
     require "pages/$page.html";
 }
