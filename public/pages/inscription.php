@@ -179,6 +179,24 @@
             transform: translateY(-1px);
         }
 
+        .error-message {
+            background: #FEE2E2;
+            color: #DC2626;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .success-message {
+            background: #D1FAE5;
+            color: #065F46;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
         .register-footer {
             margin-top: 22px;
             text-align: center;
@@ -233,9 +251,8 @@
                 <h1>Crée ton compte et rejoins la communauté</h1>
                 <p>
                     Découvre des activités près de chez toi, partage tes passions
-                    et rencontre des personnes qui ont les mêmes centres d’intérêt.
+                    et rencontre des personnes qui ont les mêmes centres d'intérêt.
                 </p>
-
                 <ul class="register-features">
                     <li>✔ Trouve facilement des activités adaptées à tes envies</li>
                     <li>✔ Crée tes propres événements en quelques clics</li>
@@ -246,16 +263,23 @@
             <div class="register-right">
                 <h2>Créer un compte</h2>
                 <p class="register-subtitle">
-                    Remplis les informations ci-dessous pour commencer l’aventure ShareTime.
+                    Remplis les informations ci-dessous pour commencer l'aventure ShareTime.
                 </p>
 
-                <form class="register-form" action="#" method="post">
+                <?php if (!empty($error)): ?>
+                    <p class="error-message"><?= htmlspecialchars($error) ?></p>
+                <?php endif; ?>
+
+                <?php if (!empty($success)): ?>
+                    <p class="success-message"><?= htmlspecialchars($success) ?></p>
+                <?php endif; ?>
+
+                <form class="register-form" action="/sharetime/public/index.php?page=inscription" method="post">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="firstname">Prénom</label>
                             <input type="text" id="firstname" name="firstname" placeholder="Ton prénom" required>
                         </div>
-
                         <div class="form-group">
                             <label for="lastname">Nom</label>
                             <input type="text" id="lastname" name="lastname" placeholder="Ton nom" required>
@@ -267,7 +291,6 @@
                             <label for="username">Pseudo</label>
                             <input type="text" id="username" name="username" placeholder="Choisis un pseudo" required>
                         </div>
-
                         <div class="form-group">
                             <label for="city">Ville</label>
                             <input type="text" id="city" name="city" placeholder="Ex : Paris" required>
@@ -284,7 +307,6 @@
                             <label for="password">Mot de passe</label>
                             <input type="password" id="password" name="password" placeholder="••••••••" required>
                         </div>
-
                         <div class="form-group">
                             <label for="confirm-password">Confirmer le mot de passe</label>
                             <input type="password" id="confirm-password" name="confirm-password" placeholder="••••••••" required>
@@ -296,9 +318,8 @@
                             <label for="birthdate">Date de naissance</label>
                             <input type="date" id="birthdate" name="birthdate" required>
                         </div>
-
                         <div class="form-group">
-                            <label for="interest">Centre d’intérêt principal</label>
+                            <label for="interest">Centre d'intérêt principal</label>
                             <select id="interest" name="interest" required>
                                 <option value="">Sélectionne une catégorie</option>
                                 <option value="sport">Sport</option>
@@ -314,17 +335,17 @@
                     <label class="checkbox-group">
                         <input type="checkbox" name="terms" required>
                         <span>
-                            J’accepte les <a href="#">conditions générales d’utilisation</a>
+                            J'accepte les <a href="#">conditions générales d'utilisation</a>
                             et la politique de confidentialité.
                         </span>
                     </label>
 
-                    <button type="submit" class="register-btn">S’inscrire</button>
+                    <button type="submit" class="register-btn">S'inscrire</button>
                 </form>
 
                 <p class="register-footer">
                     Tu as déjà un compte ?
-                    <a href="connexion.html">Se connecter</a>
+                    <a href="/sharetime/public/index.php?page=connexion">Se connecter</a>
                 </p>
             </div>
         </section>
