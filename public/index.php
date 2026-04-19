@@ -1,6 +1,5 @@
 <?php
 session_start();
-
 require '../config/database.php';
 require '../app/models/Activity.php';
 require '../app/models/User.php';
@@ -72,27 +71,43 @@ if ($page === 'home' || $page === 'activites') {
     echo '</main>';
 
 } elseif ($page === 'connexion') {
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $userModel = new User($pdo);
-        $user = $userModel->findByEmail($_POST['email']);
 
-        echo '<main class="container" style="padding: 40px 0;">';
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
 
-        if ($user) {
-            echo '<p>Utilisateur trouvé : ' . htmlspecialchars($user['email']) . '</p>';
+        if (!empty($email) && !empty($password)) {
+
+            $userModel = new User($pdo);
+            $user = $userModel->getByEmail($email);
+
+            if ($user) {
+
+                if ($password === $user['mot_de_passe']) {
+
+                    $_SESSION['user'] = $user;
+
+                    echo "<p>Connexion réussie !</p>";
+                }
+                } else {
+                    echo "<p>Mot de passe incorrect</p>";
+                }
+
+            } else {
+                echo "<p>Aucun utilisateur trouvé avec cet email</p>";
+            }
+
         } else {
-            echo '<p>Aucun utilisateur trouvé avec cet email.</p>';
+            echo "<p>Veuillez remplir tous les champs</p>";
         }
-
-        echo '</main>';
-    } else {
-        require "pages/connexion.html";
     }
 
-} else {
-    if ($page === 'connexion') {
-    require "pages/connexion.php";
-} else {
+    require 'pages/connexion.html';
+}
+
+
+ else {
     require "pages/$page.html";
 }
 }
