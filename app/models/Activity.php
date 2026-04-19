@@ -23,7 +23,7 @@ class Activity {
             INSERT INTO activities 
             (title, description, location, city, start_time, end_time, max_participants, visibility, status, creator_id, created_at)
             VALUES 
-            (:title, :description, :location, :city, :start_time, :end_time, :max_participants, :visibility, 'open', :creator_id, NOW())
+            (:title, :description, :location, :city, :start_time, :end_time, :max_participants, :visibility, 'active', :creator_id, NOW())
         ");
         return $stmt->execute([
             'title'            => $data['title'],

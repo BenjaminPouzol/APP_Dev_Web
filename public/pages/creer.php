@@ -62,8 +62,8 @@
                 <label style="font-weight:600;">Visibilité *</label>
                 <select name="visibility" required
                     style="width:100%; padding:12px; border:1px solid #D1D5DB; border-radius:8px; margin-top:6px;">
-                    <option value="public">Publique</option>
-                    <option value="private">Privée</option>
+                    <option value="publique">Publique</option>
+                    <option value="privee">Privée</option>
                 </select>
             </div>
         </div>
