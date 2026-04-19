@@ -1,9 +1,35 @@
 <?php
+session_start();
+
 require '../config/database.php';
 require '../app/models/Activity.php';
 require '../app/models/User.php';
 
 $page = $_GET['page'] ?? 'home';
+$error = null;
+
+if ($page === 'connexion' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+
+    $userModel = new User($pdo);
+    $user = $userModel->getByEmail($email);
+
+    if ($user && $password === $user['mot_de_passe']) {
+        $_SESSION['user'] = [
+            'id' => $user['idusers'],
+            'nom' => $user['nom'],
+            'prenom' => $user['prenom'],
+            'email' => $user['email'],
+            'role' => $user['role']
+        ];
+
+        header('Location: /APP_Dev_Web/public/');
+        exit;
+    } else {
+        $error = "Email ou mot de passe incorrect.";
+    }
+}
 
 $allowed_pages = ['home', 'activites', 'connexion', 'contact', 'creer', 'detail', 'faq', 'profil'];
 
@@ -64,7 +90,11 @@ if ($page === 'home' || $page === 'activites') {
     }
 
 } else {
+    if ($page === 'connexion') {
+    require "pages/connexion.php";
+} else {
     require "pages/$page.html";
+}
 }
 
 require '../app/views/footer.php';

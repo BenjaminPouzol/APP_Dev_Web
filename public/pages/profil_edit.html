@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShareTime - Modifier mon profil</title>
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Inter, sans-serif;
+            background: linear-gradient(180deg, #F9FAFB 0%, #FFFFFF 100%);
+            color: #1F2937;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 24px;
+            padding: 50px;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.08);
+            border: 1px solid #E5E7EB;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #6B7280;
+            margin-bottom: 30px;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #D1D5DB;
+            font-size: 0.95rem;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #6B7280;
+        }
+
+        .btn {
+            margin-top: 10px;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: #111827;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #374151;
+        }
+
+        .back {
+            margin-top: 20px;
+            text-align: center;
+            color: #6B7280;
+        }
+
+        .back a {
+            color: #111827;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        @media (max-width: 700px) {
+            .row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <div class="container">
+            <h1>Modifier mon profil</h1>
+            <p class="subtitle">Mets à jour tes informations personnelles</p>
+
+            <form class="form">
+
+                <div class="row">
+                    <div class="group">
+                        <label>Prénom</label>
+                        <input type="text" value="Agathe">
+                    </div>
+
+                    <div class="group">
+                        <label>Nom</label>
+                        <input type="text" value="Fournier">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="group">
+                        <label>Pseudo</label>
+                        <input type="text" value="agathe_dev">
+                    </div>
+
+                    <div class="group">
+                        <label>Ville</label>
+                        <input type="text" value="Paris">
+                    </div>
+                </div>
+
+                <div class="group">
+                    <label>Email</label>
+                    <input type="email" value="agathe@email.com">
+                </div>
+
+                <div class="row">
+                    <div class="group">
+                        <label>Nouveau mot de passe</label>
+                        <input type="password" placeholder="Laisser vide si inchangé">
+                    </div>
+
+                    <div class="group">
+                        <label>Confirmer</label>
+                        <input type="password">
+                    </div>
+                </div>
+
+                <div class="group">
+                    <label>Centre d’intérêt</label>
+                    <select>
+                        <option>Sport</option>
+                        <option selected>Culture</option>
+                        <option>Voyage</option>
+                        <option>Musique</option>
+                    </select>
+                </div>
+
+                <button class="btn">Mettre à jour mon profil</button>
+            </form>
+
+            <div class="back">
+                <p><a href="profil.html">Retour au profil</a></p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
