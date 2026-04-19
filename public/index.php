@@ -61,6 +61,44 @@ if ($page === 'inscription' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// ── CRÉATION D'ACTIVITÉ ────────────────────────────────
+if ($page === 'creer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['user'])) {
+        header('Location: /sharetime/public/?page=connexion');
+        exit;
+    }
+
+    $title            = trim($_POST['title'] ?? '');
+    $description      = trim($_POST['description'] ?? '');
+    $location         = trim($_POST['location'] ?? '');
+    $city             = trim($_POST['city'] ?? '');
+    $start_time       = $_POST['start_time'] ?? '';
+    $end_time         = $_POST['end_time'] ?? '';
+    $max_participants = intval($_POST['max_participants'] ?? 0);
+    $visibility       = $_POST['visibility'] ?? 'public';
+
+    if (empty($title) || empty($description) || empty($location) || empty($city) || empty($start_time) || empty($end_time)) {
+        $error = "Veuillez remplir tous les champs obligatoires.";
+    } elseif ($max_participants < 2) {
+        $error = "Le nombre de participants doit être d'au moins 2.";
+    } else {
+        $activityModel = new Activity($pdo);
+        $activityModel->create([
+            'title'            => $title,
+            'description'      => $description,
+            'location'         => $location,
+            'city'             => $city,
+            'start_time'       => $start_time,
+            'end_time'         => $end_time,
+            'max_participants' => $max_participants,
+            'visibility'       => $visibility,
+            'creator_id'       => $_SESSION['user']['id'],
+        ]);
+        header('Location: /sharetime/public/?page=activites');
+        exit;
+    }
+}
+
 // ── DÉCONNEXION ────────────────────────────────────────
 if ($page === 'logout') {
     session_destroy();
@@ -69,7 +107,7 @@ if ($page === 'logout') {
 }
 
 // ── ROUTING ────────────────────────────────────────────
-$allowed_pages = ['home', 'activites', 'connexion', 'inscription', 'contact', 'creer', 'detail', 'faq', 'profil'];
+$allowed_pages = ['home', 'activites', 'connexion', 'inscription', 'contact', 'creer', 'detail', 'faq', 'profil', 'cgu', 'mentions'];
 if (!in_array($page, $allowed_pages)) {
     $page = 'home';
 }
@@ -105,6 +143,9 @@ if ($page === 'home' || $page === 'activites') {
 
 } elseif ($page === 'inscription') {
     require 'pages/inscription.php';
+
+} elseif ($page === 'creer') {
+    require 'pages/creer.php';
 
 } else {
     require "pages/$page.html";
