@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Header</title>
+    <style>
+        header {
+            background-color: #303C6C; /* couleur différente */
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, sans-serif;
+        }
+
+        .register-btn-inscription {
+            border: none;
+            border-radius: 14px;
+            padding: 15px 20px;
+            background: #E88600;
+            color: #FFFFFF;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .register-btn-inscription :hover {
+            background: #FFA82E;
+            transform: translateY(-1px);
+        }
+
+        .register-btn-connexion {
+            border: none;
+            border-radius: 14px;
+            padding: 15px 20px;
+            background: #ffffff;
+            color: #E88600;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .register-btn-connexion :hover {
+            background: #d2d2d2;
+            transform: translateY(-1px);
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .logo-Share {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #E88600;
+        }
+
+        .logo-Time {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .navbar-logo-text {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        header a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <!-- ============================================================
+            NAVBAR
+            ============================================================ -->
+        <nav class="navbar">
+            <div class="container">
+                <a href="Page test.html">
+                    <div class="navbar-logo-text">
+                        <img src="..\logo ShareTime sans fond.png" alt="Logo de ShareTime" width="75">
+                        <span class="logo-Share">Share</span><span class="logo-Time">Time</span>
+                    </div>
+                </a>
+                <ul class="navbar-links">
+                    <li><a href="Page test.html">Activités</a></li>
+                    <li><a href="Page test.html">FAQ</a></li>
+                    <li><a href="Page test.html">Contact</a></li>
+                </ul>
+                <div class="navbar-actions">
+                    <a href="Page test.html" class="register-btn-connexion">Se connecter</a>
+                    <a href="Inscription - couleur.html" class="register-btn-inscription">S'inscrire</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+</body>
+</html>
