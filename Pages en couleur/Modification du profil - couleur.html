@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShareTime - Modifier mon profil</title>
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Inter, sans-serif;
+            background: linear-gradient(180deg, #F9FAFB 0%, #FFFFFF 100%);
+            color: #303C6C;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 24px;
+            padding: 50px;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.5);
+            border: 1px solid #E5E7EB;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #E88600;
+        }
+
+        .subtitle {
+            color: #303C6C;
+            margin-bottom: 30px;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #dbd1d1;
+            font-size: 0.95rem;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #FFA82E;
+            box-shadow: 0 0 0 4px rgba(255, 168, 46, 0.12);
+        }
+
+        .btn {
+            margin-top: 10px;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: #E88600;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #FFA82E;
+            transform: translateY(-1px);
+        }
+
+        .back {
+            margin-top: 20px;
+            text-align: center;
+            color: #6B7280;
+        }
+
+        .back a {
+            color: #303C6C;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        @media (max-width: 700px) {
+            .row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <div class="container">
+            <h1>Modifier mon profil</h1>
+            <p class="subtitle">Mets à jour tes informations personnelles</p>
+
+            <form class="form">
+
+                <div class="row">
+                    <div class="group">
+                        <label>Prénom</label>
+                        <input type="text" id="firstname" name="firstname" placeholder="Ton prénom" required>
+                    </div>
+
+                    <div class="group">
+                        <label>Nom</label>
+                        <input type="text" id="lastname" name="lastname" placeholder="Ton nom" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="group">
+                        <label>Pseudo</label>
+                        <input type="text" id="username" name="username" placeholder="Choisis un pseudo" required>
+                    </div>
+
+                    <div class="group">
+                        <label>Ville</label>
+                        <input type="text" id="city" name="city" placeholder="Ex : Paris" required>
+                    </div>
+                </div>
+
+                <div class="group">
+                    <label>Email</label>
+                    <input type="email" id="email" name="email" placeholder="ton@email.com" required>
+                </div>
+
+                <div class="row">
+                    <div class="group">
+                        <label>Nouveau mot de passe</label>
+                        <input type="password" id="password" name="password" placeholder="Laisser vide si inchangé" required>
+                    </div>
+
+                    <div class="group">
+                        <label>Confirmer</label>
+                        <input type="password" id="password" name="password" placeholder="Laisser vide si inchangé" required>
+                    </div>
+                </div>
+
+                <div class="group">
+                    <label>Centre d’intérêt</label>
+                    <select>
+                        <option selected>Sélectionne une catégorie</option>
+                        <option>Sport</option>
+                        <option>Culture</option>
+                        <option>Voyage</option>
+                        <option>Musique</option>
+                    </select>
+                </div>
+
+                <button class="btn">Mettre à jour mon profil</button>
+            </form>
+
+            <div class="back">
+                <p><a href="profil.html">Retour au profil</a></p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
