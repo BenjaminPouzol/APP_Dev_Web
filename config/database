@@ -1,0 +1,19 @@
+<?php
+// Paramètres de connexion pour XAMPP
+$host = 'localhost';
+$dbname = 'sharetime'; // Le nom de ta base de données (issu de ton fichier APPDEVWEB.sql)
+$user = 'root';        // Sur XAMPP, l'utilisateur par défaut est 'root'
+$pass = '';            // Sur XAMPP, il n'y a pas de mot de passe par défaut
+
+try {
+    // Création de l'objet PDO pour se connecter
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);
+    
+    // On active l'affichage des erreurs SQL pour faciliter le débuggage
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+} catch (PDOException $e) {
+    // Si la connexion échoue, on arrête tout et on affiche l'erreur
+    die("Erreur de connexion à la base de données : " . $e->getMessage());
+}
+?>
