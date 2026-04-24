@@ -283,6 +283,57 @@ if ($page === 'contact' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// ── OWNER : TOUTES LES ACTIONS ─────────────────────────
+if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_owner();
+    csrf_check();
+    $action = $_POST['action'] ?? '';
+    $type   = $_POST['type']   ?? 'user';
+    $valid_tabs = ['dashboard', 'users', 'activities', 'admins'];
+    $tab    = in_array($_POST['tab'] ?? '', $valid_tabs) ? $_POST['tab'] : 'dashboard';
+    $me     = (int)$_SESSION['user']['id'];
+
+    if ($type === 'user') {
+        $target_id = intval($_POST['user_id'] ?? 0);
+        if ($target_id > 0 && $target_id !== $me) {
+            $um = new User($pdo);
+            if ($action === 'ban') {
+                $um->setBanned($target_id, true);
+            } elseif ($action === 'unban') {
+                $um->setBanned($target_id, false);
+            } elseif ($action === 'set_role') {
+                $new_role = in_array($_POST['role'] ?? '', ['utilisateur', 'admin']) ? $_POST['role'] : null;
+                if ($new_role) $um->setRole($target_id, $new_role);
+            } elseif ($action === 'transfer_ownership') {
+                if ($um->transferOwnership($target_id, $me)) {
+                    $_SESSION['user']['role'] = 'admin';
+                    $_SESSION['flash'] = "Propriété transférée avec succès.";
+                    header('Location: /sharetime/public/?page=owner&tab=admins');
+                    exit;
+                }
+                $_SESSION['flash'] = "Transfert impossible.";
+                header('Location: /sharetime/public/?page=owner&tab=admins');
+                exit;
+            } elseif ($action === 'delete') {
+                $um->delete($target_id);
+            }
+        }
+    } elseif ($type === 'activity') {
+        $activity_id = intval($_POST['activity_id'] ?? 0);
+        if ($activity_id > 0) {
+            $am = new Activity($pdo);
+            if ($action === 'set_status') {
+                $am->setStatus($activity_id, $_POST['status'] ?? '');
+            } elseif ($action === 'delete') {
+                $am->delete($activity_id);
+            }
+        }
+    }
+    $_SESSION['flash'] = "Action effectuée.";
+    header('Location: /sharetime/public/?page=owner&tab=' . $tab);
+    exit;
+}
+
 // ── ADMIN : GESTION UTILISATEURS ───────────────────────
 if ($page === 'admin_users' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     require_admin();
@@ -295,68 +346,22 @@ if ($page === 'admin_users' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $um = new User($pdo);
         if ($action === 'ban') {
             $target_user = $um->getById($target_id);
-            // Seul le propriétaire peut suspendre un admin
-            if ($target_user && $target_user['role'] === 'admin' && !is_owner()) {
+            if ($target_user && $target_user['role'] === 'admin') {
                 $_SESSION['flash'] = "Vous n'avez pas le droit de suspendre un administrateur.";
-                header('Location: /sharetime/public/?page=admin_users');
-                exit;
+                header('Location: /sharetime/public/?page=admin_users'); exit;
             }
             $um->setBanned($target_id, true);
         } elseif ($action === 'unban') {
             $target_user = $um->getById($target_id);
-            // Seul le propriétaire peut réactiver un admin suspendu
-            if ($target_user && $target_user['role'] === 'admin' && !is_owner()) {
+            if ($target_user && $target_user['role'] === 'admin') {
                 $_SESSION['flash'] = "Vous n'avez pas le droit de réactiver un administrateur.";
-                header('Location: /sharetime/public/?page=admin_users');
-                exit;
+                header('Location: /sharetime/public/?page=admin_users'); exit;
             }
             $um->setBanned($target_id, false);
-        } elseif ($action === 'set_role' && is_owner()) {
-            $new_role = in_array($_POST['role'] ?? '', ['utilisateur', 'admin']) ? $_POST['role'] : null;
-            if ($new_role) $um->setRole($target_id, $new_role);
-        } elseif ($action === 'transfer_ownership' && is_owner()) {
-            if ($um->transferOwnership($target_id, $me)) {
-                // Le propriétaire actuel est maintenant admin : on met à jour sa session
-                $_SESSION['user']['role'] = 'admin';
-                $_SESSION['flash'] = "La propriété a été transférée avec succès.";
-            } else {
-                $_SESSION['flash'] = "Transfert impossible.";
-            }
-            header('Location: /sharetime/public/?page=admin_users');
-            exit;
-        } elseif ($action === 'delete' && is_owner()) {
-            $um->delete($target_id);
         }
     }
     $_SESSION['flash'] = "Action effectuée.";
     header('Location: /sharetime/public/?page=admin_users');
-    exit;
-}
-
-// ── OWNER : ACTIONS ────────────────────────────────────
-if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_owner();
-    csrf_check();
-    $action    = $_POST['action'] ?? '';
-    $target_id = intval($_POST['user_id'] ?? 0);
-    $me        = (int)$_SESSION['user']['id'];
-
-    if ($target_id > 0 && $target_id !== $me) {
-        $um = new User($pdo);
-        if ($action === 'set_role') {
-            $new_role = in_array($_POST['role'] ?? '', ['utilisateur', 'admin']) ? $_POST['role'] : null;
-            if ($new_role) $um->setRole($target_id, $new_role);
-            $_SESSION['flash'] = "Rôle mis à jour.";
-        } elseif ($action === 'transfer_ownership') {
-            if ($um->transferOwnership($target_id, $me)) {
-                $_SESSION['user']['role'] = 'admin';
-                $_SESSION['flash'] = "Propriété transférée avec succès.";
-            } else {
-                $_SESSION['flash'] = "Transfert impossible.";
-            }
-        }
-    }
-    header('Location: /sharetime/public/?page=owner');
     exit;
 }
 
@@ -460,6 +465,8 @@ if ($page === 'home') {
     header('Location: /sharetime/public/?page=connexion'); exit;
 
 } elseif ($page === 'admin') {
+    // Rediriger le propriétaire vers son panel unifié
+    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; }
     require_admin();
     $admin_stats = [
         'membres'       => $pdo->query("SELECT COUNT(*) FROM users WHERE role != 'owner'")->fetchColumn(),
@@ -478,16 +485,33 @@ if ($page === 'home') {
     ")->fetchAll();
 
 } elseif ($page === 'admin_users') {
+    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=users'); exit; }
     require_admin();
     $admin_users_list = $userModel->getAllForAdmin();
 
 } elseif ($page === 'admin_activities') {
+    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=activities'); exit; }
     require_admin();
     $admin_activities_list = $activityModel->getAllForAdmin();
 
 } elseif ($page === 'owner') {
     require_owner();
+    $valid_tabs  = ['dashboard', 'users', 'activities', 'admins'];
+    $owner_tab   = in_array($_GET['tab'] ?? '', $valid_tabs) ? $_GET['tab'] : 'dashboard';
     $owner_users = $userModel->getAllForAdmin();
+    $admin_activities_list = $activityModel->getAllForAdmin();
+    $admin_stats = [
+        'membres'      => $pdo->query("SELECT COUNT(*) FROM users WHERE role != 'owner'")->fetchColumn(),
+        'activites'    => $pdo->query("SELECT COUNT(*) FROM activities")->fetchColumn(),
+        'inscriptions' => $pdo->query("SELECT COUNT(*) FROM registrations WHERE status = 'inscrit'")->fetchColumn(),
+        'admins'       => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn(),
+        'suspendus'    => $pdo->query("SELECT COUNT(*) FROM users WHERE is_banned = 1")->fetchColumn(),
+    ];
+    $admin_recent_users = $pdo->query("SELECT * FROM users ORDER BY date_creation DESC LIMIT 5")->fetchAll();
+    $admin_recent_activities = $pdo->query("
+        SELECT a.*, u.prenom, u.nom FROM activities a
+        JOIN users u ON u.idusers = a.creator_id ORDER BY a.created_at DESC LIMIT 5
+    ")->fetchAll();
 }
 
 // ── RENDU ──────────────────────────────────────────────

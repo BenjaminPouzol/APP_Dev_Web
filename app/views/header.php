@@ -114,11 +114,6 @@
                        style="background:var(--orange-pale);color:var(--orange);border:1.5px solid rgba(232,129,26,0.4);">
                         👑 Propriétaire
                     </a>
-                    <a href="/sharetime/public/?page=admin"
-                       class="btn btn-sm"
-                       style="background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);">
-                        ⚙️ Admin
-                    </a>
                 <?php elseif ($_SESSION['user']['role'] === 'admin'): ?>
                     <a href="/sharetime/public/?page=admin"
                        class="btn btn-sm"
