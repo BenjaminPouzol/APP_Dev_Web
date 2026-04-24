@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(c:/xampp/php/php.exe -r \"echo password_hash\\('Admin1234!', PASSWORD_DEFAULT\\);\")",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root sharetime)",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root -h 127.0.0.1 -P 3306 sharetime)",
+      "Bash(tasklist)",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root -h 127.0.0.1 -P 3306 sharetime -e \"DESCRIBE users; SELECT email, LEFT\\(mot_de_passe,20\\) as mdp_debut, pseudo, date_naissance FROM users WHERE email='admin@sharetime.fr';\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost/sharetime/public/\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost/sharetime/public/?page=activites\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost/sharetime/public/?page=connexion\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost/sharetime/public/?page=inscription\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost/sharetime/public/?page=faq\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost/sharetime/public/?page=contact\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost/sharetime/public/?page=detail&id=1\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost/sharetime/public/?page=profil\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost/sharetime/public/?page=creer\")",
+      "Bash(curl -s \"http://localhost/sharetime/public/\")",
+      "Bash(curl -s \"http://localhost/sharetime/public/?page=faq\")",
+      "Bash(curl -s \"http://localhost/sharetime/public/?page=activites\")",
+      "Bash(curl -s \"http://localhost/sharetime/public/?page=connexion\")",
+      "Bash(curl -s \"http://localhost/sharetime/public/?page=detail&id=999\")",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root -h 127.0.0.1 sharetime -e \"SELECT COUNT\\(*\\) as users FROM users; SELECT COUNT\\(*\\) as activities FROM activities; SELECT COUNT\\(*\\) as registrations FROM registrations;\")",
+      "Bash(curl -s \"http://localhost/sharetime/public/?page=home\")",
+      "Bash(curl -s \"http://localhost/sharetime/public/?page=profil_edit\" -L)",
+      "Bash(curl -s \"http://localhost/sharetime/public/?page=cgu\")",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root -h 127.0.0.1 sharetime -e \"SELECT COUNT\\(*\\) as faq FROM faq;\")",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root -h 127.0.0.1 sharetime -e \"SELECT idusers FROM users LIMIT 1;\")",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root -h 127.0.0.1 sharetime -e ' *)",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root -h 127.0.0.1 sharetime -e \"SELECT COUNT\\(*\\) as activites FROM activities; SELECT COUNT\\(*\\) as users FROM users;\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost/sharetime/public/__TRACKED_VAR__)",
+      "Bash(curl -s \"http://localhost/sharetime/public/?page=detail&id=1\")",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root -h 127.0.0.1 sharetime -e \"SELECT idusers, nom, prenom, pseudo, email, role FROM users;\")",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root -h 127.0.0.1 sharetime -e \"UPDATE users SET pseudo = 'Admin' WHERE email = 'admin@sharetime.fr';\")",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root -h 127.0.0.1 sharetime)",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root -h 127.0.0.1 sharetime -e \"SELECT email, role, is_banned FROM users;\")"
+    ]
+  }
+}

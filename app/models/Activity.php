@@ -7,22 +7,68 @@ class Activity {
         $this->pdo = $pdo;
     }
 
-    public function getAll() {
-        $stmt = $this->pdo->query("SELECT * FROM activities ORDER BY start_time ASC");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // ── Lecture publique ───────────────────────────────────
+
+    public function getAll($city = '') {
+        $sql = "SELECT a.*, u.prenom, u.nom, u.pseudo,
+                       (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'inscrit') AS nb_inscrits
+                FROM activities a
+                JOIN users u ON u.idusers = a.creator_id
+                WHERE a.visibility = 'publique'";
+        $params = [];
+        if ($city !== '') {
+            $sql .= " AND a.city LIKE :city";
+            $params['city'] = '%' . $city . '%';
+        }
+        $sql .= " ORDER BY a.start_time ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
     public function getById($id) {
-        $stmt = $this->pdo->prepare("SELECT * FROM activities WHERE idactivities = :id");
-        $stmt->execute(['id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $this->pdo->prepare("
+            SELECT a.*, u.prenom, u.nom, u.pseudo,
+                   (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'inscrit') AS nb_inscrits
+            FROM activities a
+            JOIN users u ON u.idusers = a.creator_id
+            WHERE a.idactivities = :id
+        ");
+        $stmt->execute(['id' => (int)$id]);
+        return $stmt->fetch();
     }
+
+    public function getByCreator($user_id) {
+        $stmt = $this->pdo->prepare("
+            SELECT a.*,
+                   (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'inscrit') AS nb_inscrits
+            FROM activities a
+            WHERE a.creator_id = :id
+            ORDER BY a.start_time DESC
+        ");
+        $stmt->execute(['id' => (int)$user_id]);
+        return $stmt->fetchAll();
+    }
+
+    public function getUserRegistrations($user_id) {
+        $stmt = $this->pdo->prepare("
+            SELECT a.*, r.status AS reg_status, r.registered_at
+            FROM registrations r
+            JOIN activities a ON a.idactivities = r.activity_id
+            WHERE r.user_id = :id AND r.status = 'inscrit'
+            ORDER BY a.start_time ASC
+        ");
+        $stmt->execute(['id' => (int)$user_id]);
+        return $stmt->fetchAll();
+    }
+
+    // ── Création ───────────────────────────────────────────
 
     public function create($data) {
         $stmt = $this->pdo->prepare("
-            INSERT INTO activities 
+            INSERT INTO activities
             (title, description, location, city, start_time, end_time, max_participants, visibility, status, creator_id, created_at)
-            VALUES 
+            VALUES
             (:title, :description, :location, :city, :start_time, :end_time, :max_participants, :visibility, 'active', :creator_id, NOW())
         ");
         return $stmt->execute([
@@ -36,5 +82,59 @@ class Activity {
             'visibility'       => $data['visibility'],
             'creator_id'       => $data['creator_id'],
         ]);
+    }
+
+    // ── Inscriptions ───────────────────────────────────────
+
+    public function isRegistered($activity_id, $user_id) {
+        $stmt = $this->pdo->prepare("
+            SELECT COUNT(*) FROM registrations
+            WHERE activity_id = :a AND user_id = :u AND status = 'inscrit'
+        ");
+        $stmt->execute(['a' => (int)$activity_id, 'u' => (int)$user_id]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    public function register($activity_id, $user_id) {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO registrations (activity_id, user_id, status)
+            VALUES (:a, :u, 'inscrit')
+            ON DUPLICATE KEY UPDATE status = 'inscrit', cancelled_at = NULL
+        ");
+        return $stmt->execute(['a' => (int)$activity_id, 'u' => (int)$user_id]);
+    }
+
+    public function unregister($activity_id, $user_id) {
+        $stmt = $this->pdo->prepare("
+            UPDATE registrations SET status = 'annule', cancelled_at = NOW()
+            WHERE activity_id = :a AND user_id = :u
+        ");
+        return $stmt->execute(['a' => (int)$activity_id, 'u' => (int)$user_id]);
+    }
+
+    // ── Administration ─────────────────────────────────────
+
+    public function getAllForAdmin() {
+        $stmt = $this->pdo->query("
+            SELECT a.*, u.prenom, u.nom, u.pseudo,
+                   (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'inscrit') AS nb_inscrits
+            FROM activities a
+            JOIN users u ON u.idusers = a.creator_id
+            ORDER BY a.created_at DESC
+        ");
+        return $stmt->fetchAll();
+    }
+
+    public function setStatus($id, $status) {
+        if (!in_array($status, ['active', 'annulee', 'terminee'])) return false;
+        $stmt = $this->pdo->prepare("UPDATE activities SET status = :status WHERE idactivities = :id");
+        return $stmt->execute(['status' => $status, 'id' => (int)$id]);
+    }
+
+    public function delete($id) {
+        $this->pdo->prepare("DELETE FROM registrations WHERE activity_id = :id")->execute(['id' => $id]);
+        $this->pdo->prepare("DELETE FROM comments WHERE activity_id = :id")->execute(['id' => $id]);
+        $stmt = $this->pdo->prepare("DELETE FROM activities WHERE idactivities = :id");
+        return $stmt->execute(['id' => (int)$id]);
     }
 }

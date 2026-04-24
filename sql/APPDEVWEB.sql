@@ -11,9 +11,11 @@ CREATE TABLE users (
   idusers INT AUTO_INCREMENT PRIMARY KEY,
   nom VARCHAR(100) NOT NULL,
   prenom VARCHAR(100) NOT NULL,
+  pseudo VARCHAR(100),
   email VARCHAR(150) NOT NULL UNIQUE,
   mot_de_passe VARCHAR(255) NOT NULL,
   ville VARCHAR(100),
+  date_naissance DATE,
   bio TEXT,
   photo_profil VARCHAR(255),
   note_moyenne FLOAT DEFAULT 0,
@@ -191,5 +193,6 @@ INSERT INTO cgu (contenu, version) VALUES
 ('En utilisant ShareTime, vous acceptez les règles de la plateforme.', 'v1.0');
 
 -- ================= ADMIN =================
-INSERT INTO users (nom, prenom, email, mot_de_passe, role, cgu_acceptees)
-VALUES ('Admin', 'ShareTime', 'admin@sharetime.fr', 'Admin1234!', 'admin', 1);
+-- Mot de passe = 'Admin1234!' (hash bcrypt)
+INSERT INTO users (nom, prenom, pseudo, email, mot_de_passe, role, cgu_acceptees)
+VALUES ('Admin', 'ShareTime', 'admin', 'admin@sharetime.fr', '$2y$10$d2Omt3dYMXBHhrnP2A1H/.Y/BhPt09.TqOEG5H.0ILSAxZDAPP0l6', 'admin', 1);
