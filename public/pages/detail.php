@@ -7,9 +7,7 @@
 </main>
 
 <?php else:
-    $emojis        = ['🏃', '🎨', '🌲', '🤝', '🖼️'];
-    $color_classes = ['sport', 'atelier', 'sortie', 'club', 'art'];
-    $idx    = $activity['idactivities'] % 5;
+    $cat    = $CATEGORY_MAP[$activity['category']] ?? $CATEGORY_MAP['autre'];
     $places = $activity['max_participants'] - $activity['nb_inscrits'];
     $start  = new DateTime($activity['start_time']);
     $end    = new DateTime($activity['end_time']);
@@ -23,9 +21,9 @@
     </a>
 
     <!-- Image header -->
-    <div class="card-image <?= $color_classes[$idx] ?>"
+    <div class="card-image <?= $cat[1] ?>"
          style="border-radius:var(--radius-lg); height:200px; margin-bottom:24px; font-size:4rem; position:relative;">
-        <?= $emojis[$idx] ?>
+        <?= $cat[0] ?>
         <span class="card-badge-vis" style="font-size:0.85rem;">
             <?= $activity['visibility'] === 'publique' ? '🌍 Public' : '🔒 Privé' ?>
         </span>
@@ -44,7 +42,14 @@
             </div>
         <?php endif; ?>
 
-        <h1 style="color:var(--navy); margin-bottom:6px;"><?= htmlspecialchars($activity['title']) ?></h1>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+            <h1 style="color:var(--navy); margin:0;"><?= htmlspecialchars($activity['title']) ?></h1>
+            <a href="/sharetime/public/?page=activites&category=<?= htmlspecialchars($activity['category']) ?>"
+               style="background:var(--gray-100); color:var(--gray-600); padding:4px 12px; border-radius:99px;
+                      font-size:0.78rem; font-weight:600; text-decoration:none; white-space:nowrap; flex-shrink:0;">
+                <?= $cat[0] ?> <?= $cat[2] ?>
+            </a>
+        </div>
         <p style="color:var(--gray-500); font-size:0.9rem; margin-bottom:28px;">
             Organisée par
             <a href="/sharetime/public/?page=profil&id=<?= $activity['creator_id'] ?>"

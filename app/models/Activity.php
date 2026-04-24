@@ -9,16 +9,26 @@ class Activity {
 
     // ── Lecture publique ───────────────────────────────────
 
-    public function getAll($city = '') {
+    public function getAll($city = '', $user_id = null, $category = '') {
+        $params = [];
+        if ($user_id) {
+            $visibility_clause = "(a.visibility = 'publique' OR a.creator_id = :user_id)";
+            $params['user_id'] = (int)$user_id;
+        } else {
+            $visibility_clause = "a.visibility = 'publique'";
+        }
         $sql = "SELECT a.*, u.prenom, u.nom, u.pseudo,
                        (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'inscrit') AS nb_inscrits
                 FROM activities a
                 JOIN users u ON u.idusers = a.creator_id
-                WHERE a.visibility = 'publique'";
-        $params = [];
+                WHERE {$visibility_clause}";
         if ($city !== '') {
             $sql .= " AND a.city LIKE :city";
             $params['city'] = '%' . $city . '%';
+        }
+        if ($category !== '') {
+            $sql .= " AND a.category = :category";
+            $params['category'] = $category;
         }
         $sql .= " ORDER BY a.start_time ASC";
         $stmt = $this->pdo->prepare($sql);
@@ -67,9 +77,9 @@ class Activity {
     public function create($data) {
         $stmt = $this->pdo->prepare("
             INSERT INTO activities
-            (title, description, location, city, start_time, end_time, max_participants, visibility, status, creator_id, created_at)
+            (title, description, location, city, start_time, end_time, max_participants, visibility, category, status, creator_id, created_at)
             VALUES
-            (:title, :description, :location, :city, :start_time, :end_time, :max_participants, :visibility, 'active', :creator_id, NOW())
+            (:title, :description, :location, :city, :start_time, :end_time, :max_participants, :visibility, :category, 'active', :creator_id, NOW())
         ");
         return $stmt->execute([
             'title'            => $data['title'],
@@ -80,6 +90,7 @@ class Activity {
             'end_time'         => $data['end_time'],
             'max_participants' => $data['max_participants'],
             'visibility'       => $data['visibility'],
+            'category'         => $data['category'],
             'creator_id'       => $data['creator_id'],
         ]);
     }

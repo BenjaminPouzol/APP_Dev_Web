@@ -1,8 +1,3 @@
-<?php
-$emojis        = ['🏃', '🎨', '🌲', '🤝', '🖼️'];
-$color_classes = ['sport', 'atelier', 'sortie', 'club', 'art'];
-?>
-
 <main class="container" style="padding:40px 0;">
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; flex-wrap:wrap; gap:16px;">
@@ -10,7 +5,10 @@ $color_classes = ['sport', 'atelier', 'sortie', 'club', 'art'];
             <h1 style="color:var(--navy); margin-bottom:4px;">Activités</h1>
             <p style="color:var(--gray-500); font-size:0.9rem;">
                 <?= count($activities) ?> activité<?= count($activities) > 1 ? 's' : '' ?> disponible<?= count($activities) > 1 ? 's' : '' ?>
-                <?= !empty($city_filter) ? ' pour "' . htmlspecialchars($city_filter) . '"' : '' ?>
+                <?= !empty($city_filter) ? ' à "' . htmlspecialchars($city_filter) . '"' : '' ?>
+                <?php if (!empty($category_filter) && isset($CATEGORY_MAP[$category_filter])): ?>
+                    · <?= $CATEGORY_MAP[$category_filter][0] ?> <?= $CATEGORY_MAP[$category_filter][2] ?>
+                <?php endif; ?>
             </p>
         </div>
         <?php if (isset($_SESSION['user'])): ?>
@@ -18,16 +16,37 @@ $color_classes = ['sport', 'atelier', 'sortie', 'club', 'art'];
         <?php endif; ?>
     </div>
 
-    <!-- Filtres -->
+    <!-- Chips catégories -->
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
+        <a href="/sharetime/public/?page=activites<?= !empty($city_filter) ? '&city='.urlencode($city_filter) : '' ?>"
+           style="padding:6px 16px; border-radius:99px; font-size:0.85rem; font-weight:600; text-decoration:none;
+                  background:<?= empty($category_filter) ? 'var(--navy)' : 'var(--gray-100)' ?>;
+                  color:<?= empty($category_filter) ? 'white' : 'var(--gray-600)' ?>;">
+            Toutes
+        </a>
+        <?php foreach ($CATEGORY_MAP as $val => [$emoji, , $label]): if ($val === 'autre') continue; ?>
+        <a href="/sharetime/public/?page=activites&category=<?= $val ?><?= !empty($city_filter) ? '&city='.urlencode($city_filter) : '' ?>"
+           style="padding:6px 16px; border-radius:99px; font-size:0.85rem; font-weight:600; text-decoration:none;
+                  background:<?= $category_filter === $val ? 'var(--navy)' : 'var(--gray-100)' ?>;
+                  color:<?= $category_filter === $val ? 'white' : 'var(--gray-600)' ?>;">
+            <?= $emoji ?> <?= $label ?>
+        </a>
+        <?php endforeach; ?>
+    </div>
+
+    <!-- Filtre ville -->
     <form method="get" action="/sharetime/public/" style="margin-bottom:28px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
         <input type="hidden" name="page" value="activites">
+        <?php if (!empty($category_filter)): ?>
+            <input type="hidden" name="category" value="<?= htmlspecialchars($category_filter) ?>">
+        <?php endif; ?>
         <input type="text" name="city"
                value="<?= htmlspecialchars($city_filter) ?>"
                placeholder="Filtrer par ville..."
                style="padding:10px 16px; border:1.5px solid var(--gray-300); border-radius:8px; font-size:0.9rem; min-width:220px; font-family:inherit;">
         <button type="submit" class="btn btn-navy">Filtrer</button>
-        <?php if (!empty($city_filter)): ?>
-            <a href="/sharetime/public/?page=activites" class="btn btn-outline-navy">✕ Réinitialiser</a>
+        <?php if (!empty($city_filter) || !empty($category_filter)): ?>
+            <a href="/sharetime/public/?page=activites" class="btn btn-outline-navy">✕ Tout réinitialiser</a>
         <?php endif; ?>
     </form>
 
@@ -48,14 +67,14 @@ $color_classes = ['sport', 'atelier', 'sortie', 'club', 'art'];
     <?php else: ?>
         <div class="cards-grid">
             <?php foreach ($activities as $a):
-                $idx    = $a['idactivities'] % 5;
+                $cat    = $CATEGORY_MAP[$a['category']] ?? $CATEGORY_MAP['autre'];
                 $places = $a['max_participants'] - $a['nb_inscrits'];
                 $start  = new DateTime($a['start_time']);
                 $auteur = $a['pseudo'] ?: $a['prenom'];
             ?>
             <a href="/sharetime/public/?page=detail&id=<?= $a['idactivities'] ?>" class="activity-card">
-                <div class="card-image <?= $color_classes[$idx] ?>">
-                    <?= $emojis[$idx] ?>
+                <div class="card-image <?= $cat[1] ?>">
+                    <?= $cat[0] ?>
                     <span class="card-badge"><?= htmlspecialchars($a['city']) ?></span>
                     <span class="card-badge-vis"><?= $a['visibility'] === 'publique' ? 'Public' : 'Privé' ?></span>
                 </div>

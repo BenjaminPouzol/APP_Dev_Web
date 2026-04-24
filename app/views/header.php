@@ -79,7 +79,11 @@
             <?php if (isset($_SESSION['user'])): ?>
                 <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin', 'owner'])): ?>
                 <li class="mobile-only" style="border-top: 1px solid rgba(255,255,255,0.08); margin-top:8px;">
-                    <a href="/sharetime/public/?page=admin" style="color:var(--orange); font-weight:700;">⚙️ Administration</a>
+                    <?php if ($_SESSION['user']['role'] === 'owner'): ?>
+                        <a href="/sharetime/public/?page=owner" style="color:var(--orange); font-weight:700;">👑 Espace Propriétaire</a>
+                    <?php else: ?>
+                        <a href="/sharetime/public/?page=admin" style="color:var(--orange); font-weight:700;">⚙️ Administration</a>
+                    <?php endif; ?>
                 </li>
                 <?php else: ?>
                 <li class="mobile-only" style="border-top: 1px solid rgba(255,255,255,0.08); margin-top:8px;">
@@ -104,7 +108,18 @@
 
         <div class="navbar-actions">
             <?php if (isset($_SESSION['user'])): ?>
-                <?php if (in_array($_SESSION['user']['role'], ['admin', 'owner'])): ?>
+                <?php if ($_SESSION['user']['role'] === 'owner'): ?>
+                    <a href="/sharetime/public/?page=owner"
+                       class="btn btn-sm"
+                       style="background:var(--orange-pale);color:var(--orange);border:1.5px solid rgba(232,129,26,0.4);">
+                        👑 Propriétaire
+                    </a>
+                    <a href="/sharetime/public/?page=admin"
+                       class="btn btn-sm"
+                       style="background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);">
+                        ⚙️ Admin
+                    </a>
+                <?php elseif ($_SESSION['user']['role'] === 'admin'): ?>
                     <a href="/sharetime/public/?page=admin"
                        class="btn btn-sm"
                        style="background:var(--orange-pale);color:var(--orange);border:1.5px solid rgba(232,129,26,0.4);">

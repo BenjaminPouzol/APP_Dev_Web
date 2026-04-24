@@ -2,9 +2,6 @@
 $nb_users      = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
 $nb_activities = $pdo->query("SELECT COUNT(*) FROM activities WHERE status = 'active'")->fetchColumn();
 $nb_cities     = $pdo->query("SELECT COUNT(DISTINCT city) FROM activities WHERE city != ''")->fetchColumn();
-
-$emojis        = ['🏃', '🎨', '🌲', '🤝', '🖼️'];
-$color_classes = ['sport', 'atelier', 'sortie', 'club', 'art'];
 ?>
 
 <main>
@@ -27,11 +24,9 @@ $color_classes = ['sport', 'atelier', 'sortie', 'club', 'art'];
         </form>
 
         <div class="hero-chips">
-            <a href="/sharetime/public/?page=activites" class="chip">🏃 Sport</a>
-            <a href="/sharetime/public/?page=activites" class="chip">🎨 Créativité</a>
-            <a href="/sharetime/public/?page=activites" class="chip">🌲 Nature</a>
-            <a href="/sharetime/public/?page=activites" class="chip">🤝 Social</a>
-            <a href="/sharetime/public/?page=activites" class="chip">🖼️ Culture</a>
+            <?php foreach ($CATEGORY_MAP as $val => [$emoji, , $label]): if ($val === 'autre') continue; ?>
+            <a href="/sharetime/public/?page=activites&category=<?= $val ?>" class="chip"><?= $emoji ?> <?= $label ?></a>
+            <?php endforeach; ?>
         </div>
     </div>
 </section>
@@ -53,6 +48,56 @@ $color_classes = ['sport', 'atelier', 'sortie', 'club', 'art'];
         </div>
     </div>
 </div>
+
+<!-- ── ACCÈS RAPIDE ADMIN / OWNER ── -->
+<?php if (isset($_SESSION['user']) && is_admin()): ?>
+<div class="container" style="margin:32px auto 0;">
+    <div style="display:grid; grid-template-columns:<?= is_owner() ? '1fr 1fr' : '1fr' ?>; gap:16px;">
+
+        <?php if (is_owner()): ?>
+        <!-- Carte Propriétaire -->
+        <a href="/sharetime/public/?page=owner" style="text-decoration:none;">
+            <div style="background:linear-gradient(135deg,var(--orange) 0%,#c96a10 100%);
+                        border-radius:16px; padding:24px 28px;
+                        display:flex; align-items:center; justify-content:space-between; gap:16px;
+                        box-shadow:0 4px 18px rgba(232,129,26,0.3); transition:transform 0.15s, box-shadow 0.15s;"
+                 onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(232,129,26,0.4)'"
+                 onmouseout="this.style.transform='';this.style.boxShadow='0 4px 18px rgba(232,129,26,0.3)'">
+                <div>
+                    <p style="color:rgba(255,255,255,0.75);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Accès rapide</p>
+                    <p style="color:white;font-size:1.15rem;font-weight:800;margin:0;">👑 Espace Propriétaire</p>
+                    <p style="color:rgba(255,255,255,0.7);font-size:0.82rem;margin:4px 0 0;">Gérer les administrateurs · Transférer la propriété</p>
+                </div>
+                <span style="color:white;font-size:1.8rem;opacity:0.6;">→</span>
+            </div>
+        </a>
+        <?php endif; ?>
+
+        <!-- Carte Admin (admin ET owner) -->
+        <a href="/sharetime/public/?page=admin" style="text-decoration:none;">
+            <div style="background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%);
+                        border-radius:16px; padding:24px 28px;
+                        display:flex; align-items:center; justify-content:space-between; gap:16px;
+                        box-shadow:0 4px 18px rgba(30,58,110,0.25); transition:transform 0.15s, box-shadow 0.15s;"
+                 onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(30,58,110,0.35)'"
+                 onmouseout="this.style.transform='';this.style.boxShadow='0 4px 18px rgba(30,58,110,0.25)'">
+                <div>
+                    <p style="color:rgba(255,255,255,0.65);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Accès rapide</p>
+                    <p style="color:white;font-size:1.15rem;font-weight:800;margin:0;">⚙️ Panel d'administration</p>
+                    <p style="color:rgba(255,255,255,0.6);font-size:0.82rem;margin:4px 0 0;">Membres · Activités · Tableau de bord</p>
+                </div>
+                <span style="color:white;font-size:1.8rem;opacity:0.6;">→</span>
+            </div>
+        </a>
+
+    </div>
+</div>
+<style>
+@media (max-width: 640px) {
+    div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+}
+</style>
+<?php endif; ?>
 
 <!-- ── ACTIVITÉS RÉCENTES ── -->
 <section class="section">
@@ -80,13 +125,13 @@ $color_classes = ['sport', 'atelier', 'sortie', 'club', 'art'];
                 foreach ($activities as $a):
                     if ($shown >= 6) break;
                     $shown++;
-                    $idx   = $a['idactivities'] % 5;
+                    $cat    = $CATEGORY_MAP[$a['category']] ?? $CATEGORY_MAP['autre'];
                     $places = $a['max_participants'] - $a['nb_inscrits'];
                     $start  = new DateTime($a['start_time']);
                 ?>
                 <a href="/sharetime/public/?page=detail&id=<?= $a['idactivities'] ?>" class="activity-card">
-                    <div class="card-image <?= $color_classes[$idx] ?>">
-                        <?= $emojis[$idx] ?>
+                    <div class="card-image <?= $cat[1] ?>">
+                        <?= $cat[0] ?>
                         <span class="card-badge"><?= htmlspecialchars($a['city']) ?></span>
                         <span class="card-badge-vis"><?= $a['visibility'] === 'publique' ? 'Public' : 'Privé' ?></span>
                     </div>

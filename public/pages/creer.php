@@ -72,6 +72,18 @@
                 </div>
             </div>
 
+            <div>
+                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">Catégorie *</label>
+                <select name="category"
+                        style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box; background:white;">
+                    <?php foreach ($CATEGORY_MAP as $val => [$emoji, , $label]): ?>
+                        <option value="<?= $val ?>" <?= ($_POST['category'] ?? 'autre') === $val ? 'selected' : '' ?>>
+                            <?= $emoji ?> <?= $label ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
             <div style="display:flex; gap:12px; margin-top:8px;">
                 <button type="submit" class="btn btn-orange btn-lg">Créer l'activité</button>
                 <a href="/sharetime/public/?page=activites" class="btn btn-outline-navy btn-lg">Annuler</a>

@@ -83,6 +83,33 @@ class User {
         return $stmt->execute(['role' => $role, 'id' => (int)$id]);
     }
 
+    // Transfère la propriété : l'ancien owner devient admin, le nouveau devient owner.
+    // Retourne false si la cible est déjà owner ou n'existe pas.
+    public function transferOwnership(int $new_owner_id, int $current_owner_id): bool {
+        if ($new_owner_id === $current_owner_id) return false;
+        $target = $this->getById($new_owner_id);
+        if (!$target || $target['role'] === 'owner') return false;
+
+        $this->pdo->beginTransaction();
+        try {
+            // L'ancien propriétaire devient admin
+            $this->pdo->prepare("UPDATE users SET role = 'admin' WHERE idusers = :id")
+                       ->execute(['id' => $current_owner_id]);
+            // Le nouveau utilisateur devient owner
+            $this->pdo->prepare("UPDATE users SET role = 'owner', is_banned = 0 WHERE idusers = :id")
+                       ->execute(['id' => $new_owner_id]);
+            $this->pdo->commit();
+            return true;
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            return false;
+        }
+    }
+
+    public function hasOwner(): bool {
+        return (bool) $this->pdo->query("SELECT COUNT(*) FROM users WHERE role = 'owner'")->fetchColumn();
+    }
+
     public function setBanned($id, $banned) {
         // On ne peut pas suspendre un owner
         $stmt = $this->pdo->prepare("

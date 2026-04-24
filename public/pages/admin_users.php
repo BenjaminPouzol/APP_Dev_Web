@@ -25,6 +25,19 @@
         </div>
         <?php endif; ?>
 
+        <?php if (is_owner()): ?>
+        <div style="background:#FEF3E2;border:1.5px solid rgba(232,129,26,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
+            <span style="font-size:1.5rem;">👑</span>
+            <div>
+                <p style="margin:0;font-weight:700;color:var(--orange);font-size:0.9rem;">Vous êtes propriétaire</p>
+                <p style="margin:2px 0 0;font-size:0.82rem;color:var(--gray-600);">
+                    Vous pouvez nommer ou révoquer des administrateurs, et transférer la propriété du site à un autre membre.
+                    Le transfert est <strong>irréversible</strong> sans intervention du nouveau propriétaire.
+                </p>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <div style="background:white;border:1.5px solid var(--gray-200);border-radius:14px;overflow:hidden;">
             <div style="padding:18px 20px;border-bottom:1px solid var(--gray-100);">
                 <h2 style="margin:0;font-size:1rem;color:var(--navy);">
@@ -92,7 +105,8 @@
 
                                 <?php if ($can_act): ?>
 
-                                    <!-- Suspendre / Réactiver (admin + owner) -->
+                                    <!-- Suspendre / Réactiver : owner pour tout le monde, admin uniquement pour les membres -->
+                                    <?php if (is_owner() || $u['role'] === 'utilisateur'): ?>
                                     <form method="POST" action="/sharetime/public/?page=admin_users" style="display:inline;">
                                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                                         <input type="hidden" name="user_id" value="<?= $uid ?>">
@@ -103,10 +117,11 @@
                                             <?= $banned ? '✓ Réactiver' : '⊘ Suspendre' ?>
                                         </button>
                                     </form>
+                                    <?php endif; ?>
 
                                     <?php if (is_owner()): ?>
 
-                                        <!-- Changer le rôle (owner uniquement) -->
+                                        <!-- Changer le rôle admin/membre (owner uniquement) -->
                                         <?php if (!$banned): ?>
                                         <form method="POST" action="/sharetime/public/?page=admin_users" style="display:inline;display:flex;gap:4px;">
                                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
@@ -119,6 +134,18 @@
                                             <button type="submit" style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--gray-300);background:white;color:var(--gray-700);font-size:0.78rem;font-weight:600;cursor:pointer;">OK</button>
                                         </form>
                                         <?php endif; ?>
+
+                                        <!-- Transférer la propriété (owner uniquement) -->
+                                        <form method="POST" action="/sharetime/public/?page=admin_users" style="display:inline;">
+                                            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                                            <input type="hidden" name="user_id" value="<?= $uid ?>">
+                                            <input type="hidden" name="action" value="transfer_ownership">
+                                            <button type="submit"
+                                                style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--orange);background:white;color:var(--orange);font-size:0.78rem;font-weight:600;cursor:pointer;"
+                                                onclick="return confirm('Transférer la propriété du site à <?= htmlspecialchars(addslashes($u['prenom'].' '.$u['nom'])) ?> ?\n\nVous deviendrez administrateur. Cette action est irréversible sans intervention du nouveau propriétaire.')">
+                                                👑 Propriétaire
+                                            </button>
+                                        </form>
 
                                         <!-- Supprimer (owner uniquement) -->
                                         <form method="POST" action="/sharetime/public/?page=admin_users" style="display:inline;">

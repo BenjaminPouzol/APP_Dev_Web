@@ -13,6 +13,17 @@ $page    = $_GET['page'] ?? 'home';
 $error   = null;
 $success = null;
 
+// ── CATÉGORIES ───────────────────────────────────────────
+// [emoji, classe CSS, libellé]
+$CATEGORY_MAP = [
+    'sport'      => ['🏃', 'sport',   'Sport'],
+    'creativite' => ['🎨', 'atelier', 'Créativité'],
+    'nature'     => ['🌲', 'sortie',  'Nature'],
+    'social'     => ['🤝', 'club',    'Social'],
+    'culture'    => ['🖼️', 'art',     'Culture'],
+    'autre'      => ['⭐', 'sport',   'Autre'],
+];
+
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
@@ -150,6 +161,7 @@ if ($page === 'creer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $end_time         = $_POST['end_time'] ?? '';
     $max_participants = intval($_POST['max_participants'] ?? 0);
     $visibility       = in_array($_POST['visibility'] ?? '', ['publique', 'privee']) ? $_POST['visibility'] : 'publique';
+    $category         = in_array($_POST['category'] ?? '', array_keys($CATEGORY_MAP)) ? $_POST['category'] : 'autre';
 
     if (empty($title) || empty($description) || empty($location) || empty($city) || empty($start_time) || empty($end_time)) {
         $error = "Veuillez remplir tous les champs obligatoires.";
@@ -168,6 +180,7 @@ if ($page === 'creer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             'end_time'         => $end_time,
             'max_participants' => $max_participants,
             'visibility'       => $visibility,
+            'category'         => $category,
             'creator_id'       => $_SESSION['user']['id'],
         ]);
         header('Location: /sharetime/public/?page=activites');
@@ -229,6 +242,7 @@ if ($page === 'contact' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $contact_name    = trim($_POST['name'] ?? '');
     $contact_email   = trim($_POST['email'] ?? '');
+    $contact_subject = trim($_POST['subject'] ?? '');
     $contact_message = trim($_POST['message'] ?? '');
 
     if (empty($contact_name) || empty($contact_email) || empty($contact_message)) {
@@ -236,7 +250,36 @@ if ($page === 'contact' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($contact_email, FILTER_VALIDATE_EMAIL)) {
         $error = "Adresse e-mail invalide.";
     } else {
-        $success = "Votre message a bien été envoyé. Nous vous répondrons rapidement.";
+        // Crée la table si elle n'existe pas encore
+        $pdo->exec("CREATE TABLE IF NOT EXISTS contact_messages (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(150) NOT NULL,
+            subject VARCHAR(200) DEFAULT '',
+            message TEXT NOT NULL,
+            sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            is_read TINYINT(1) NOT NULL DEFAULT 0
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $stmt = $pdo->prepare("
+            INSERT INTO contact_messages (name, email, subject, message)
+            VALUES (:name, :email, :subject, :message)
+        ");
+        $stmt->execute([
+            'name'    => $contact_name,
+            'email'   => $contact_email,
+            'subject' => $contact_subject,
+            'message' => $contact_message,
+        ]);
+
+        // Tentative d'envoi email (nécessite un SMTP configuré)
+        $to      = 'admin@sharetime.fr';
+        $subject = '[ShareTime] ' . ($contact_subject ?: 'Nouveau message de contact');
+        $body    = "Nom : {$contact_name}\nEmail : {$contact_email}\n\n{$contact_message}";
+        $headers = "From: noreply@sharetime.fr\r\nReply-To: {$contact_email}";
+        @mail($to, $subject, $body, $headers);
+
+        $success = "Votre message a bien été reçu. Nous vous répondrons rapidement.";
     }
 }
 
@@ -251,18 +294,69 @@ if ($page === 'admin_users' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($target_id > 0 && $target_id !== $me) {
         $um = new User($pdo);
         if ($action === 'ban') {
+            $target_user = $um->getById($target_id);
+            // Seul le propriétaire peut suspendre un admin
+            if ($target_user && $target_user['role'] === 'admin' && !is_owner()) {
+                $_SESSION['flash'] = "Vous n'avez pas le droit de suspendre un administrateur.";
+                header('Location: /sharetime/public/?page=admin_users');
+                exit;
+            }
             $um->setBanned($target_id, true);
         } elseif ($action === 'unban') {
+            $target_user = $um->getById($target_id);
+            // Seul le propriétaire peut réactiver un admin suspendu
+            if ($target_user && $target_user['role'] === 'admin' && !is_owner()) {
+                $_SESSION['flash'] = "Vous n'avez pas le droit de réactiver un administrateur.";
+                header('Location: /sharetime/public/?page=admin_users');
+                exit;
+            }
             $um->setBanned($target_id, false);
         } elseif ($action === 'set_role' && is_owner()) {
             $new_role = in_array($_POST['role'] ?? '', ['utilisateur', 'admin']) ? $_POST['role'] : null;
             if ($new_role) $um->setRole($target_id, $new_role);
+        } elseif ($action === 'transfer_ownership' && is_owner()) {
+            if ($um->transferOwnership($target_id, $me)) {
+                // Le propriétaire actuel est maintenant admin : on met à jour sa session
+                $_SESSION['user']['role'] = 'admin';
+                $_SESSION['flash'] = "La propriété a été transférée avec succès.";
+            } else {
+                $_SESSION['flash'] = "Transfert impossible.";
+            }
+            header('Location: /sharetime/public/?page=admin_users');
+            exit;
         } elseif ($action === 'delete' && is_owner()) {
             $um->delete($target_id);
         }
     }
     $_SESSION['flash'] = "Action effectuée.";
     header('Location: /sharetime/public/?page=admin_users');
+    exit;
+}
+
+// ── OWNER : ACTIONS ────────────────────────────────────
+if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_owner();
+    csrf_check();
+    $action    = $_POST['action'] ?? '';
+    $target_id = intval($_POST['user_id'] ?? 0);
+    $me        = (int)$_SESSION['user']['id'];
+
+    if ($target_id > 0 && $target_id !== $me) {
+        $um = new User($pdo);
+        if ($action === 'set_role') {
+            $new_role = in_array($_POST['role'] ?? '', ['utilisateur', 'admin']) ? $_POST['role'] : null;
+            if ($new_role) $um->setRole($target_id, $new_role);
+            $_SESSION['flash'] = "Rôle mis à jour.";
+        } elseif ($action === 'transfer_ownership') {
+            if ($um->transferOwnership($target_id, $me)) {
+                $_SESSION['user']['role'] = 'admin';
+                $_SESSION['flash'] = "Propriété transférée avec succès.";
+            } else {
+                $_SESSION['flash'] = "Transfert impossible.";
+            }
+        }
+    }
+    header('Location: /sharetime/public/?page=owner');
     exit;
 }
 
@@ -315,7 +409,7 @@ $allowed_pages = [
     'home', 'activites', 'connexion', 'inscription', 'contact', 'creer',
     'detail', 'faq', 'profil', 'profil_edit', 'cgu', 'mentions',
     's_inscrire', 'se_desinscrire',
-    'admin', 'admin_users', 'admin_activities',
+    'admin', 'admin_users', 'admin_activities', 'owner',
 ];
 if (!in_array($page, $allowed_pages)) $page = 'home';
 
@@ -323,18 +417,20 @@ $activityModel = new Activity($pdo);
 $userModel     = new User($pdo);
 
 // Données selon la page
-$activities = $city_filter = '';
+$activities = $city_filter = $category_filter = '';
 $activities = $user_activities = $user_registrations = $faq_items = [];
 $activity = $profile = null;
 $is_registered = false;
-$admin_stats = $admin_users_list = $admin_activities_list = [];
+$admin_stats = $admin_users_list = $admin_activities_list = $owner_users = [];
 
 if ($page === 'home') {
-    $activities = $activityModel->getAll();
+    $activities = $activityModel->getAll('', $_SESSION['user']['id'] ?? null);
 
 } elseif ($page === 'activites') {
-    $city_filter = trim($_GET['city'] ?? '');
-    $activities  = $activityModel->getAll($city_filter);
+    $city_filter     = trim($_GET['city'] ?? '');
+    $raw_cat         = trim($_GET['category'] ?? '');
+    $category_filter = isset($CATEGORY_MAP[$raw_cat]) ? $raw_cat : '';
+    $activities      = $activityModel->getAll($city_filter, $_SESSION['user']['id'] ?? null, $category_filter);
 
 } elseif ($page === 'detail') {
     $activity_id = intval($_GET['id'] ?? 0);
@@ -388,6 +484,10 @@ if ($page === 'home') {
 } elseif ($page === 'admin_activities') {
     require_admin();
     $admin_activities_list = $activityModel->getAllForAdmin();
+
+} elseif ($page === 'owner') {
+    require_owner();
+    $owner_users = $userModel->getAllForAdmin();
 }
 
 // ── RENDU ──────────────────────────────────────────────
@@ -395,7 +495,7 @@ require '../app/views/header.php';
 
 $php_pages  = ['home', 'activites', 'connexion', 'inscription', 'creer', 'detail',
                'profil', 'profil_edit', 'faq', 'contact',
-               'admin', 'admin_users', 'admin_activities'];
+               'admin', 'admin_users', 'admin_activities', 'owner'];
 $html_pages = ['cgu', 'mentions'];
 
 if (in_array($page, $php_pages)) {
