@@ -528,7 +528,7 @@
                     </div>
                     <p>Passionnée de sport en plein air et de cuisine du monde. J'organise des sorties running chaque semaine !</p>
                 </div>
-                <button class="btn-edit-profile" onclick="showSection('parametres')">✏️ Modifier le profil</button>
+                <button class="btn-edit-profile" onclick="showSection('parametres')"> Modifier le profil</button>
             </div>
             <div class="profile-stats">
                 <div class="stat-item">
@@ -553,22 +553,22 @@
         <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-item active" onclick="showSection('inscriptions')" id="nav-inscriptions">
-                📋 Mes inscriptions
+                 Mes inscriptions
             </div>
             <div class="sidebar-item" onclick="showSection('creees')" id="nav-creees">
-                🎯 Mes activités créées
+                 Mes activités créées
             </div>
             <div class="sidebar-item" onclick="showSection('notifications')" id="nav-notifications">
-                🔔 Notifications
+                 Notifications
                 <span class="badge-notif">3</span>
             </div>
             <div class="sidebar-separator"></div>
             <div class="sidebar-item" onclick="showSection('parametres')" id="nav-parametres">
-                ⚙️ Paramètres
+                 Paramètres
             </div>
             <div class="sidebar-separator"></div>
             <div class="sidebar-item danger" onclick="confirmDeconnexion()">
-                🚪 Se déconnecter
+                 Se déconnecter
             </div>
         </aside>
 
@@ -578,7 +578,7 @@
             <!-- MES INSCRIPTIONS -->
             <div class="section-panel active" id="panel-inscriptions">
                 <div class="panel-header">
-                    <div class="panel-title">📋 Mes inscriptions</div>
+                    <div class="panel-title"> Mes inscriptions</div>
                     <span class="panel-count">3 activités</span>
                 </div>
 
@@ -587,12 +587,12 @@
                     <div class="activity-info">
                         <div class="activity-name">Footing matinal en forêt</div>
                         <div class="activity-meta">
-                            <span>📅 Sam. 14 juin · 7h00</span>
-                            <span>📍 Forêt de Vincennes</span>
+                            <span> Sam. 14 juin · 7h00</span>
+                            <span> Forêt de Vincennes</span>
                         </div>
                     </div>
                     <div class="activity-actions">
-                        <span class="status-badge status-inscrit">✅ Inscrit(e)</span>
+                        <span class="status-badge status-inscrit"> Inscrit(e)</span>
                         <button class="btn-desinscrit">Se désinscrire</button>
                     </div>
                 </div>
@@ -602,8 +602,8 @@
                     <div class="activity-info">
                         <div class="activity-name">Atelier cuisine asiatique</div>
                         <div class="activity-meta">
-                            <span>📅 Dim. 15 juin · 14h30</span>
-                            <span>📍 Paris 11e</span>
+                            <span> Dim. 15 juin · 14h30</span>
+                            <span> Paris 11e</span>
                         </div>
                     </div>
                     <div class="activity-actions">
@@ -616,8 +616,8 @@
                     <div class="activity-info">
                         <div class="activity-name">Club de lecture — Camus</div>
                         <div class="activity-meta">
-                            <span>📅 Lun. 16 juin · 19h00</span>
-                            <span>📍 Café des Lettres, Lyon</span>
+                            <span> Lun. 16 juin · 19h00</span>
+                            <span> Café des Lettres, Lyon</span>
                         </div>
                     </div>
                     <div class="activity-actions">
@@ -629,7 +629,7 @@
             <!-- MES ACTIVITÉS CRÉÉES -->
             <div class="section-panel" id="panel-creees">
                 <div class="panel-header">
-                    <div class="panel-title">🎯 Mes activités créées</div>
+                    <div class="panel-title"> Mes activités créées</div>
                     <span class="panel-count">8 activités</span>
                 </div>
 
@@ -638,8 +638,8 @@
                     <div class="activity-info">
                         <div class="activity-name">Footing matinal en forêt de Vincennes</div>
                         <div class="activity-meta">
-                            <span>📅 Sam. 14 juin · 7h00</span>
-                            <span>👥 6/10 inscrits</span>
+                            <span> Sam. 14 juin · 7h00</span>
+                            <span> 6/10 inscrits</span>
                         </div>
                     </div>
                     <div class="activity-actions">
@@ -653,12 +653,12 @@
                     <div class="activity-info">
                         <div class="activity-name">Balade vélo en bord de Seine</div>
                         <div class="activity-meta">
-                            <span>📅 Mer. 18 juin · 9h00</span>
-                            <span>👥 3/8 inscrits</span>
+                            <span> Mer. 18 juin · 9h00</span>
+                            <span> 3/8 inscrits</span>
                         </div>
                     </div>
                     <div class="activity-actions">
-                        <span class="status-badge status-publiee">🌐 Publiée</span>
+                        <span class="status-badge status-publiee"> Publiée</span>
                         <button class="btn-manage">Gérer</button>
                     </div>
                 </div>
@@ -673,7 +673,7 @@
                         </div>
                     </div>
                     <div class="activity-actions">
-                        <span class="status-badge status-inscrit">✅ Complet</span>
+                        <span class="status-badge status-inscrit"> Complet</span>
                         <button class="btn-manage">Gérer</button>
                     </div>
                 </div>
@@ -682,7 +682,7 @@
             <!-- NOTIFICATIONS -->
             <div class="section-panel" id="panel-notifications">
                 <div class="panel-header">
-                    <div class="panel-title">🔔 Notifications</div>
+                    <div class="panel-title"> Notifications</div>
                     <span class="panel-count">3 non lues</span>
                 </div>
 
@@ -853,7 +853,7 @@
         document.querySelectorAll('.btn-save').forEach(btn => {
             btn.addEventListener('click', function() {
                 const original = this.textContent;
-                this.textContent = '✅ Enregistré !';
+                this.textContent = 'Enregistré !';
                 this.style.background = '#2e7d4f';
                 setTimeout(() => {
                     this.textContent = original;
