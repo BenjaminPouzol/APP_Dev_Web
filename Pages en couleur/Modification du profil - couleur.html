@@ -11,7 +11,7 @@
             margin: 0;
             font-family: Inter, sans-serif;
             background: linear-gradient(180deg, #F9FAFB 0%, #FFFFFF 100%);
-            color: #1F2937;
+            color: #303C6C;
         }
 
         .page {
@@ -28,17 +28,18 @@
             background: white;
             border-radius: 24px;
             padding: 50px;
-            box-shadow: 0 18px 45px rgba(0,0,0,0.08);
+            box-shadow: 0 18px 45px rgba(0,0,0,0.5);
             border: 1px solid #E5E7EB;
         }
 
         h1 {
             margin-top: 0;
             margin-bottom: 10px;
+            color: #E88600;
         }
 
         .subtitle {
-            color: #6B7280;
+            color: #303C6C;
             margin-bottom: 30px;
         }
 
@@ -68,13 +69,14 @@
         input, select {
             padding: 12px;
             border-radius: 10px;
-            border: 1px solid #D1D5DB;
+            border: 1px solid #dbd1d1;
             font-size: 0.95rem;
         }
 
         input:focus {
             outline: none;
-            border-color: #6B7280;
+            border-color: #FFA82E;
+            box-shadow: 0 0 0 4px rgba(255, 168, 46, 0.12);
         }
 
         .btn {
@@ -82,14 +84,15 @@
             padding: 14px;
             border-radius: 12px;
             border: none;
-            background: #111827;
+            background: #E88600;
             color: white;
             font-weight: bold;
             cursor: pointer;
         }
 
         .btn:hover {
-            background: #374151;
+            background: #FFA82E;
+            transform: translateY(-1px);
         }
 
         .back {
@@ -99,7 +102,7 @@
         }
 
         .back a {
-            color: #111827;
+            color: #303C6C;
             font-weight: bold;
             text-decoration: none;
         }
@@ -123,49 +126,50 @@
                 <div class="row">
                     <div class="group">
                         <label>Prénom</label>
-                        <input type="text" value="Agathe">
+                        <input type="text" id="firstname" name="firstname" placeholder="Ton prénom" required>
                     </div>
 
                     <div class="group">
                         <label>Nom</label>
-                        <input type="text" value="Fournier">
+                        <input type="text" id="lastname" name="lastname" placeholder="Ton nom" required>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="group">
                         <label>Pseudo</label>
-                        <input type="text" value="agathe_dev">
+                        <input type="text" id="username" name="username" placeholder="Choisis un pseudo" required>
                     </div>
 
                     <div class="group">
                         <label>Ville</label>
-                        <input type="text" value="Paris">
+                        <input type="text" id="city" name="city" placeholder="Ex : Paris" required>
                     </div>
                 </div>
 
                 <div class="group">
                     <label>Email</label>
-                    <input type="email" value="agathe@email.com">
+                    <input type="email" id="email" name="email" placeholder="ton@email.com" required>
                 </div>
 
                 <div class="row">
                     <div class="group">
                         <label>Nouveau mot de passe</label>
-                        <input type="password" placeholder="Laisser vide si inchangé">
+                        <input type="password" id="password" name="password" placeholder="Laisser vide si inchangé" required>
                     </div>
 
                     <div class="group">
                         <label>Confirmer</label>
-                        <input type="password">
+                        <input type="password" id="password" name="password" placeholder="Laisser vide si inchangé" required>
                     </div>
                 </div>
 
                 <div class="group">
                     <label>Centre d’intérêt</label>
                     <select>
+                        <option selected>Sélectionne une catégorie</option>
                         <option>Sport</option>
-                        <option selected>Culture</option>
+                        <option>Culture</option>
                         <option>Voyage</option>
                         <option>Musique</option>
                     </select>

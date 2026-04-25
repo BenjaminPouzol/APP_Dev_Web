@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - ShareTime</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, sans-serif;
+        }
+
+        /* ======= HEADER / NAVBAR ======= */
+        header {
+            background-color: #303C6C;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .navbar-logo-text {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-Share {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #E88600;
+        }
+
+        .logo-Time {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        header a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .register-btn-inscription {
+            border: none;
+            border-radius: 14px;
+            padding: 15px 20px;
+            background: #E88600;
+            color: #FFFFFF;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+            text-decoration: none;
+        }
+
+        .register-btn-inscription:hover {
+            background: #FFA82E;
+            transform: translateY(-1px);
+        }
+
+        .register-btn-connexion {
+            border: none;
+            border-radius: 14px;
+            padding: 15px 20px;
+            background: #ffffff;
+            color: #E88600;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+            text-decoration: none;
+        }
+
+        .register-btn-connexion:hover {
+            background: #d2d2d2;
+            transform: translateY(-1px);
+        }
+
+        /* ======= HERO FAQ ======= */
+        .faq-hero {
+            background: linear-gradient(135deg, #303C6C 0%, #3D518F 100%);
+            color: white;
+            text-align: center;
+            padding: 60px 20px 50px;
+        }
+
+        .faq-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0 0 10px;
+            color: #E88600;
+        }
+
+        .faq-hero p {
+            font-size: 1.1rem;
+            color: #c5cceb;
+            margin: 0 auto;
+            max-width: 550px;
+        }
+
+        /* ======= SEARCH BAR ======= */
+        .faq-search-wrap {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .faq-search {
+            width: 100%;
+            max-width: 480px;
+            padding: 14px 20px;
+            border-radius: 50px;
+            border: none;
+            font-size: 1rem;
+            font-family: Inter, sans-serif;
+            outline: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        /* ======= CATEGORIES ======= */
+        .faq-categories {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 30px auto 0;
+            max-width: 700px;
+            padding: 0 20px;
+        }
+
+        .cat-btn {
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50px;
+            padding: 8px 20px;
+            background: transparent;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cat-btn:hover, .cat-btn.active {
+            background: #E88600;
+            border-color: #E88600;
+        }
+
+        /* ======= MAIN CONTENT ======= */
+        .faq-main {
+            max-width: 850px;
+            margin: 50px auto 60px;
+            padding: 0 20px;
+        }
+
+        /* no results message */
+        .no-results {
+            display: none;
+            text-align: center;
+            color: #999;
+            font-size: 1.05rem;
+            margin-top: 40px;
+        }
+
+        /* ======= ACCORDION ======= */
+        .faq-item {
+            border: 1.5px solid #e0e4f0;
+            border-radius: 14px;
+            margin-bottom: 14px;
+            overflow: hidden;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .faq-item:hover {
+            box-shadow: 0 4px 18px rgba(48,60,108,0.1);
+        }
+
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            cursor: pointer;
+            background: #fff;
+            user-select: none;
+            gap: 16px;
+        }
+
+        .faq-question-text {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #303C6C;
+            flex: 1;
+        }
+
+        .faq-tag {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 4px 10px;
+            border-radius: 50px;
+            background: #f0f2fa;
+            color: #3D518F;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .faq-item.open .faq-question {
+            background: #fafbff;
+            border-bottom: 1.5px solid #e0e4f0;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, padding 0.3s ease;
+            background: #fff;
+            padding: 0 24px;
+        }
+
+        .faq-answer-inner {
+            padding: 18px 0;
+            color: #4a5580;
+            line-height: 1.75;
+            font-size: 0.97rem;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 400px;
+            padding: 0 24px;
+        }
+
+        /* ======= CTA BOTTOM ======= */
+        .faq-cta {
+            background: linear-gradient(135deg, #f4f6ff 0%, #fff 100%);
+            border: 1.5px solid #e0e4f0;
+            border-radius: 18px;
+            padding: 40px 30px;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .faq-cta h2 {
+            color: #303C6C;
+            font-size: 1.4rem;
+            margin: 0 0 10px;
+        }
+
+        .faq-cta p {
+            color: #6b759e;
+            margin: 0 0 24px;
+        }
+
+        /* ======= FOOTER ======= */
+        footer {
+            background-color: #303C6C;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .footer-column {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .footer-column > div {
+            flex: 0 0 200px;
+            text-align: left;
+        }
+
+        .footer-column p {
+            color: #ffffff;
+            margin: 0 0 10px 0;
+        }
+
+        .footer-column h1 {
+            font-size: 2rem;
+            color: #E88600;
+            margin: 0 0 10px 0;
+        }
+
+        .footer-column > div a,
+        .footer-column > div h3 {
+            margin: 0 0 10px 0;
+            display: block;
+        }
+
+        footer a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+        HEADER / NAVBAR
+    ============================================================ -->
+    <header>
+        <nav class="navbar">
+            <div class="container">
+                <a href="Page test.html">
+                    <div class="navbar-logo-text">
+                        <img src="logo ShareTime sans fond.png" alt="Logo de ShareTime" width="75">
+                        <span class="logo-Share">Share</span><span class="logo-Time">Time</span>
+                    </div>
+                </a>
+                <ul class="navbar-links">
+                    <li><a href="Page test.html">Activités</a></li>
+                    <li><a href="FAQ - couleur.html">FAQ</a></li>
+                    <li><a href="Page test.html">Contact</a></li>
+                </ul>
+                <div class="navbar-actions">
+                    <a href="Page test.html" class="register-btn-connexion">Se connecter</a>
+                    <a href="Inscription - couleur.html" class="register-btn-inscription">S'inscrire</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============================================================
+        HERO
+    ============================================================ -->
+    <div class="faq-hero">
+        <h1>Foire Aux Questions</h1>
+        <p>Vous avez une question ? Trouvez la réponse parmi nos questions les plus fréquentes.</p>
+
+        <div class="faq-search-wrap">
+            <input
+                class="faq-search"
+                type="text"
+                id="searchInput"
+                placeholder="Rechercher une question..."
+                oninput="filterFAQ()"
+            >
+        </div>
+
+        <div class="faq-categories">
+            <button class="cat-btn active" onclick="filterByCategory('all', this)">Toutes</button>
+            <button class="cat-btn" onclick="filterByCategory('compte', this)">Compte</button>
+            <button class="cat-btn" onclick="filterByCategory('activites', this)">Activités</button>
+            <button class="cat-btn" onclick="filterByCategory('securite', this)">Sécurité</button>
+            <button class="cat-btn" onclick="filterByCategory('technique', this)">Technique</button>
+        </div>
+    </div>
+
+    <!-- ============================================================
+        FAQ ACCORDION
+    ============================================================ -->
+    <div class="faq-main">
+
+        <div class="no-results" id="noResults">
+            Aucune question ne correspond à votre recherche.
+        </div>
+
+        <!-- Q1 -->
+        <div class="faq-item" data-category="compte">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-question-text">Comment créer un compte sur ShareTime ?</span>
+                <span class="faq-tag">Compte</span>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Créer un compte est simple et gratuit ! Cliquez sur le bouton <strong>« S'inscrire »</strong> en haut à droite de la page, puis renseignez votre prénom, adresse e-mail et un mot de passe sécurisé. Après avoir accepté nos Conditions Générales d'Utilisation, votre compte est immédiatement actif.
+                </div>
+            </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="faq-item" data-category="compte">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-question-text">Comment modifier ou supprimer mon compte ?</span>
+                <span class="faq-tag">Compte</span>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Vous pouvez modifier vos informations personnelles (prénom, photo, bio…) depuis votre espace <strong>Profil</strong>. Pour supprimer définitivement votre compte, rendez-vous dans les paramètres et cliquez sur <strong>« Supprimer mon compte »</strong>. Cette action est irréversible et entraîne la perte de toutes vos données et activités.
+                </div>
+            </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="faq-item" data-category="activites">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-question-text">Comment publier une activité sur ShareTime ?</span>
+                <span class="faq-tag">Activités</span>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Une fois connecté, cliquez sur <strong>« Créer une activité »</strong>. Renseignez le titre, la catégorie, la date, le lieu, le nombre de places et une description. Vous pouvez également ajouter des conditions de participation (équipement requis, niveau, etc.). Votre activité sera ensuite visible par tous les membres.
+                </div>
+            </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="faq-item" data-category="activites">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-question-text">Comment s'inscrire à une activité proposée par un autre membre ?</span>
+                <span class="faq-tag">Activités</span>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Sur la page d'une activité, cliquez sur le bouton <strong>« S'inscrire à cette activité »</strong>. Si des places sont disponibles, votre inscription est confirmée immédiatement. Si l'activité est complète, vous pouvez rejoindre la <strong>liste d'attente</strong> : vous serez automatiquement notifié si une place se libère.
+                </div>
+            </div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="faq-item" data-category="activites">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-question-text">Puis-je annuler ma participation à une activité ?</span>
+                <span class="faq-tag">Activités</span>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Oui, vous pouvez annuler votre participation à tout moment depuis votre espace <strong>Mes activités</strong>. Si vous annulez, votre place est automatiquement proposée à la première personne sur la liste d'attente. Pensez à prévenir l'organisateur en cas d'annulation tardive afin de ne pas le laisser dans l'incertitude.
+                </div>
+            </div>
+        </div>
+
+        <!-- Q6 -->
+        <div class="faq-item" data-category="activites">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-question-text">ShareTime est-il gratuit pour les participants et les organisateurs ?</span>
+                <span class="faq-tag">Activités</span>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Oui, ShareTime est entièrement gratuit, aussi bien pour s'inscrire à une activité que pour en créer une. La plateforme est un espace de partage entre particuliers, sans frais de mise en relation. Les éventuels coûts liés à l'activité elle-même (entrée, matériel…) sont à la charge des participants et fixés librement par l'organisateur.
+                </div>
+            </div>
+        </div>
+
+        <!-- Q7 -->
+        <div class="faq-item" data-category="securite">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-question-text">Comment signaler un comportement abusif ou une activité inappropriée ?</span>
+                <span class="faq-tag">Sécurité</span>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    La sécurité de notre communauté est notre priorité. Si vous constatez un comportement abusif, un contenu inapproprié ou une activité suspecte, utilisez le bouton <strong>« Signaler »</strong> disponible sur chaque profil et activité. Notre équipe examine chaque signalement et peut suspendre ou supprimer les comptes concernés.
+                </div>
+            </div>
+        </div>
+
+        <!-- Q8 -->
+        <div class="faq-item" data-category="securite">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-question-text">Mes données personnelles sont-elles protégées ?</span>
+                <span class="faq-tag">Sécurité</span>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Oui. ShareTime ne collecte que les données strictement nécessaires au fonctionnement de la plateforme. Elles ne sont jamais revendues à des tiers. Vous disposez à tout moment d'un droit d'accès, de rectification et de suppression de vos informations, conformément à la réglementation RGPD. Pour toute demande, contactez-nous via la page Contact.
+                </div>
+            </div>
+        </div>
+
+        <!-- Q9 -->
+        <div class="faq-item" data-category="technique">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-question-text">J'ai oublié mon mot de passe, comment le réinitialiser ?</span>
+                <span class="faq-tag">Technique</span>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Sur la page de connexion, cliquez sur <strong>« Mot de passe oublié »</strong>. Entrez l'adresse e-mail associée à votre compte et vous recevrez un lien de réinitialisation dans quelques minutes. Si vous ne voyez pas l'e-mail, pensez à vérifier votre dossier <strong>Spam</strong> ou <strong>Courrier indésirable</strong>.
+                </div>
+            </div>
+        </div>
+
+        <!-- Q10 -->
+        <div class="faq-item" data-category="technique">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span class="faq-question-text">ShareTime fonctionne-t-il sur mobile ?</span>
+                <span class="faq-tag">Technique</span>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Oui, ShareTime est conçu pour fonctionner sur tous les appareils : ordinateur, tablette et smartphone. Le site est entièrement responsive et s'adapte automatiquement à la taille de votre écran. Il est accessible depuis tous les navigateurs modernes (Chrome, Safari, Firefox, Edge…) sans nécessiter d'installation d'application.
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="faq-cta">
+            <h2>Vous n'avez pas trouvé votre réponse ?</h2>
+            <p>Notre équipe est disponible pour vous aider. N'hésitez pas à nous écrire !</p>
+            <a href="Page test.html" class="register-btn-inscription">Contacter l'équipe ShareTime</a>
+        </div>
+
+    </div>
+
+    <!-- ============================================================
+        FOOTER
+    ============================================================ -->
+    <footer>
+        <nav class="navbar">
+            <div class="footer-column">
+                <div>
+                    <a href="Page test.html"><span class="logo-Share">Share</span><span class="logo-Time">Time</span></a>
+                    <p>La plateforme de partage et d'organisation d'activités entre particuliers. Partageons l'instant.</p>
+                </div>
+                <div>
+                    <h1>Activités</h1>
+                    <p><a href="Page test.html">Toutes les activités</a></p>
+                    <p><a href="Page test.html">Créer une activité</a></p>
+                    <p><a href="Page test.html">Par catégorie</a></p>
+                </div>
+                <div>
+                    <h1>Compte</h1>
+                    <p><a href="Inscription - couleur.html">Inscription</a></p>
+                    <p><a href="Page test.html">Connexion</a></p>
+                    <p><a href="Page test.html">Déconnexion</a></p>
+                </div>
+                <div>
+                    <h1>Aide</h1>
+                    <p><a href="FAQ - couleur.html">FAQ</a></p>
+                    <p><a href="Page test.html">Contact</a></p>
+                    <p><a href="Page test.html">Signaler</a></p>
+                </div>
+                <div>
+                    <h1>Légal</h1>
+                    <p><a href="CGU - couleur.html">CGU</a></p>
+                    <p><a href="Page test.html">Mentions légales</a></p>
+                    <p><a href="Page test.html">Suppression du compte</a></p>
+                </div>
+            </div>
+        </nav>
+    </footer>
+
+    <!-- ============================================================
+        JAVASCRIPT – Accordéon + Recherche + Filtre par catégorie
+    ============================================================ -->
+    <script>
+        let activeCategory = 'all';
+
+        /* ---- Accordéon ---- */
+        function toggleFAQ(questionEl) {
+            const item = questionEl.parentElement;
+            const isOpen = item.classList.contains('open');
+            // Ferme tous les items ouverts
+            document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+            // Ouvre celui cliqué si ce n'était pas déjà lui
+            if (!isOpen) item.classList.add('open');
+        }
+
+        /* ---- Filtre par catégorie ---- */
+        function filterByCategory(cat, btn) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilters();
+        }
+
+        /* ---- Recherche textuelle ---- */
+        function filterFAQ() {
+            applyFilters();
+        }
+
+        /* ---- Application combinée des deux filtres ---- */
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const items = document.querySelectorAll('.faq-item');
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const questionText = item.querySelector('.faq-question-text').textContent.toLowerCase();
+                const answerText = item.querySelector('.faq-answer-inner').textContent.toLowerCase();
+                const itemCategory = item.dataset.category;
+
+                const matchesSearch = query === '' || questionText.includes(query) || answerText.includes(query);
+                const matchesCategory = activeCategory === 'all' || itemCategory === activeCategory;
+
+                if (matchesSearch && matchesCategory) {
+                    item.style.display = '';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                    item.classList.remove('open'); // referme si caché
+                }
+            });
+
+            document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+    </script>
+
+</body>
+</html>

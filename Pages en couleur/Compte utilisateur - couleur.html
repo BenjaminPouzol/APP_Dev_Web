@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon compte – ShareTime</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Inter, sans-serif;
+            background: #f4f6ff;
+            color: #303C6C;
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        /* ======= NAVBAR ======= */
+        header {
+            background-color: #303C6C;
+            color: white;
+            padding: 16px 30px;
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .navbar-logo-text { display: flex; align-items: center; }
+        .logo-Share { font-size: 1.8rem; font-weight: 800; color: #E88600; }
+        .logo-Time  { font-size: 1.8rem; font-weight: 800; color: #ffffff; }
+
+        .navbar-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+            margin: 0; padding: 0;
+        }
+
+        .navbar-links a { color: white; font-weight: 500; }
+        .navbar-links a:hover { color: #E88600; }
+
+        .navbar-actions { display: flex; gap: 10px; align-items: center; }
+
+        .avatar-nav {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: #E88600;
+            color: white;
+            font-weight: 800;
+            font-size: 0.95rem;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        .btn-create {
+            background: #E88600;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .btn-create:hover { background: #FFA82E; transform: translateY(-1px); }
+
+        /* ======= PROFILE BANNER ======= */
+        .profile-banner {
+            background: linear-gradient(135deg, #303C6C 0%, #3D518F 100%);
+            color: white;
+            padding: 40px 30px 36px;
+        }
+
+        .profile-banner-inner {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .profile-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .avatar-big {
+            width: 90px; height: 90px;
+            border-radius: 50%;
+            background: #E88600;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .profile-info { flex: 1; }
+
+        .profile-info h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 0 0 8px;
+        }
+
+        .badge-role {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 50px;
+            padding: 4px 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .dot-green {
+            width: 8px; height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+        }
+
+        .profile-info p {
+            margin: 0;
+            color: #c5cceb;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            max-width: 480px;
+        }
+
+        .btn-edit-profile {
+            border: 1.5px solid rgba(255,255,255,0.4);
+            border-radius: 12px;
+            padding: 10px 18px;
+            background: transparent;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .btn-edit-profile:hover { background: rgba(255,255,255,0.12); }
+
+        /* Stats */
+        .profile-stats {
+            display: flex;
+            gap: 36px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item { text-align: left; }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: white;
+            line-height: 1;
+        }
+
+        .stat-value.orange { color: #E88600; }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #9eaad4;
+            margin-top: 4px;
+        }
+
+        /* ======= LAYOUT ======= */
+        .page-layout {
+            display: flex;
+            max-width: 1100px;
+            margin: 30px auto 60px;
+            padding: 0 20px;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        /* ======= SIDEBAR ======= */
+        .sidebar {
+            width: 230px;
+            flex-shrink: 0;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(48,60,108,0.08);
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #303C6C;
+            transition: background 0.15s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-item:hover { background: #f4f6ff; }
+
+        .sidebar-item.active {
+            background: #fff8ed;
+            border-left-color: #E88600;
+            color: #E88600;
+        }
+
+        .sidebar-item.danger { color: #e84040; }
+        .sidebar-item.danger:hover { background: #fff0f0; }
+
+        .sidebar-separator {
+            height: 1px;
+            background: #eef0f8;
+            margin: 4px 0;
+        }
+
+        .badge-notif {
+            background: #E88600;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 800;
+            border-radius: 50px;
+            padding: 2px 7px;
+            margin-left: auto;
+        }
+
+        /* ======= MAIN PANEL ======= */
+        .main-panel {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .section-panel {
+            display: none;
+        }
+
+        .section-panel.active {
+            display: block;
+        }
+
+        /* Panel header */
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #303C6C;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-count {
+            font-size: 0.85rem;
+            color: #9eaad4;
+            font-weight: 500;
+        }
+
+        /* Activity card */
+        .activity-card {
+            background: white;
+            border-radius: 14px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 10px rgba(48,60,108,0.06);
+            transition: box-shadow 0.2s;
+        }
+
+        .activity-card:hover { box-shadow: 0 4px 20px rgba(48,60,108,0.12); }
+
+        .activity-icon {
+            width: 52px; height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .activity-info { flex: 1; min-width: 0; }
+
+        .activity-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #303C6C;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .activity-meta {
+            font-size: 0.82rem;
+            color: #8a96c4;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .activity-meta span { display: flex; align-items: center; gap: 4px; }
+
+        .activity-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border-radius: 50px;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .status-inscrit  { background: #e8f8ee; color: #2e7d4f; }
+        .status-attente  { background: #fff3e0; color: #b46000; }
+        .status-annulee  { background: #fde8e8; color: #c0392b; }
+        .status-publiee  { background: #e8f0ff; color: #3D518F; }
+
+        .btn-desinscrit {
+            background: white;
+            border: 1.5px solid #e84040;
+            color: #e84040;
+            border-radius: 10px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-desinscrit:hover { background: #fff0f0; }
+
+        .btn-manage {
+            background: white;
+            border: 1.5px solid #303C6C;
+            color: #303C6C;
+            border-radius: 10px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-manage:hover { background: #f4f6ff; }
+
+        /* Notifications */
+        .notif-item {
+            background: white;
+            border-radius: 14px;
+            padding: 16px 20px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(48,60,108,0.06);
+        }
+
+        .notif-item.unread { border-left: 3px solid #E88600; }
+
+        .notif-icon-wrap {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: #fff3e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .notif-content { flex: 1; }
+        .notif-text { font-size: 0.9rem; color: #303C6C; font-weight: 600; margin-bottom: 3px; }
+        .notif-time { font-size: 0.78rem; color: #9eaad4; }
+
+        /* Paramètres */
+        .settings-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(48,60,108,0.06);
+        }
+
+        .settings-section h3 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #303C6C;
+            margin: 0 0 18px;
+        }
+
+        .settings-field { margin-bottom: 14px; }
+
+        .settings-field label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #6b759e;
+            margin-bottom: 6px;
+        }
+
+        .settings-field input, .settings-field textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #e0e4f0;
+            border-radius: 10px;
+            font-family: Inter, sans-serif;
+            font-size: 0.95rem;
+            color: #303C6C;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .settings-field input:focus, .settings-field textarea:focus {
+            border-color: #E88600;
+        }
+
+        .settings-field textarea { resize: vertical; min-height: 80px; }
+
+        .btn-save {
+            background: #E88600;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 11px 24px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .btn-save:hover { background: #FFA82E; transform: translateY(-1px); }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #9eaad4;
+            font-size: 0.95rem;
+        }
+
+        .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+        /* ======= FOOTER ======= */
+        footer {
+            background-color: #303C6C;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .footer-column {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .footer-column > div { flex: 0 0 200px; text-align: left; }
+        .footer-column p { color: #ffffff; margin: 0 0 10px 0; }
+        .footer-column h1 { font-size: 2rem; color: #E88600; margin: 0 0 10px 0; }
+        .footer-column > div a { margin: 0 0 10px 0; display: block; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================ NAVBAR -->
+    <header>
+        <nav class="navbar">
+            <div class="container">
+                <a href="Page test.html">
+                    <div class="navbar-logo-text">
+                        <img src="logo ShareTime sans fond.png" alt="Logo ShareTime" width="60">
+                        <span class="logo-Share">Share</span><span class="logo-Time">Time</span>
+                    </div>
+                </a>
+                <ul class="navbar-links">
+                    <li><a href="Page test.html">Accueil</a></li>
+                    <li><a href="Page test.html">Activités</a></li>
+                    <li><a href="FAQ - couleur.html">FAQ</a></li>
+                    <li><a href="Page test.html">Contact</a></li>
+                </ul>
+                <div class="navbar-actions">
+                    <div class="avatar-nav">MD</div>
+                    <button class="btn-create">+ Créer</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============================================================ PROFILE BANNER -->
+    <div class="profile-banner">
+        <div class="profile-banner-inner">
+            <div class="profile-top">
+                <div class="avatar-big">MD</div>
+                <div class="profile-info">
+                    <h1>Marie Dupont</h1>
+                    <div class="badge-role">
+                        <span class="dot-green"></span>
+                        Organisatrice
+                    </div>
+                    <p>Passionnée de sport en plein air et de cuisine du monde. J'organise des sorties running chaque semaine !</p>
+                </div>
+                <button class="btn-edit-profile" onclick="showSection('parametres')"> Modifier le profil</button>
+            </div>
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Activités créées</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value orange">24</div>
+                    <div class="stat-label">Inscriptions</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">4.9 ⭐</div>
+                    <div class="stat-label">Note moyenne</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ LAYOUT -->
+    <div class="page-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-item active" onclick="showSection('inscriptions')" id="nav-inscriptions">
+                 Mes inscriptions
+            </div>
+            <div class="sidebar-item" onclick="showSection('creees')" id="nav-creees">
+                 Mes activités créées
+            </div>
+            <div class="sidebar-item" onclick="showSection('notifications')" id="nav-notifications">
+                 Notifications
+                <span class="badge-notif">3</span>
+            </div>
+            <div class="sidebar-separator"></div>
+            <div class="sidebar-item" onclick="showSection('parametres')" id="nav-parametres">
+                 Paramètres
+            </div>
+            <div class="sidebar-separator"></div>
+            <div class="sidebar-item danger" onclick="confirmDeconnexion()">
+                 Se déconnecter
+            </div>
+        </aside>
+
+        <!-- MAIN PANEL -->
+        <main class="main-panel">
+
+            <!-- MES INSCRIPTIONS -->
+            <div class="section-panel active" id="panel-inscriptions">
+                <div class="panel-header">
+                    <div class="panel-title"> Mes inscriptions</div>
+                    <span class="panel-count">3 activités</span>
+                </div>
+
+                <div class="activity-card">
+                    <div class="activity-icon" style="background:#e8f0ff;">🏃</div>
+                    <div class="activity-info">
+                        <div class="activity-name">Footing matinal en forêt</div>
+                        <div class="activity-meta">
+                            <span> Sam. 14 juin · 7h00</span>
+                            <span> Forêt de Vincennes</span>
+                        </div>
+                    </div>
+                    <div class="activity-actions">
+                        <span class="status-badge status-inscrit"> Inscrit(e)</span>
+                        <button class="btn-desinscrit">Se désinscrire</button>
+                    </div>
+                </div>
+
+                <div class="activity-card">
+                    <div class="activity-icon" style="background:#fff8e1;">🍜</div>
+                    <div class="activity-info">
+                        <div class="activity-name">Atelier cuisine asiatique</div>
+                        <div class="activity-meta">
+                            <span> Dim. 15 juin · 14h30</span>
+                            <span> Paris 11e</span>
+                        </div>
+                    </div>
+                    <div class="activity-actions">
+                        <span class="status-badge status-attente">⏳ Liste d'attente · #2</span>
+                    </div>
+                </div>
+
+                <div class="activity-card">
+                    <div class="activity-icon" style="background:#fce4ec;">📚</div>
+                    <div class="activity-info">
+                        <div class="activity-name">Club de lecture — Camus</div>
+                        <div class="activity-meta">
+                            <span> Lun. 16 juin · 19h00</span>
+                            <span> Café des Lettres, Lyon</span>
+                        </div>
+                    </div>
+                    <div class="activity-actions">
+                        <span class="status-badge status-annulee">✕ Annulée</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MES ACTIVITÉS CRÉÉES -->
+            <div class="section-panel" id="panel-creees">
+                <div class="panel-header">
+                    <div class="panel-title"> Mes activités créées</div>
+                    <span class="panel-count">8 activités</span>
+                </div>
+
+                <div class="activity-card">
+                    <div class="activity-icon" style="background:#e8f0ff;">🏃</div>
+                    <div class="activity-info">
+                        <div class="activity-name">Footing matinal en forêt de Vincennes</div>
+                        <div class="activity-meta">
+                            <span> Sam. 14 juin · 7h00</span>
+                            <span> 6/10 inscrits</span>
+                        </div>
+                    </div>
+                    <div class="activity-actions">
+                        <span class="status-badge status-publiee">🌐 Publiée</span>
+                        <button class="btn-manage">Gérer</button>
+                    </div>
+                </div>
+
+                <div class="activity-card">
+                    <div class="activity-icon" style="background:#e8fdf0;">🚴</div>
+                    <div class="activity-info">
+                        <div class="activity-name">Balade vélo en bord de Seine</div>
+                        <div class="activity-meta">
+                            <span> Mer. 18 juin · 9h00</span>
+                            <span> 3/8 inscrits</span>
+                        </div>
+                    </div>
+                    <div class="activity-actions">
+                        <span class="status-badge status-publiee"> Publiée</span>
+                        <button class="btn-manage">Gérer</button>
+                    </div>
+                </div>
+
+                <div class="activity-card">
+                    <div class="activity-icon" style="background:#fff3e0;">🧘</div>
+                    <div class="activity-info">
+                        <div class="activity-name">Yoga au parc Monceau</div>
+                        <div class="activity-meta">
+                            <span>📅 Ven. 20 juin · 8h00</span>
+                            <span>👥 10/10 inscrits</span>
+                        </div>
+                    </div>
+                    <div class="activity-actions">
+                        <span class="status-badge status-inscrit"> Complet</span>
+                        <button class="btn-manage">Gérer</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOTIFICATIONS -->
+            <div class="section-panel" id="panel-notifications">
+                <div class="panel-header">
+                    <div class="panel-title"> Notifications</div>
+                    <span class="panel-count">3 non lues</span>
+                </div>
+
+                <div class="notif-item unread">
+                    <div class="notif-icon-wrap">🏃</div>
+                    <div class="notif-content">
+                        <div class="notif-text">Une place s'est libérée pour <strong>Atelier cuisine asiatique</strong> — vous passez en position #1.</div>
+                        <div class="notif-time">Il y a 10 minutes</div>
+                    </div>
+                </div>
+
+                <div class="notif-item unread">
+                    <div class="notif-icon-wrap">💬</div>
+                    <div class="notif-content">
+                        <div class="notif-text"><strong>Lucas M.</strong> vous a envoyé un message concernant le footing matinal.</div>
+                        <div class="notif-time">Il y a 1 heure</div>
+                    </div>
+                </div>
+
+                <div class="notif-item unread">
+                    <div class="notif-icon-wrap">⭐</div>
+                    <div class="notif-content">
+                        <div class="notif-text">Vous avez reçu une nouvelle évaluation 5 étoiles pour <strong>Yoga au parc Monceau</strong>.</div>
+                        <div class="notif-time">Il y a 3 heures</div>
+                    </div>
+                </div>
+
+                <div class="notif-item">
+                    <div class="notif-icon-wrap">🎉</div>
+                    <div class="notif-content">
+                        <div class="notif-text"><strong>Sophie K.</strong> s'est inscrite à votre activité <strong>Balade vélo en bord de Seine</strong>.</div>
+                        <div class="notif-time">Hier à 18h42</div>
+                    </div>
+                </div>
+
+                <div class="notif-item">
+                    <div class="notif-icon-wrap">✅</div>
+                    <div class="notif-content">
+                        <div class="notif-text">Votre inscription à <strong>Footing matinal en forêt</strong> a bien été confirmée.</div>
+                        <div class="notif-time">Lundi à 9h15</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PARAMÈTRES -->
+            <div class="section-panel" id="panel-parametres">
+                <div class="panel-header">
+                    <div class="panel-title">⚙️ Paramètres</div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Informations personnelles</h3>
+                    <div class="settings-field">
+                        <label>Prénom</label>
+                        <input type="text" value="Marie">
+                    </div>
+                    <div class="settings-field">
+                        <label>Nom</label>
+                        <input type="text" value="Dupont">
+                    </div>
+                    <div class="settings-field">
+                        <label>Adresse e-mail</label>
+                        <input type="email" value="marie.dupont@email.com">
+                    </div>
+                    <div class="settings-field">
+                        <label>Biographie</label>
+                        <textarea>Passionnée de sport en plein air et de cuisine du monde. J'organise des sorties running chaque semaine !</textarea>
+                    </div>
+                    <button class="btn-save">💾 Enregistrer les modifications</button>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Sécurité</h3>
+                    <div class="settings-field">
+                        <label>Mot de passe actuel</label>
+                        <input type="password" placeholder="••••••••">
+                    </div>
+                    <div class="settings-field">
+                        <label>Nouveau mot de passe</label>
+                        <input type="password" placeholder="••••••••">
+                    </div>
+                    <div class="settings-field">
+                        <label>Confirmer le nouveau mot de passe</label>
+                        <input type="password" placeholder="••••••••">
+                    </div>
+                    <button class="btn-save">🔒 Changer le mot de passe</button>
+                </div>
+
+                <div class="settings-section">
+                    <h3 style="color:#e84040;">Zone de danger</h3>
+                    <p style="font-size:0.9rem; color:#6b759e; margin:0 0 14px;">La suppression de votre compte est définitive et irréversible.</p>
+                    <button style="background:white; border:1.5px solid #e84040; color:#e84040; border-radius:12px; padding:11px 24px; font-size:0.9rem; font-weight:700; cursor:pointer;">
+                        🗑️ Supprimer mon compte
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ============================================================ FOOTER -->
+    <footer>
+        <nav class="navbar">
+            <div class="footer-column">
+                <div>
+                    <a href="Page test.html"><span class="logo-Share">Share</span><span class="logo-Time">Time</span></a>
+                    <p>La plateforme de partage et d'organisation d'activités entre particuliers. Partageons l'instant.</p>
+                </div>
+                <div>
+                    <h1>Activités</h1>
+                    <p><a href="Page test.html">Toutes les activités</a></p>
+                    <p><a href="Page test.html">Créer une activité</a></p>
+                    <p><a href="Page test.html">Par catégorie</a></p>
+                </div>
+                <div>
+                    <h1>Compte</h1>
+                    <p><a href="Inscription - couleur.html">Inscription</a></p>
+                    <p><a href="Page test.html">Connexion</a></p>
+                    <p><a href="Page test.html">Déconnexion</a></p>
+                </div>
+                <div>
+                    <h1>Aide</h1>
+                    <p><a href="FAQ - couleur.html">FAQ</a></p>
+                    <p><a href="Page test.html">Contact</a></p>
+                    <p><a href="Page test.html">Signaler</a></p>
+                </div>
+                <div>
+                    <h1>Légal</h1>
+                    <p><a href="CGU - couleur.html">CGU</a></p>
+                    <p><a href="Page test.html">Mentions légales</a></p>
+                    <p><a href="Page test.html">Suppression du compte</a></p>
+                </div>
+            </div>
+        </nav>
+    </footer>
+
+    <!-- ============================================================ JS -->
+    <script>
+        function showSection(name) {
+            // Masque tous les panels
+            document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+
+            // Affiche le bon panel
+            document.getElementById('panel-' + name).classList.add('active');
+            const navEl = document.getElementById('nav-' + name);
+            if (navEl) navEl.classList.add('active');
+        }
+
+        function confirmDeconnexion() {
+            if (confirm('Êtes-vous sûr(e) de vouloir vous déconnecter ?')) {
+                window.location.href = 'Page test.html';
+            }
+        }
+
+        // Feedback bouton Se désinscrire
+        document.querySelectorAll('.btn-desinscrit').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const card = this.closest('.activity-card');
+                const badge = card.querySelector('.status-badge');
+                badge.className = 'status-badge status-annulee';
+                badge.textContent = '✕ Annulée';
+                this.remove();
+            });
+        });
+
+        // Feedback bouton Enregistrer
+        document.querySelectorAll('.btn-save').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const original = this.textContent;
+                this.textContent = 'Enregistré !';
+                this.style.background = '#2e7d4f';
+                setTimeout(() => {
+                    this.textContent = original;
+                    this.style.background = '';
+                }, 2000);
+            });
+        });
+    </script>
+
+</body>
+</html>
