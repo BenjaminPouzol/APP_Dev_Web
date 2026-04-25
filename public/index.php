@@ -575,16 +575,13 @@ if ($page === 'home') {
 // ── RENDU ──────────────────────────────────────────────
 require '../app/views/header.php';
 
-$php_pages  = ['home', 'activites', 'connexion', 'inscription', 'creer', 'detail',
-               'profil', 'profil_edit', 'faq', 'contact',
-               'admin', 'admin_users', 'admin_activities', 'owner',
-               'mot_de_passe_oublie', 'reinitialiser_mdp'];
-$html_pages = ['cgu', 'mentions'];
+$php_pages = ['home', 'activites', 'connexion', 'inscription', 'creer', 'detail',
+              'profil', 'profil_edit', 'faq', 'contact', 'cgu', 'mentions',
+              'admin', 'admin_users', 'admin_activities', 'owner',
+              'mot_de_passe_oublie', 'reinitialiser_mdp'];
 
 if (in_array($page, $php_pages)) {
     require "pages/{$page}.php";
-} elseif (in_array($page, $html_pages)) {
-    require "pages/{$page}.html";
 } else {
     require 'pages/home.php';
 }
