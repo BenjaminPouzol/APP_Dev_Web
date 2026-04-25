@@ -34,6 +34,27 @@ try {
     if (!$pdo->query("SHOW COLUMNS FROM activities LIKE 'category'")->fetch()) {
         $pdo->exec("ALTER TABLE activities ADD COLUMN category VARCHAR(20) NOT NULL DEFAULT 'autre' AFTER visibility");
     }
+
+    // Tables créées à la volée — garanties dès le démarrage
+    $pdo->exec("CREATE TABLE IF NOT EXISTS password_resets (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(150) NOT NULL,
+        token VARCHAR(64) NOT NULL UNIQUE,
+        expires_at DATETIME NOT NULL,
+        used TINYINT(1) NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS contact_messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(150) NOT NULL,
+        subject VARCHAR(200) DEFAULT '',
+        message TEXT NOT NULL,
+        sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        is_read TINYINT(1) NOT NULL DEFAULT 0
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 } catch (PDOException $e) {
     die("Erreur connexion DB : " . $e->getMessage());
 }

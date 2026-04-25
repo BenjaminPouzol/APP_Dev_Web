@@ -157,16 +157,6 @@ if ($page === 'mot_de_passe_oublie' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($reset_email) || !filter_var($reset_email, FILTER_VALIDATE_EMAIL)) {
         $error = "Veuillez saisir une adresse e-mail valide.";
     } else {
-        // Créer la table si nécessaire
-        $pdo->exec("CREATE TABLE IF NOT EXISTS password_resets (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            email VARCHAR(150) NOT NULL,
-            token VARCHAR(64) NOT NULL UNIQUE,
-            expires_at DATETIME NOT NULL,
-            used TINYINT(1) NOT NULL DEFAULT 0,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $userModel = new User($pdo);
         $userExists = $userModel->emailExists($reset_email);
 
@@ -328,17 +318,6 @@ if ($page === 'contact' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($contact_email, FILTER_VALIDATE_EMAIL)) {
         $error = "Adresse e-mail invalide.";
     } else {
-        // Crée la table si elle n'existe pas encore
-        $pdo->exec("CREATE TABLE IF NOT EXISTS contact_messages (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            email VARCHAR(150) NOT NULL,
-            subject VARCHAR(200) DEFAULT '',
-            message TEXT NOT NULL,
-            sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            is_read TINYINT(1) NOT NULL DEFAULT 0
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $stmt = $pdo->prepare("
             INSERT INTO contact_messages (name, email, subject, message)
             VALUES (:name, :email, :subject, :message)
