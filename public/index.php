@@ -149,6 +149,84 @@ if ($page === 'inscription' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// ── MOT DE PASSE OUBLIÉ ───────────────────────────────
+if ($page === 'mot_de_passe_oublie' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+    $reset_email = trim($_POST['email'] ?? '');
+
+    if (empty($reset_email) || !filter_var($reset_email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Veuillez saisir une adresse e-mail valide.";
+    } else {
+        // Créer la table si nécessaire
+        $pdo->exec("CREATE TABLE IF NOT EXISTS password_resets (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            email VARCHAR(150) NOT NULL,
+            token VARCHAR(64) NOT NULL UNIQUE,
+            expires_at DATETIME NOT NULL,
+            used TINYINT(1) NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $userModel = new User($pdo);
+        $userExists = $userModel->emailExists($reset_email);
+
+        if ($userExists) {
+            // Invalider les anciens tokens pour cet email
+            $pdo->prepare("DELETE FROM password_resets WHERE email = :email")
+                ->execute(['email' => $reset_email]);
+
+            $token   = bin2hex(random_bytes(32));
+            $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
+            $pdo->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (:email, :token, :expires)")
+                ->execute(['email' => $reset_email, 'token' => $token, 'expires' => $expires]);
+
+            $reset_link = 'http://' . $_SERVER['HTTP_HOST'] . '/sharetime/public/?page=reinitialiser_mdp&token=' . $token;
+            $subject    = '[ShareTime] Réinitialisation de votre mot de passe';
+            $body       = "Bonjour,\n\nCliquez sur le lien suivant pour réinitialiser votre mot de passe (valable 1 heure) :\n\n{$reset_link}\n\nSi vous n'avez pas demandé cette réinitialisation, ignorez ce message.\n\nL'équipe ShareTime";
+            $headers    = "From: noreply@sharetime.fr\r\nContent-Type: text/plain; charset=utf-8";
+            @mail($reset_email, $subject, $body, $headers);
+        }
+        // Toujours afficher le même message (ne pas révéler si l'email existe)
+        $success = "Si un compte est associé à cet email, vous recevrez un lien de réinitialisation dans quelques minutes.";
+    }
+}
+
+// ── RÉINITIALISATION DU MOT DE PASSE ──────────────────
+if ($page === 'reinitialiser_mdp' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+    $token       = trim($_POST['token'] ?? '');
+    $new_pass    = $_POST['password'] ?? '';
+    $confirm     = $_POST['confirm'] ?? '';
+
+    if (empty($token)) {
+        $error = "Token invalide.";
+    } elseif (strlen($new_pass) < 8) {
+        $error = "Le mot de passe doit contenir au moins 8 caractères.";
+    } elseif ($new_pass !== $confirm) {
+        $error = "Les mots de passe ne correspondent pas.";
+    } else {
+        $stmt = $pdo->prepare("
+            SELECT * FROM password_resets
+            WHERE token = :token AND used = 0 AND expires_at > NOW()
+        ");
+        $stmt->execute(['token' => $token]);
+        $reset = $stmt->fetch();
+
+        if (!$reset) {
+            $error = "Ce lien est invalide ou a expiré. Veuillez faire une nouvelle demande.";
+        } else {
+            $hash = password_hash($new_pass, PASSWORD_DEFAULT);
+            $pdo->prepare("UPDATE users SET mot_de_passe = :hash WHERE email = :email")
+                ->execute(['hash' => $hash, 'email' => $reset['email']]);
+            $pdo->prepare("UPDATE password_resets SET used = 1 WHERE token = :token")
+                ->execute(['token' => $token]);
+            $_SESSION['flash'] = "Mot de passe réinitialisé avec succès. Vous pouvez vous connecter.";
+            header('Location: /sharetime/public/?page=connexion');
+            exit;
+        }
+    }
+}
+
 // ── CRÉATION D'ACTIVITÉ ────────────────────────────────
 if ($page === 'creer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
@@ -415,6 +493,7 @@ $allowed_pages = [
     'detail', 'faq', 'profil', 'profil_edit', 'cgu', 'mentions',
     's_inscrire', 'se_desinscrire',
     'admin', 'admin_users', 'admin_activities', 'owner',
+    'mot_de_passe_oublie', 'reinitialiser_mdp',
 ];
 if (!in_array($page, $allowed_pages)) $page = 'home';
 
@@ -519,7 +598,8 @@ require '../app/views/header.php';
 
 $php_pages  = ['home', 'activites', 'connexion', 'inscription', 'creer', 'detail',
                'profil', 'profil_edit', 'faq', 'contact',
-               'admin', 'admin_users', 'admin_activities', 'owner'];
+               'admin', 'admin_users', 'admin_activities', 'owner',
+               'mot_de_passe_oublie', 'reinitialiser_mdp'];
 $html_pages = ['cgu', 'mentions'];
 
 if (in_array($page, $php_pages)) {

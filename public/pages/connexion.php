@@ -37,7 +37,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Mot de passe</label>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <label style="margin:0;">Mot de passe</label>
+                        <a href="/sharetime/public/?page=mot_de_passe_oublie"
+                           style="font-size:0.82rem; color:var(--gray-400); text-decoration:none;"
+                           onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--gray-400)'">
+                            Mot de passe oublié ?
+                        </a>
+                    </div>
                     <input type="password" name="password" placeholder="••••••••" required>
                 </div>
 
