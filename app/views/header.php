@@ -65,7 +65,8 @@
 
 <nav class="navbar">
     <div class="container">
-        <a href="/sharetime/public/">
+        <a href="/sharetime/public/" class="navbar-logo">
+            <img src="/sharetime/public/images/logo.png" alt="ShareTime logo">
             <div class="navbar-logo-text">
                 <span class="share">Share</span><span class="time">Time</span>
             </div>
