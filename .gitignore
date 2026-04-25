@@ -1,3 +1,4 @@
 CLAUDE.md
-sql/
+sql/*.backup.sql
+sql/dump_*.sql
 .claude/
