@@ -41,6 +41,13 @@
                             📍 <?= htmlspecialchars($profile['ville']) ?>
                         </p>
                     <?php endif; ?>
+                    <?php if (!empty($profile['note_moyenne'])): ?>
+                        <p style="font-size:0.9rem; margin:4px 0; color:var(--gray-700);">
+                            <span style="color:var(--orange);">★</span>
+                            <strong><?= number_format($profile['note_moyenne'], 1) ?></strong>
+                            <span style="color:var(--gray-400); font-size:0.82rem;">en tant qu'organisateur</span>
+                        </p>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php if ($is_own): ?>

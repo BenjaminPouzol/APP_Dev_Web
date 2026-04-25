@@ -76,23 +76,9 @@
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Date de naissance</label>
-                        <input type="date" name="birthdate" value="<?= htmlspecialchars($_POST['birthdate'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label>Centre d'intérêt</label>
-                        <select name="interest">
-                            <option value="">Sélectionner</option>
-                            <option value="sport">Sport</option>
-                            <option value="culture">Culture</option>
-                            <option value="musique">Musique</option>
-                            <option value="food">Food</option>
-                            <option value="voyage">Voyage</option>
-                            <option value="bien-etre">Bien-être</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label>Date de naissance</label>
+                    <input type="date" name="birthdate" value="<?= htmlspecialchars($_POST['birthdate'] ?? '') ?>">
                 </div>
 
                 <label style="display:flex; align-items:flex-start; gap:10px; font-size:0.9rem; color:var(--gray-600); cursor:pointer;">

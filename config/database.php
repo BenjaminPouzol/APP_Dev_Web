@@ -34,6 +34,14 @@ try {
     if (!$pdo->query("SHOW COLUMNS FROM activities LIKE 'category'")->fetch()) {
         $pdo->exec("ALTER TABLE activities ADD COLUMN category VARCHAR(20) NOT NULL DEFAULT 'autre' AFTER visibility");
     }
+    // activities : colonne liste_attente_active
+    if (!$pdo->query("SHOW COLUMNS FROM activities LIKE 'liste_attente_active'")->fetch()) {
+        $pdo->exec("ALTER TABLE activities ADD COLUMN liste_attente_active TINYINT(1) NOT NULL DEFAULT 0");
+    }
+    // users : colonne note_moyenne
+    if (!$pdo->query("SHOW COLUMNS FROM users LIKE 'note_moyenne'")->fetch()) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN note_moyenne FLOAT DEFAULT NULL");
+    }
 
     // Tables créées à la volée — garanties dès le démarrage
     $pdo->exec("CREATE TABLE IF NOT EXISTS password_resets (
@@ -54,6 +62,11 @@ try {
         sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         is_read TINYINT(1) NOT NULL DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Nettoyage périodique des tokens expirés (environ 1 requête sur 50)
+    if (mt_rand(1, 50) === 1) {
+        $pdo->exec("DELETE FROM password_resets WHERE expires_at < NOW() OR used = 1");
+    }
 
 } catch (PDOException $e) {
     die("Erreur connexion DB : " . $e->getMessage());

@@ -84,6 +84,19 @@
                 </select>
             </div>
 
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:14px 16px;
+                          border:1.5px solid var(--gray-200); border-radius:10px; background:var(--gray-50);">
+                <input type="checkbox" name="liste_attente_active" value="1"
+                       <?= !empty($_POST['liste_attente_active']) ? 'checked' : '' ?>
+                       style="width:18px; height:18px; accent-color:var(--orange); cursor:pointer;">
+                <span style="color:var(--gray-700); font-weight:500;">
+                    Activer la liste d'attente
+                    <span style="display:block; font-size:0.8rem; font-weight:400; color:var(--gray-400);">
+                        Les participants peuvent rejoindre une file d'attente si l'activité est complète.
+                    </span>
+                </span>
+            </label>
+
             <div style="display:flex; gap:12px; margin-top:8px;">
                 <button type="submit" class="btn btn-orange btn-lg">Créer l'activité</button>
                 <a href="/sharetime/public/?page=activites" class="btn btn-outline-navy btn-lg">Annuler</a>

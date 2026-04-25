@@ -9,6 +9,27 @@ require '../config/database.php';
 require '../app/models/Activity.php';
 require '../app/models/User.php';
 
+// ── CONTRÔLE DE BAN EN SESSION ────────────────────────
+// Vérifie toutes les 10 requêtes si l'utilisateur n'a pas été banni
+if (isset($_SESSION['user'])) {
+    $_SESSION['_req_count'] = ($_SESSION['_req_count'] ?? 0) + 1;
+    if ($_SESSION['_req_count'] >= 10) {
+        $_SESSION['_req_count'] = 0;
+        $stmt_ban = $pdo->prepare("SELECT is_banned, role FROM users WHERE idusers = :id");
+        $stmt_ban->execute(['id' => $_SESSION['user']['id']]);
+        $row_ban = $stmt_ban->fetch();
+        if ($row_ban) {
+            if (!empty($row_ban['is_banned'])) {
+                $_SESSION = [];
+                session_destroy();
+                header('Location: /sharetime/public/?page=connexion');
+                exit;
+            }
+            $_SESSION['user']['role'] = $row_ban['role'];
+        }
+    }
+}
+
 $page    = $_GET['page'] ?? 'home';
 $error   = null;
 $success = null;
@@ -74,7 +95,13 @@ if ($page === 'connexion' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if (empty($email) || empty($password)) {
+    // Rate limiting : 5 tentatives max, blocage 15 min
+    $attempt_key = 'login_attempts_' . md5($email);
+    $block_key   = 'login_blocked_' . md5($email);
+    if (!empty($_SESSION[$block_key]) && time() < $_SESSION[$block_key]) {
+        $mins  = ceil(($_SESSION[$block_key] - time()) / 60);
+        $error = "Trop de tentatives échouées. Réessayez dans {$mins} minute(s).";
+    } elseif (empty($email) || empty($password)) {
         $error = "Veuillez remplir tous les champs.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Adresse e-mail invalide.";
@@ -86,6 +113,7 @@ if ($page === 'connexion' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!empty($user['is_banned'])) {
                 $error = "Votre compte a été suspendu. Contactez l'administrateur.";
             } else {
+                unset($_SESSION[$attempt_key], $_SESSION[$block_key]);
                 session_regenerate_id(true);
                 $_SESSION['user'] = [
                     'id'     => $user['idusers'],
@@ -95,11 +123,20 @@ if ($page === 'connexion' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     'email'  => $user['email'],
                     'role'   => $user['role'],
                 ];
+                $_SESSION['flash'] = "Bienvenue, " . htmlspecialchars($user['prenom']) . " !";
                 header('Location: /sharetime/public/');
                 exit;
             }
         } else {
-            $error = "Email ou mot de passe incorrect.";
+            $_SESSION[$attempt_key] = ($_SESSION[$attempt_key] ?? 0) + 1;
+            if ($_SESSION[$attempt_key] >= 5) {
+                $_SESSION[$block_key]   = time() + 15 * 60;
+                $_SESSION[$attempt_key] = 0;
+                $error = "Trop de tentatives échouées. Compte temporairement bloqué pour 15 minutes.";
+            } else {
+                $remaining = 5 - $_SESSION[$attempt_key];
+                $error = "Email ou mot de passe incorrect. ({$remaining} tentative(s) restante(s))";
+            }
         }
     }
 }
@@ -157,11 +194,10 @@ if ($page === 'mot_de_passe_oublie' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($reset_email) || !filter_var($reset_email, FILTER_VALIDATE_EMAIL)) {
         $error = "Veuillez saisir une adresse e-mail valide.";
     } else {
-        $userModel = new User($pdo);
+        $userModel  = new User($pdo);
         $userExists = $userModel->emailExists($reset_email);
 
         if ($userExists) {
-            // Invalider les anciens tokens pour cet email
             $pdo->prepare("DELETE FROM password_resets WHERE email = :email")
                 ->execute(['email' => $reset_email]);
 
@@ -176,7 +212,6 @@ if ($page === 'mot_de_passe_oublie' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $headers    = "From: noreply@sharetime.fr\r\nContent-Type: text/plain; charset=utf-8";
             @mail($reset_email, $subject, $body, $headers);
         }
-        // Toujours afficher le même message (ne pas révéler si l'email existe)
         $success = "Si un compte est associé à cet email, vous recevrez un lien de réinitialisation dans quelques minutes.";
     }
 }
@@ -184,9 +219,9 @@ if ($page === 'mot_de_passe_oublie' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 // ── RÉINITIALISATION DU MOT DE PASSE ──────────────────
 if ($page === 'reinitialiser_mdp' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    $token       = trim($_POST['token'] ?? '');
-    $new_pass    = $_POST['password'] ?? '';
-    $confirm     = $_POST['confirm'] ?? '';
+    $token    = trim($_POST['token'] ?? '');
+    $new_pass = $_POST['password'] ?? '';
+    $confirm  = $_POST['confirm'] ?? '';
 
     if (empty($token)) {
         $error = "Token invalide.";
@@ -195,10 +230,7 @@ if ($page === 'reinitialiser_mdp' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($new_pass !== $confirm) {
         $error = "Les mots de passe ne correspondent pas.";
     } else {
-        $stmt = $pdo->prepare("
-            SELECT * FROM password_resets
-            WHERE token = :token AND used = 0 AND expires_at > NOW()
-        ");
+        $stmt = $pdo->prepare("SELECT * FROM password_resets WHERE token = :token AND used = 0 AND expires_at > NOW()");
         $stmt->execute(['token' => $token]);
         $reset = $stmt->fetch();
 
@@ -221,15 +253,16 @@ if ($page === 'reinitialiser_mdp' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($page === 'creer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
     csrf_check();
-    $title            = trim($_POST['title'] ?? '');
-    $description      = trim($_POST['description'] ?? '');
-    $location         = trim($_POST['location'] ?? '');
-    $city             = trim($_POST['city'] ?? '');
-    $start_time       = $_POST['start_time'] ?? '';
-    $end_time         = $_POST['end_time'] ?? '';
-    $max_participants = intval($_POST['max_participants'] ?? 0);
-    $visibility       = in_array($_POST['visibility'] ?? '', ['publique', 'privee']) ? $_POST['visibility'] : 'publique';
-    $category         = in_array($_POST['category'] ?? '', array_keys($CATEGORY_MAP)) ? $_POST['category'] : 'autre';
+    $title               = trim($_POST['title'] ?? '');
+    $description         = trim($_POST['description'] ?? '');
+    $location            = trim($_POST['location'] ?? '');
+    $city                = trim($_POST['city'] ?? '');
+    $start_time          = $_POST['start_time'] ?? '';
+    $end_time            = $_POST['end_time'] ?? '';
+    $max_participants    = intval($_POST['max_participants'] ?? 0);
+    $visibility          = in_array($_POST['visibility'] ?? '', ['publique', 'privee']) ? $_POST['visibility'] : 'publique';
+    $category            = in_array($_POST['category'] ?? '', array_keys($CATEGORY_MAP)) ? $_POST['category'] : 'autre';
+    $liste_attente_active = isset($_POST['liste_attente_active']) ? 1 : 0;
 
     if (empty($title) || empty($description) || empty($location) || empty($city) || empty($start_time) || empty($end_time)) {
         $error = "Veuillez remplir tous les champs obligatoires.";
@@ -240,17 +273,19 @@ if ($page === 'creer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $activityModel = new Activity($pdo);
         $activityModel->create([
-            'title'            => $title,
-            'description'      => $description,
-            'location'         => $location,
-            'city'             => $city,
-            'start_time'       => $start_time,
-            'end_time'         => $end_time,
-            'max_participants' => $max_participants,
-            'visibility'       => $visibility,
-            'category'         => $category,
-            'creator_id'       => $_SESSION['user']['id'],
+            'title'               => $title,
+            'description'         => $description,
+            'location'            => $location,
+            'city'                => $city,
+            'start_time'          => $start_time,
+            'end_time'            => $end_time,
+            'max_participants'    => $max_participants,
+            'visibility'          => $visibility,
+            'category'            => $category,
+            'liste_attente_active' => $liste_attente_active,
+            'creator_id'          => $_SESSION['user']['id'],
         ]);
+        $_SESSION['flash'] = "Activité créée avec succès !";
         header('Location: /sharetime/public/?page=activites');
         exit;
     }
@@ -263,9 +298,16 @@ if ($page === 's_inscrire' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $activity_id = intval($_POST['activity_id'] ?? 0);
     if ($activity_id > 0) {
         $activityModel = new Activity($pdo);
-        $activity = $activityModel->getById($activity_id);
-        if ($activity && $activity['nb_inscrits'] < $activity['max_participants'] && $activity['status'] === 'active') {
-            $activityModel->register($activity_id, $_SESSION['user']['id']);
+        $activity      = $activityModel->getById($activity_id);
+        $reg_status    = $activityModel->getRegistrationStatus($activity_id, $_SESSION['user']['id']);
+
+        if ($activity && $activity['status'] === 'active' && (!$reg_status || $reg_status === 'annule')) {
+            if ($activity['nb_inscrits'] < $activity['max_participants']) {
+                $activityModel->register($activity_id, $_SESSION['user']['id']);
+            } elseif (!empty($activity['liste_attente_active'])) {
+                $activityModel->registerWaitlist($activity_id, $_SESSION['user']['id']);
+                $_SESSION['flash'] = "Activité complète. Vous avez été ajouté(e) à la liste d'attente.";
+            }
         }
     }
     header('Location: /sharetime/public/?page=detail&id=' . $activity_id);
@@ -279,9 +321,67 @@ if ($page === 'se_desinscrire' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $activity_id = intval($_POST['activity_id'] ?? 0);
     if ($activity_id > 0) {
         $activityModel = new Activity($pdo);
+        $activity      = $activityModel->getById($activity_id);
+        $was_inscrit   = $activityModel->getRegistrationStatus($activity_id, $_SESSION['user']['id']) === 'inscrit';
         $activityModel->unregister($activity_id, $_SESSION['user']['id']);
+        // Promouvoir le premier de la liste d'attente si la place se libère
+        if ($was_inscrit && $activity && !empty($activity['liste_attente_active'])) {
+            $activityModel->promoteFromWaitlist($activity_id);
+        }
     }
     header('Location: /sharetime/public/?page=detail&id=' . $activity_id);
+    exit;
+}
+
+// ── COMMENTER ──────────────────────────────────────────
+if ($page === 'commenter' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    csrf_check();
+    $activity_id = intval($_POST['activity_id'] ?? 0);
+    $content     = trim($_POST['content'] ?? '');
+    if ($activity_id > 0 && $content !== '') {
+        $activityModel = new Activity($pdo);
+        $activityModel->addComment($activity_id, $_SESSION['user']['id'], $content);
+    }
+    header('Location: /sharetime/public/?page=detail&id=' . $activity_id . '#comments');
+    exit;
+}
+
+// ── SUPPRIMER COMMENTAIRE ──────────────────────────────
+if ($page === 'supprimer_commentaire' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    csrf_check();
+    $comment_id  = intval($_POST['comment_id'] ?? 0);
+    $activity_id = intval($_POST['activity_id'] ?? 0);
+    if ($comment_id > 0) {
+        $activityModel = new Activity($pdo);
+        if (is_admin()) {
+            $activityModel->deleteCommentAsAdmin($comment_id);
+        } else {
+            $activityModel->deleteComment($comment_id, $_SESSION['user']['id']);
+        }
+    }
+    header('Location: /sharetime/public/?page=detail&id=' . $activity_id . '#comments');
+    exit;
+}
+
+// ── NOTER UN ORGANISATEUR ─────────────────────────────
+if ($page === 'noter' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    csrf_check();
+    $activity_id = intval($_POST['activity_id'] ?? 0);
+    $note        = intval($_POST['note'] ?? 0);
+    if ($activity_id > 0 && $note >= 1 && $note <= 5) {
+        $activityModel = new Activity($pdo);
+        $activity      = $activityModel->getById($activity_id);
+        if ($activity && $activity['status'] === 'terminee') {
+            $reg_status = $activityModel->getRegistrationStatus($activity_id, $_SESSION['user']['id']);
+            if ($reg_status === 'inscrit') {
+                $activityModel->rate($_SESSION['user']['id'], $activity['creator_id'], $activity_id, $note);
+            }
+        }
+    }
+    header('Location: /sharetime/public/?page=detail&id=' . $activity_id . '#rating');
     exit;
 }
 
@@ -318,18 +418,9 @@ if ($page === 'contact' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($contact_email, FILTER_VALIDATE_EMAIL)) {
         $error = "Adresse e-mail invalide.";
     } else {
-        $stmt = $pdo->prepare("
-            INSERT INTO contact_messages (name, email, subject, message)
-            VALUES (:name, :email, :subject, :message)
-        ");
-        $stmt->execute([
-            'name'    => $contact_name,
-            'email'   => $contact_email,
-            'subject' => $contact_subject,
-            'message' => $contact_message,
-        ]);
+        $pdo->prepare("INSERT INTO contact_messages (name, email, subject, message) VALUES (:name, :email, :subject, :message)")
+            ->execute(['name' => $contact_name, 'email' => $contact_email, 'subject' => $contact_subject, 'message' => $contact_message]);
 
-        // Tentative d'envoi email (nécessite un SMTP configuré)
         $to      = 'admin@sharetime.fr';
         $subject = '[ShareTime] ' . ($contact_subject ?: 'Nouveau message de contact');
         $body    = "Nom : {$contact_name}\nEmail : {$contact_email}\n\n{$contact_message}";
@@ -344,11 +435,11 @@ if ($page === 'contact' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     require_owner();
     csrf_check();
-    $action = $_POST['action'] ?? '';
-    $type   = $_POST['type']   ?? 'user';
+    $action     = $_POST['action'] ?? '';
+    $type       = $_POST['type']   ?? 'user';
     $valid_tabs = ['dashboard', 'users', 'activities', 'admins'];
-    $tab    = in_array($_POST['tab'] ?? '', $valid_tabs) ? $_POST['tab'] : 'dashboard';
-    $me     = (int)$_SESSION['user']['id'];
+    $tab        = in_array($_POST['tab'] ?? '', $valid_tabs) ? $_POST['tab'] : 'dashboard';
+    $me         = (int)$_SESSION['user']['id'];
 
     if ($type === 'user') {
         $target_id = intval($_POST['user_id'] ?? 0);
@@ -470,7 +561,7 @@ if ($page === 'logout') {
 $allowed_pages = [
     'home', 'activites', 'connexion', 'inscription', 'contact', 'creer',
     'detail', 'faq', 'profil', 'profil_edit', 'cgu', 'mentions',
-    's_inscrire', 'se_desinscrire',
+    's_inscrire', 'se_desinscrire', 'commenter', 'supprimer_commentaire', 'noter',
     'admin', 'admin_users', 'admin_activities', 'owner',
     'mot_de_passe_oublie', 'reinitialiser_mdp',
 ];
@@ -480,26 +571,51 @@ $activityModel = new Activity($pdo);
 $userModel     = new User($pdo);
 
 // Données selon la page
-$activities = $city_filter = $category_filter = '';
-$activities = $user_activities = $user_registrations = $faq_items = [];
-$activity = $profile = null;
-$is_registered = false;
-$admin_stats = $admin_users_list = $admin_activities_list = $owner_users = [];
+$activities     = $user_activities = $user_registrations = $faq_items = [];
+$activity       = $profile = null;
+$reg_status     = null;
+$waitlist_count = $waitlist_position = 0;
+$comments       = [];
+$has_rated      = false;
+$city_filter    = $category_filter = $title_filter = $status_filter = '';
+$current_page   = 1;
+$total_pages    = 1;
+$admin_stats    = $admin_users_list = $admin_activities_list = $owner_users = [];
 
 if ($page === 'home') {
-    $activities = $activityModel->getAll('', $_SESSION['user']['id'] ?? null);
+    $activities = $activityModel->getAll('', $_SESSION['user']['id'] ?? null, '', 'active');
 
 } elseif ($page === 'activites') {
     $city_filter     = trim($_GET['city'] ?? '');
     $raw_cat         = trim($_GET['category'] ?? '');
     $category_filter = isset($CATEGORY_MAP[$raw_cat]) ? $raw_cat : '';
-    $activities      = $activityModel->getAll($city_filter, $_SESSION['user']['id'] ?? null, $category_filter);
+    $title_filter    = trim($_GET['search'] ?? '');
+    $valid_statuts   = ['active', 'annulee', 'terminee'];
+    $status_filter   = in_array($_GET['statut'] ?? '', $valid_statuts) ? $_GET['statut'] : '';
+    $current_page    = max(1, intval($_GET['p'] ?? 1));
+    $per_page        = 12;
+    $total_count     = $activityModel->countAll($city_filter, $_SESSION['user']['id'] ?? null, $category_filter, $status_filter, $title_filter);
+    $total_pages     = max(1, (int)ceil($total_count / $per_page));
+    $current_page    = min($current_page, $total_pages);
+    $activities      = $activityModel->getAll($city_filter, $_SESSION['user']['id'] ?? null, $category_filter, $status_filter, $title_filter, $current_page, $per_page);
 
 } elseif ($page === 'detail') {
     $activity_id = intval($_GET['id'] ?? 0);
     $activity    = $activity_id ? $activityModel->getById($activity_id) : null;
-    if ($activity && isset($_SESSION['user'])) {
-        $is_registered = $activityModel->isRegistered($activity_id, $_SESSION['user']['id']);
+    if ($activity) {
+        $comments = $activityModel->getComments($activity_id);
+        if (isset($_SESSION['user'])) {
+            $reg_status = $activityModel->getRegistrationStatus($activity_id, $_SESSION['user']['id']);
+            if (!empty($activity['liste_attente_active'])) {
+                $waitlist_count = $activityModel->getWaitlistCount($activity_id);
+                if ($reg_status === 'en_attente') {
+                    $waitlist_position = $activityModel->getWaitlistPosition($activity_id, $_SESSION['user']['id']);
+                }
+            }
+            if ($activity['status'] === 'terminee' && $reg_status === 'inscrit') {
+                $has_rated = $activityModel->hasRated($_SESSION['user']['id'], $activity['creator_id'], $activity_id);
+            }
+        }
     }
 
 } elseif ($page === 'profil') {
@@ -523,23 +639,19 @@ if ($page === 'home') {
     header('Location: /sharetime/public/?page=connexion'); exit;
 
 } elseif ($page === 'admin') {
-    // Rediriger le propriétaire vers son panel unifié
     if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; }
     require_admin();
     $admin_stats = [
-        'membres'       => $pdo->query("SELECT COUNT(*) FROM users WHERE role != 'owner'")->fetchColumn(),
-        'activites'     => $pdo->query("SELECT COUNT(*) FROM activities")->fetchColumn(),
-        'inscriptions'  => $pdo->query("SELECT COUNT(*) FROM registrations WHERE status = 'inscrit'")->fetchColumn(),
-        'admins'        => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn(),
-        'suspendus'     => $pdo->query("SELECT COUNT(*) FROM users WHERE is_banned = 1")->fetchColumn(),
+        'membres'      => $pdo->query("SELECT COUNT(*) FROM users WHERE role != 'owner'")->fetchColumn(),
+        'activites'    => $pdo->query("SELECT COUNT(*) FROM activities")->fetchColumn(),
+        'inscriptions' => $pdo->query("SELECT COUNT(*) FROM registrations WHERE status = 'inscrit'")->fetchColumn(),
+        'admins'       => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn(),
+        'suspendus'    => $pdo->query("SELECT COUNT(*) FROM users WHERE is_banned = 1")->fetchColumn(),
     ];
-    $admin_recent_users = $pdo->query("
-        SELECT * FROM users ORDER BY date_creation DESC LIMIT 5
-    ")->fetchAll();
+    $admin_recent_users = $pdo->query("SELECT * FROM users ORDER BY date_creation DESC LIMIT 5")->fetchAll();
     $admin_recent_activities = $pdo->query("
-        SELECT a.*, u.prenom, u.nom
-        FROM activities a JOIN users u ON u.idusers = a.creator_id
-        ORDER BY a.created_at DESC LIMIT 5
+        SELECT a.*, u.prenom, u.nom FROM activities a
+        JOIN users u ON u.idusers = a.creator_id ORDER BY a.created_at DESC LIMIT 5
     ")->fetchAll();
 
 } elseif ($page === 'admin_users') {
