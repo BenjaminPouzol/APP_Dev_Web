@@ -2,3 +2,4 @@ CLAUDE.md
 sql/*.backup.sql
 sql/dump_*.sql
 .claude/
+config/database.php
