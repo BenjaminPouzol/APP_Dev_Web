@@ -44,11 +44,17 @@
     </div>
 </footer>
 
-<?php if (!empty($flash)): ?>
+<?php if (!empty($flash) || !empty($flash_html)): ?>
 <div id="toast-container">
     <div class="toast toast-<?= htmlspecialchars($flash_type ?? 'success') ?>" id="toast-msg">
         <div class="toast-icon"><?= ($flash_type ?? 'success') === 'error' ? '✕' : '✓' ?></div>
-        <p class="toast-text"><?= htmlspecialchars($flash) ?></p>
+        <p class="toast-text">
+            <?php if (!empty($flash_html)): ?>
+                <?= $flash_html ?>
+            <?php else: ?>
+                <?= htmlspecialchars($flash) ?>
+            <?php endif; ?>
+        </p>
         <button class="toast-close" onclick="this.closest('.toast').remove()" aria-label="Fermer">×</button>
     </div>
 </div>

@@ -47,13 +47,13 @@ class User {
 
     // ── Création / Modification ────────────────────────────
 
-    public function create($data) {
+    public function create($data): int {
         $hash = password_hash($data['password'], PASSWORD_DEFAULT);
         $stmt = $this->pdo->prepare("
             INSERT INTO users (prenom, nom, pseudo, email, mot_de_passe, ville, date_naissance, role, cgu_acceptees, cgu_version)
             VALUES (:prenom, :nom, :pseudo, :email, :password, :ville, :date_naissance, 'utilisateur', :cgu, 'v1.0')
         ");
-        return $stmt->execute([
+        $stmt->execute([
             'prenom'         => $data['prenom'],
             'nom'            => $data['nom'],
             'pseudo'         => $data['pseudo'],
@@ -63,6 +63,7 @@ class User {
             'date_naissance' => $data['date_naissance'] ?: null,
             'cgu'            => $data['cgu_acceptees'] ? 1 : 0,
         ]);
+        return (int)$this->pdo->lastInsertId();
     }
 
     public function update($id, $data) {

@@ -93,9 +93,36 @@ try {
         CONSTRAINT fol_following_fk FOREIGN KEY (following_id) REFERENCES users (idusers) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    // users : colonne email_verified
+    if (!$pdo->query("SHOW COLUMNS FROM users LIKE 'email_verified'")->fetch()) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER email");
+    }
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS email_verifications (
+        id         INT AUTO_INCREMENT PRIMARY KEY,
+        user_id    INT NOT NULL,
+        token      VARCHAR(64) NOT NULL UNIQUE,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT ev_user_fk FOREIGN KEY (user_id) REFERENCES users (idusers) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS admin_logs (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        admin_id    INT NOT NULL,
+        action      VARCHAR(50)  NOT NULL,
+        target_type ENUM('user','activity') NOT NULL,
+        target_id   INT NOT NULL,
+        details     VARCHAR(255) DEFAULT '',
+        created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY (admin_id),
+        KEY (created_at),
+        CONSTRAINT al_admin_fk FOREIGN KEY (admin_id) REFERENCES users (idusers) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
     // Nettoyage périodique des tokens expirés (environ 1 requête sur 50)
     if (mt_rand(1, 50) === 1) {
         $pdo->exec("DELETE FROM password_resets WHERE expires_at < NOW() OR used = 1");
+        $pdo->exec("DELETE FROM email_verifications WHERE created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)");
     }
 
 } catch (PDOException $e) {

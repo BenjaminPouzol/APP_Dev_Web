@@ -11,6 +11,20 @@
 
 <main class="container" style="padding:40px 0; max-width:800px; margin:auto;">
 
+    <?php if ($is_own && empty($profile['email_verified'])): ?>
+    <div style="background:#FEF3E2; border:1.5px solid rgba(232,129,26,0.4); border-radius:10px;
+                padding:14px 20px; margin-bottom:20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <span style="font-size:1.3rem;">⚠️</span>
+        <div style="flex:1;">
+            <p style="margin:0; font-weight:600; color:#92400E; font-size:0.9rem;">Votre adresse email n'est pas encore vérifiée.</p>
+            <p style="margin:4px 0 0; color:#B45309; font-size:0.82rem;">Certaines fonctionnalités peuvent être limitées.</p>
+        </div>
+        <form method="post" action="/sharetime/public/?page=renvoyer_verification" style="margin:0;">
+            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+            <button type="submit" class="btn btn-sm btn-orange">Renvoyer l'email</button>
+        </form>
+    </div>
+    <?php endif; ?>
 
     <!-- En-tête profil -->
     <div style="background:white; border:1.5px solid var(--gray-200); border-radius:var(--radius-lg); padding:32px; margin-bottom:24px;">
