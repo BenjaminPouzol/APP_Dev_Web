@@ -80,6 +80,41 @@ if ($page === 'suivre' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// ── ENVOYER UN MESSAGE PRIVÉ ───────────────────────────────────
+if ($page === 'envoyer_message' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    csrf_check();
+    $receiver_id = intval($_POST['receiver_id'] ?? 0);
+    $content     = trim($_POST['content'] ?? '');
+    $me          = (int)$_SESSION['user']['id'];
+
+    if ($receiver_id <= 0 || $receiver_id === $me) {
+        header('Location: /sharetime/public/?page=messages'); exit;
+    }
+    if (empty($content)) {
+        $_SESSION['flash']      = "Le message ne peut pas être vide.";
+        $_SESSION['flash_type'] = 'error';
+        header('Location: /sharetime/public/?page=messages&with=' . $receiver_id); exit;
+    }
+    if (mb_strlen($content) > 1000) {
+        $_SESSION['flash']      = "Message trop long (max 1000 caractères).";
+        $_SESSION['flash_type'] = 'error';
+        header('Location: /sharetime/public/?page=messages&with=' . $receiver_id); exit;
+    }
+
+    $um = new User($pdo);
+    $receiver = $um->getById($receiver_id);
+    if (!$receiver || !empty($receiver['is_banned'])) {
+        header('Location: /sharetime/public/?page=messages'); exit;
+    }
+
+    $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)")
+        ->execute([$me, $receiver_id, $content]);
+
+    header('Location: /sharetime/public/?page=messages&with=' . $receiver_id);
+    exit;
+}
+
 // ── MARQUER NOTIFICATIONS LUES ─────────────────────────────────
 if ($page === 'notifs_lues' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }

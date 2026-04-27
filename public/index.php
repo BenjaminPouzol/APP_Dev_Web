@@ -62,23 +62,22 @@ $allowed_pages = [
     'admin', 'admin_users', 'admin_activities', 'admin_logs', 'owner',
     'mot_de_passe_oublie', 'reinitialiser_mdp',
     'modifier_activite', 'notifications', 'verifier_email', 'renvoyer_verification',
+    'messages', 'envoyer_message',
 ];
 
-// Notifications non lues (navbar)
-$notif_count = 0;
-if (isset($_SESSION['user'])) {
-    try {
-        $stmt_nc = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = :u AND is_read = 0");
-        $stmt_nc->execute(['u' => $_SESSION['user']['id']]);
-        $notif_count = (int)$stmt_nc->fetchColumn();
-    } catch (\Throwable $e) {}
-}
 if (!in_array($page, $allowed_pages)) $page = 'home';
 
 $activityModel = new Activity($pdo);
 $userModel     = new User($pdo);
 
 // ── DONNÉES PAR PAGE ───────────────────────────────────────────
+$notif_count   = 0;
+$msg_count     = 0;
+$conversations = [];
+$conversation_user     = null;
+$conversation_messages = [];
+$with_id = 0;
+
 $activities     = $user_activities = $user_registrations = $faq_items = [];
 $activity       = $profile = null;
 $reg_status     = null;
@@ -229,6 +228,56 @@ if ($page === 'home') {
     $stmt_notifs->execute(['u' => $_SESSION['user']['id']]);
     $notifications = $stmt_notifs->fetchAll();
 
+} elseif ($page === 'messages') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    $me      = (int)$_SESSION['user']['id'];
+    $with_id = intval($_GET['with'] ?? 0);
+
+    // Liste des conversations (une ligne par interlocuteur)
+    $stmt_convs = $pdo->prepare("
+        SELECT
+            u.idusers, u.prenom, u.nom, u.pseudo, u.photo_profil,
+            m.content AS last_content,
+            m.created_at AS last_time,
+            m.sender_id AS last_sender_id,
+            (SELECT COUNT(*) FROM messages
+             WHERE receiver_id = ? AND sender_id = u.idusers AND is_read = 0) AS unread_count
+        FROM (
+            SELECT
+                CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END AS other_id,
+                MAX(id) AS last_id
+            FROM messages
+            WHERE sender_id = ? OR receiver_id = ?
+            GROUP BY other_id
+        ) conv
+        JOIN users u ON u.idusers = conv.other_id
+        JOIN messages m ON m.id = conv.last_id
+        ORDER BY conv.last_id DESC
+    ");
+    $stmt_convs->execute([$me, $me, $me, $me]);
+    $conversations = $stmt_convs->fetchAll();
+
+    if ($with_id > 0) {
+        $conversation_user = $userModel->getById($with_id);
+        if ($conversation_user) {
+            // Marquer comme lu
+            $pdo->prepare("UPDATE messages SET is_read = 1 WHERE receiver_id = ? AND sender_id = ? AND is_read = 0")
+                ->execute([$me, $with_id]);
+            // Charger les messages
+            $stmt_msgs = $pdo->prepare("
+                SELECT m.*, u.prenom, u.nom, u.pseudo, u.photo_profil
+                FROM messages m
+                JOIN users u ON u.idusers = m.sender_id
+                WHERE (m.sender_id = ? AND m.receiver_id = ?)
+                   OR (m.sender_id = ? AND m.receiver_id = ?)
+                ORDER BY m.created_at ASC
+                LIMIT 100
+            ");
+            $stmt_msgs->execute([$me, $with_id, $with_id, $me]);
+            $conversation_messages = $stmt_msgs->fetchAll();
+        }
+    }
+
 } elseif ($page === 'owner') {
     require_owner();
     $valid_tabs  = ['dashboard', 'users', 'activities', 'admins'];
@@ -249,6 +298,19 @@ if ($page === 'home') {
     ")->fetchAll();
 }
 
+// ── COMPTEURS NAVBAR (calculés après data loading pour être à jour) ──
+if (isset($_SESSION['user'])) {
+    try {
+        $stmt_nc = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
+        $stmt_nc->execute([$_SESSION['user']['id']]);
+        $notif_count = (int)$stmt_nc->fetchColumn();
+
+        $stmt_mc = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE receiver_id = ? AND is_read = 0");
+        $stmt_mc->execute([$_SESSION['user']['id']]);
+        $msg_count = (int)$stmt_mc->fetchColumn();
+    } catch (\Throwable $e) {}
+}
+
 // ── RENDU ──────────────────────────────────────────────────────
 require '../app/views/header.php';
 
@@ -257,7 +319,7 @@ $php_pages = [
     'profil', 'profil_edit', 'faq', 'contact', 'cgu', 'mentions',
     'admin', 'admin_users', 'admin_activities', 'admin_logs', 'owner',
     'mot_de_passe_oublie', 'reinitialiser_mdp',
-    'modifier_activite', 'notifications', 'verifier_email',
+    'modifier_activite', 'notifications', 'verifier_email', 'messages',
 ];
 
 if (in_array($page, $php_pages)) {

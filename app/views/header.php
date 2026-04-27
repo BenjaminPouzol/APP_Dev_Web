@@ -123,6 +123,14 @@
                 </li>
                 <?php endif; ?>
                 <li class="mobile-only">
+                    <a href="/sharetime/public/?page=messages">
+                        ✉️ Messages<?php if (!empty($msg_count)): ?>
+                        <span style="background:#3B82F6;color:white;font-size:0.65rem;font-weight:700;
+                                     padding:1px 6px;border-radius:99px;margin-left:6px;"><?= $msg_count > 9 ? '9+' : $msg_count ?></span>
+                        <?php endif; ?>
+                    </a>
+                </li>
+                <li class="mobile-only">
                     <a href="/sharetime/public/?page=profil">Mon profil</a>
                 </li>
                 <li class="mobile-only">
@@ -167,6 +175,22 @@
                                  font-size:0.65rem; font-weight:700; min-width:16px; height:16px; border-radius:99px;
                                  display:flex; align-items:center; justify-content:center; padding:0 3px; line-height:1;">
                         <?= $notif_count > 9 ? '9+' : $notif_count ?>
+                    </span>
+                    <?php endif; ?>
+                </a>
+                <!-- Enveloppe messages -->
+                <a href="/sharetime/public/?page=messages"
+                   style="position:relative; display:inline-flex; align-items:center; justify-content:center;
+                          width:36px; height:36px; border-radius:8px; border:1.5px solid rgba(255,255,255,0.2);
+                          color:white; text-decoration:none; font-size:1.1rem; transition:background 0.15s;"
+                   onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'"
+                   title="Messages">
+                    ✉️
+                    <?php if (!empty($msg_count)): ?>
+                    <span style="position:absolute; top:-4px; right:-4px; background:#3B82F6; color:white;
+                                 font-size:0.65rem; font-weight:700; min-width:16px; height:16px; border-radius:99px;
+                                 display:flex; align-items:center; justify-content:center; padding:0 3px; line-height:1;">
+                        <?= $msg_count > 9 ? '9+' : $msg_count ?>
                     </span>
                     <?php endif; ?>
                 </a>

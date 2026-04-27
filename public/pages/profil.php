@@ -73,13 +73,17 @@
                 <?php if ($is_own): ?>
                     <a href="/sharetime/public/?page=profil_edit" class="btn btn-outline-navy btn-sm">✏️ Modifier le profil</a>
                 <?php elseif (isset($_SESSION['user'])): ?>
-                    <form method="post" action="/sharetime/public/?page=suivre" style="margin:0;">
-                        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                        <input type="hidden" name="user_id" value="<?= $profile['idusers'] ?>">
-                        <button type="submit" class="btn btn-sm <?= $is_following ? 'btn-outline-navy' : 'btn-orange' ?>">
-                            <?= $is_following ? '✓ Abonné(e)' : '+ Suivre' ?>
-                        </button>
-                    </form>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                        <form method="post" action="/sharetime/public/?page=suivre" style="margin:0;">
+                            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                            <input type="hidden" name="user_id" value="<?= $profile['idusers'] ?>">
+                            <button type="submit" class="btn btn-sm <?= $is_following ? 'btn-outline-navy' : 'btn-orange' ?>">
+                                <?= $is_following ? '✓ Abonné(e)' : '+ Suivre' ?>
+                            </button>
+                        </form>
+                        <a href="/sharetime/public/?page=messages&with=<?= $profile['idusers'] ?>"
+                           class="btn btn-sm btn-outline-navy">✉️ Message</a>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>

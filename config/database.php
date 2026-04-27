@@ -106,6 +106,20 @@ try {
         CONSTRAINT ev_user_fk FOREIGN KEY (user_id) REFERENCES users (idusers) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    $pdo->exec("CREATE TABLE IF NOT EXISTS messages (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        sender_id   INT NOT NULL,
+        receiver_id INT NOT NULL,
+        content     TEXT NOT NULL,
+        is_read     TINYINT(1) NOT NULL DEFAULT 0,
+        created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY (sender_id),
+        KEY (receiver_id),
+        KEY (created_at),
+        CONSTRAINT msg_sender_fk   FOREIGN KEY (sender_id)   REFERENCES users (idusers) ON DELETE CASCADE,
+        CONSTRAINT msg_receiver_fk FOREIGN KEY (receiver_id) REFERENCES users (idusers) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS admin_logs (
         id          INT AUTO_INCREMENT PRIMARY KEY,
         admin_id    INT NOT NULL,
