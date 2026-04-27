@@ -39,11 +39,14 @@
         <?php endif; ?>
 
         <div style="background:white;border:1.5px solid var(--gray-200);border-radius:14px;overflow:hidden;">
-            <div style="padding:18px 20px;border-bottom:1px solid var(--gray-100);">
+            <div style="padding:18px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
                 <h2 style="margin:0;font-size:1rem;color:var(--navy);">
                     Tous les utilisateurs
-                    <span style="margin-left:8px;background:#F3F4F6;color:#6B7280;font-size:0.75rem;padding:2px 10px;border-radius:99px;font-weight:600;"><?= count($admin_users_list) ?></span>
+                    <span style="margin-left:8px;background:#F3F4F6;color:#6B7280;font-size:0.75rem;padding:2px 10px;border-radius:99px;font-weight:600;"><?= $admin_total_count ?></span>
                 </h2>
+                <?php if ($admin_total_pages > 1): ?>
+                <span style="font-size:0.82rem;color:var(--gray-500);">Page <?= $admin_current_page ?> / <?= $admin_total_pages ?></span>
+                <?php endif; ?>
             </div>
 
             <div style="overflow-x:auto;">
@@ -175,6 +178,26 @@
                 </table>
             </div>
         </div>
+
+        <!-- Pagination -->
+        <?php if ($admin_total_pages > 1): ?>
+        <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:28px;flex-wrap:wrap;">
+            <?php if ($admin_current_page > 1): ?>
+                <a href="/sharetime/public/?page=admin_users&p=<?= $admin_current_page - 1 ?>" class="btn btn-outline-navy btn-sm">← Précédent</a>
+            <?php endif; ?>
+            <?php for ($i = max(1, $admin_current_page - 2); $i <= min($admin_total_pages, $admin_current_page + 2); $i++): ?>
+                <a href="/sharetime/public/?page=admin_users&p=<?= $i ?>"
+                   style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;font-size:0.9rem;font-weight:600;text-decoration:none;
+                          background:<?= $i === $admin_current_page ? 'var(--navy)' : 'var(--gray-100)' ?>;
+                          color:<?= $i === $admin_current_page ? 'white' : 'var(--gray-600)' ?>;">
+                    <?= $i ?>
+                </a>
+            <?php endfor; ?>
+            <?php if ($admin_current_page < $admin_total_pages): ?>
+                <a href="/sharetime/public/?page=admin_users&p=<?= $admin_current_page + 1 ?>" class="btn btn-outline-navy btn-sm">Suivant →</a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
 
     </div>
 </main>

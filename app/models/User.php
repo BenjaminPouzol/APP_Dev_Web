@@ -27,15 +27,22 @@ class User {
         return $stmt->fetchColumn() > 0;
     }
 
-    public function getAllForAdmin() {
-        $stmt = $this->pdo->query("
+    public function countAllForAdmin() {
+        return (int)$this->pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+    }
+
+    public function getAllForAdmin($page = 0, $per_page = 0) {
+        $sql = "
             SELECT u.*,
                    (SELECT COUNT(*) FROM activities WHERE creator_id = u.idusers) AS nb_activities,
                    (SELECT COUNT(*) FROM registrations WHERE user_id = u.idusers AND status = 'inscrit') AS nb_registrations
             FROM users u
             ORDER BY FIELD(u.role,'owner','admin','utilisateur'), u.date_creation DESC
-        ");
-        return $stmt->fetchAll();
+        ";
+        if ($per_page > 0 && $page > 0) {
+            $sql .= " LIMIT " . (int)$per_page . " OFFSET " . (int)(($page - 1) * $per_page);
+        }
+        return $this->pdo->query($sql)->fetchAll();
     }
 
     // ── Création / Modification ────────────────────────────

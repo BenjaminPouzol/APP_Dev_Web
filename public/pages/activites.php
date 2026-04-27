@@ -29,7 +29,7 @@
                placeholder="Ville..."
                style="padding:10px 16px; border:1.5px solid var(--gray-300); border-radius:8px; font-size:0.9rem; font-family:inherit; min-width:160px;">
         <input type="text" name="search" value="<?= htmlspecialchars($title_filter) ?>"
-               placeholder="Recherche par titre..."
+               placeholder="Recherche par titre ou description..."
                style="padding:10px 16px; border:1.5px solid var(--gray-300); border-radius:8px; font-size:0.9rem; font-family:inherit; flex:1; min-width:180px;">
         <button type="submit" class="btn btn-navy">Rechercher</button>
         <?php if (!empty($city_filter) || !empty($category_filter) || !empty($status_filter) || !empty($title_filter)): ?>

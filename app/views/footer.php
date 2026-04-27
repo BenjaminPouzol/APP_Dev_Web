@@ -44,5 +44,67 @@
     </div>
 </footer>
 
+<?php if (!empty($flash)): ?>
+<div id="toast-container">
+    <div class="toast toast-<?= htmlspecialchars($flash_type ?? 'success') ?>" id="toast-msg">
+        <div class="toast-icon"><?= ($flash_type ?? 'success') === 'error' ? '✕' : '✓' ?></div>
+        <p class="toast-text"><?= htmlspecialchars($flash) ?></p>
+        <button class="toast-close" onclick="this.closest('.toast').remove()" aria-label="Fermer">×</button>
+    </div>
+</div>
+<?php endif; ?>
+
+<script>
+(function() {
+    // Auto-dismiss toast
+    var toast = document.getElementById('toast-msg');
+    if (toast) {
+        setTimeout(function() {
+            toast.style.animation = 'toast-out 0.3s ease forwards';
+            setTimeout(function() { if (toast.parentNode) toast.parentNode.remove(); }, 300);
+        }, 4500);
+    }
+
+    // Désactive le bouton submit pour éviter les doubles soumissions
+    document.addEventListener('submit', function(e) {
+        var btn = e.target.querySelector('[type="submit"]:not([data-no-loading])');
+        if (btn) {
+            btn.disabled = true;
+            btn.dataset.originalText = btn.textContent;
+            btn.textContent = 'Chargement…';
+        }
+    });
+
+    // Validation date fin > date début sur les formulaires d'activité
+    var startInput = document.querySelector('[name="start_time"]');
+    var endInput   = document.querySelector('[name="end_time"]');
+    if (startInput && endInput) {
+        function validateDates() {
+            if (startInput.value && endInput.value && endInput.value <= startInput.value) {
+                endInput.setCustomValidity('La date de fin doit être postérieure à la date de début.');
+            } else {
+                endInput.setCustomValidity('');
+            }
+        }
+        startInput.addEventListener('change', validateDates);
+        endInput.addEventListener('change', validateDates);
+    }
+
+    // Validation mot de passe (correspondance + longueur)
+    var pass    = document.querySelector('[name="password"]');
+    var confirm = document.querySelector('[name="confirm-password"]');
+    if (pass && confirm) {
+        function validatePasswords() {
+            if (confirm.value && pass.value !== confirm.value) {
+                confirm.setCustomValidity('Les mots de passe ne correspondent pas.');
+            } else {
+                confirm.setCustomValidity('');
+            }
+        }
+        pass.addEventListener('input', validatePasswords);
+        confirm.addEventListener('input', validatePasswords);
+    }
+})();
+</script>
 </body>
 </html>

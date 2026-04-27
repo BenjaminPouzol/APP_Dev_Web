@@ -45,8 +45,9 @@ $CATEGORY_MAP = [
     'autre'      => ['⭐', 'sport',   'Autre'],
 ];
 
-$flash = $_SESSION['flash'] ?? null;
-unset($_SESSION['flash']);
+$flash      = $_SESSION['flash']      ?? null;
+$flash_type = $_SESSION['flash_type'] ?? 'success';
+unset($_SESSION['flash'], $_SESSION['flash_type']);
 
 // ── CSRF ────────────────────────────────────────────────
 function csrf_token(): string {
@@ -247,6 +248,75 @@ if ($page === 'reinitialiser_mdp' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
     }
+}
+
+// ── MODIFIER ACTIVITÉ (ORGANISATEUR) ──────────────────
+if ($page === 'modifier_activite' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    csrf_check();
+    $activity_id          = intval($_POST['activity_id'] ?? 0);
+    $title                = trim($_POST['title'] ?? '');
+    $description          = trim($_POST['description'] ?? '');
+    $location             = trim($_POST['location'] ?? '');
+    $city                 = trim($_POST['city'] ?? '');
+    $start_time           = $_POST['start_time'] ?? '';
+    $end_time             = $_POST['end_time'] ?? '';
+    $max_participants     = intval($_POST['max_participants'] ?? 0);
+    $visibility           = in_array($_POST['visibility'] ?? '', ['publique', 'privee']) ? $_POST['visibility'] : 'publique';
+    $category             = in_array($_POST['category'] ?? '', array_keys($CATEGORY_MAP)) ? $_POST['category'] : 'autre';
+    $liste_attente_active = isset($_POST['liste_attente_active']) ? 1 : 0;
+
+    if (empty($title) || empty($description) || empty($location) || empty($city) || empty($start_time) || empty($end_time)) {
+        $error = "Veuillez remplir tous les champs obligatoires.";
+    } elseif ($max_participants < 2) {
+        $error = "Le nombre de participants doit être d'au moins 2.";
+    } elseif (strtotime($end_time) <= strtotime($start_time)) {
+        $error = "La date de fin doit être postérieure à la date de début.";
+    } else {
+        $activityModel = new Activity($pdo);
+        $existing      = $activityModel->getById($activity_id);
+        if (!$existing || (int)$existing['creator_id'] !== (int)$_SESSION['user']['id'] || $existing['status'] !== 'active') {
+            header('Location: /sharetime/public/?page=activites'); exit;
+        }
+        if ($max_participants < (int)$existing['nb_inscrits']) {
+            $error = "Le nombre de participants ne peut pas être inférieur au nombre d'inscrits ({$existing['nb_inscrits']}).";
+        } else {
+            $activityModel->update($activity_id, [
+                'title'               => $title,
+                'description'         => $description,
+                'location'            => $location,
+                'city'                => $city,
+                'start_time'          => $start_time,
+                'end_time'            => $end_time,
+                'max_participants'    => $max_participants,
+                'visibility'          => $visibility,
+                'category'            => $category,
+                'liste_attente_active' => $liste_attente_active,
+                'creator_id'          => $_SESSION['user']['id'],
+            ]);
+            $_SESSION['flash'] = "Activité modifiée avec succès.";
+            header('Location: /sharetime/public/?page=detail&id=' . $activity_id);
+            exit;
+        }
+    }
+}
+
+// ── ANNULER ACTIVITÉ (ORGANISATEUR) ────────────────────
+if ($page === 'annuler_activite' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    csrf_check();
+    $activity_id = intval($_POST['activity_id'] ?? 0);
+    if ($activity_id > 0) {
+        $activityModel = new Activity($pdo);
+        if ($activityModel->cancelByOrganizer($activity_id, $_SESSION['user']['id'])) {
+            $_SESSION['flash'] = "Votre activité a été annulée.";
+        } else {
+            $_SESSION['flash']      = "Impossible d'annuler cette activité.";
+            $_SESSION['flash_type'] = 'error';
+        }
+    }
+    header('Location: /sharetime/public/?page=detail&id=' . $activity_id);
+    exit;
 }
 
 // ── CRÉATION D'ACTIVITÉ ────────────────────────────────
@@ -564,6 +634,7 @@ $allowed_pages = [
     's_inscrire', 'se_desinscrire', 'commenter', 'supprimer_commentaire', 'noter',
     'admin', 'admin_users', 'admin_activities', 'owner',
     'mot_de_passe_oublie', 'reinitialiser_mdp',
+    'modifier_activite',
 ];
 if (!in_array($page, $allowed_pages)) $page = 'home';
 
@@ -581,6 +652,9 @@ $city_filter    = $category_filter = $title_filter = $status_filter = '';
 $current_page   = 1;
 $total_pages    = 1;
 $admin_stats    = $admin_users_list = $admin_activities_list = $owner_users = [];
+$admin_current_page = 1;
+$admin_total_pages  = 1;
+$admin_total_count  = 0;
 
 if ($page === 'home') {
     $activities = $activityModel->getAll('', $_SESSION['user']['id'] ?? null, '', 'active');
@@ -616,6 +690,14 @@ if ($page === 'home') {
                 $has_rated = $activityModel->hasRated($_SESSION['user']['id'], $activity['creator_id'], $activity_id);
             }
         }
+    }
+
+} elseif ($page === 'modifier_activite') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    $activity_id = intval($_GET['id'] ?? $_POST['activity_id'] ?? 0);
+    $activity    = $activity_id ? $activityModel->getById($activity_id) : null;
+    if (!$activity || (int)$activity['creator_id'] !== (int)$_SESSION['user']['id'] || $activity['status'] !== 'active') {
+        header('Location: /sharetime/public/?page=activites'); exit;
     }
 
 } elseif ($page === 'profil') {
@@ -657,12 +739,20 @@ if ($page === 'home') {
 } elseif ($page === 'admin_users') {
     if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=users'); exit; }
     require_admin();
-    $admin_users_list = $userModel->getAllForAdmin();
+    $per_page_admin     = 25;
+    $admin_total_count  = $userModel->countAllForAdmin();
+    $admin_total_pages  = max(1, (int)ceil($admin_total_count / $per_page_admin));
+    $admin_current_page = max(1, min($admin_total_pages, intval($_GET['p'] ?? 1)));
+    $admin_users_list   = $userModel->getAllForAdmin($admin_current_page, $per_page_admin);
 
 } elseif ($page === 'admin_activities') {
     if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=activities'); exit; }
     require_admin();
-    $admin_activities_list = $activityModel->getAllForAdmin();
+    $per_page_admin        = 25;
+    $admin_total_count     = $activityModel->countAllForAdmin();
+    $admin_total_pages     = max(1, (int)ceil($admin_total_count / $per_page_admin));
+    $admin_current_page    = max(1, min($admin_total_pages, intval($_GET['p'] ?? 1)));
+    $admin_activities_list = $activityModel->getAllForAdmin($admin_current_page, $per_page_admin);
 
 } elseif ($page === 'owner') {
     require_owner();
@@ -690,7 +780,8 @@ require '../app/views/header.php';
 $php_pages = ['home', 'activites', 'connexion', 'inscription', 'creer', 'detail',
               'profil', 'profil_edit', 'faq', 'contact', 'cgu', 'mentions',
               'admin', 'admin_users', 'admin_activities', 'owner',
-              'mot_de_passe_oublie', 'reinitialiser_mdp'];
+              'mot_de_passe_oublie', 'reinitialiser_mdp',
+              'modifier_activite'];
 
 if (in_array($page, $php_pages)) {
     require "pages/{$page}.php";

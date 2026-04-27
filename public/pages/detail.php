@@ -117,8 +117,21 @@
                 </div>
 
             <?php elseif ($is_organizer): ?>
-                <div style="background:var(--navy-pale); border-radius:10px; padding:16px; text-align:center;">
+                <div style="background:var(--navy-pale); border-radius:10px; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
                     <p style="color:var(--navy); font-weight:600; margin:0;">Vous êtes l'organisateur de cette activité.</p>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <a href="/sharetime/public/?page=modifier_activite&id=<?= $activity['idactivities'] ?>"
+                           class="btn btn-outline-navy btn-sm">✏️ Modifier</a>
+                        <form method="post" action="/sharetime/public/?page=annuler_activite" style="margin:0;">
+                            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                            <input type="hidden" name="activity_id" value="<?= $activity['idactivities'] ?>">
+                            <button type="submit" class="btn btn-sm"
+                                    style="border:1.5px solid #DC2626; color:#DC2626; background:white; cursor:pointer;"
+                                    onclick="return confirm('Annuler définitivement cette activité ?\n\nLes inscrits ne seront pas notifiés automatiquement.')">
+                                ❌ Annuler l'activité
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
             <?php elseif ($is_inscrit): ?>

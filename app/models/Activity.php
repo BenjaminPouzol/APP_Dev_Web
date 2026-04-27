@@ -35,8 +35,9 @@ class Activity {
             $params['status_filter'] = $status_filter;
         }
         if ($title !== '') {
-            $sql .= " AND a.title LIKE :title";
-            $params['title'] = '%' . $title . '%';
+            $sql .= " AND (a.title LIKE :title OR a.description LIKE :title_desc)";
+            $params['title']      = '%' . $title . '%';
+            $params['title_desc'] = '%' . $title . '%';
         }
         $sql .= " ORDER BY a.start_time ASC";
         if ($per_page > 0 && $page > 0) {
@@ -70,8 +71,9 @@ class Activity {
             $params['status_filter'] = $status_filter;
         }
         if ($title !== '') {
-            $sql .= " AND a.title LIKE :title";
-            $params['title'] = '%' . $title . '%';
+            $sql .= " AND (a.title LIKE :title OR a.description LIKE :title_desc)";
+            $params['title']      = '%' . $title . '%';
+            $params['title_desc'] = '%' . $title . '%';
         }
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
@@ -137,6 +139,40 @@ class Activity {
             'liste_attente_active' => $data['liste_attente_active'] ? 1 : 0,
             'creator_id'          => $data['creator_id'],
         ]);
+    }
+
+    // ── Mise à jour ────────────────────────────────────────
+
+    public function update($id, $data) {
+        $stmt = $this->pdo->prepare("
+            UPDATE activities
+            SET title = :title, description = :description, location = :location, city = :city,
+                start_time = :start_time, end_time = :end_time, max_participants = :max_participants,
+                visibility = :visibility, category = :category, liste_attente_active = :liste_attente_active
+            WHERE idactivities = :id AND creator_id = :creator_id
+        ");
+        return $stmt->execute([
+            'title'               => $data['title'],
+            'description'         => $data['description'],
+            'location'            => $data['location'],
+            'city'                => $data['city'],
+            'start_time'          => $data['start_time'],
+            'end_time'            => $data['end_time'],
+            'max_participants'    => (int)$data['max_participants'],
+            'visibility'          => $data['visibility'],
+            'category'            => $data['category'],
+            'liste_attente_active' => $data['liste_attente_active'] ? 1 : 0,
+            'id'                  => (int)$id,
+            'creator_id'          => (int)$data['creator_id'],
+        ]);
+    }
+
+    public function cancelByOrganizer($id, $creator_id) {
+        $stmt = $this->pdo->prepare("
+            UPDATE activities SET status = 'annulee'
+            WHERE idactivities = :id AND creator_id = :creator_id AND status = 'active'
+        ");
+        return $stmt->execute(['id' => (int)$id, 'creator_id' => (int)$creator_id]);
     }
 
     // ── Inscriptions ───────────────────────────────────────
@@ -288,8 +324,12 @@ class Activity {
 
     // ── Administration ─────────────────────────────────────
 
-    public function getAllForAdmin() {
-        $stmt = $this->pdo->query("
+    public function countAllForAdmin() {
+        return (int)$this->pdo->query("SELECT COUNT(*) FROM activities")->fetchColumn();
+    }
+
+    public function getAllForAdmin($page = 0, $per_page = 0) {
+        $sql = "
             SELECT a.*, u.prenom, u.nom, u.pseudo,
                    (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'inscrit') AS nb_inscrits,
                    (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'en_attente') AS nb_attente,
@@ -297,8 +337,11 @@ class Activity {
             FROM activities a
             JOIN users u ON u.idusers = a.creator_id
             ORDER BY a.created_at DESC
-        ");
-        return $stmt->fetchAll();
+        ";
+        if ($per_page > 0 && $page > 0) {
+            $sql .= " LIMIT " . (int)$per_page . " OFFSET " . (int)(($page - 1) * $per_page);
+        }
+        return $this->pdo->query($sql)->fetchAll();
     }
 
     public function setStatus($id, $status) {
