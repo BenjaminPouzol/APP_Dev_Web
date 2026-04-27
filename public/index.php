@@ -78,6 +78,28 @@ function require_owner(): void {
     if (!is_owner()) { header('Location: /sharetime/public/?page=admin'); exit; }
 }
 
+// ── Notifications ───────────────────────────────────────
+function notify(PDO $pdo, int $user_id, string $type, string $title, string $content, ?int $activity_id = null): void {
+    try {
+        $pdo->prepare("INSERT INTO notifications (user_id, activity_id, type, title, content) VALUES (:u, :a, :t, :ti, :c)")
+            ->execute(['u' => $user_id, 'a' => $activity_id, 't' => $type, 'ti' => $title, 'c' => $content]);
+    } catch (\Throwable $e) {}
+}
+
+// ── Upload image ────────────────────────────────────────
+function upload_image(string $field, string $dest_dir): ?string {
+    if (empty($_FILES[$field]['name']) || $_FILES[$field]['error'] !== UPLOAD_ERR_OK) return null;
+    $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp'];
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($_FILES[$field]['tmp_name']);
+    if (!isset($allowed[$mime])) throw new \RuntimeException("Format non supporté. Utilisez JPG, PNG, GIF ou WebP.");
+    if ($_FILES[$field]['size'] > 2 * 1024 * 1024) throw new \RuntimeException("Image trop volumineuse (max 2 Mo).");
+    $filename = uniqid('img_', true) . '.' . $allowed[$mime];
+    if (!move_uploaded_file($_FILES[$field]['tmp_name'], rtrim($dest_dir, '/') . '/' . $filename)) {
+        throw new \RuntimeException("Erreur lors de l'enregistrement de l'image.");
+    }
+    return $filename;
+}
+
 // ── Badge HTML ───────────────────────────────────────────
 function role_badge(string $role, bool $banned = false): string {
     if ($banned) {
@@ -281,22 +303,37 @@ if ($page === 'modifier_activite' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($max_participants < (int)$existing['nb_inscrits']) {
             $error = "Le nombre de participants ne peut pas être inférieur au nombre d'inscrits ({$existing['nb_inscrits']}).";
         } else {
-            $activityModel->update($activity_id, [
-                'title'               => $title,
-                'description'         => $description,
-                'location'            => $location,
-                'city'                => $city,
-                'start_time'          => $start_time,
-                'end_time'            => $end_time,
-                'max_participants'    => $max_participants,
-                'visibility'          => $visibility,
-                'category'            => $category,
-                'liste_attente_active' => $liste_attente_active,
-                'creator_id'          => $_SESSION['user']['id'],
-            ]);
-            $_SESSION['flash'] = "Activité modifiée avec succès.";
-            header('Location: /sharetime/public/?page=detail&id=' . $activity_id);
-            exit;
+            $upload_dir_act = dirname(__DIR__) . '/public/uploads/activites/';
+            $photo_act = null;
+            try { $photo_act = upload_image('photo', $upload_dir_act); } catch (\RuntimeException $e) { $error = $e->getMessage(); }
+            if (empty($error)) {
+                $update_data = [
+                    'title'               => $title,
+                    'description'         => $description,
+                    'location'            => $location,
+                    'city'                => $city,
+                    'start_time'          => $start_time,
+                    'end_time'            => $end_time,
+                    'max_participants'    => $max_participants,
+                    'visibility'          => $visibility,
+                    'category'            => $category,
+                    'liste_attente_active' => $liste_attente_active,
+                    'creator_id'          => $_SESSION['user']['id'],
+                ];
+                if ($photo_act !== null) {
+                    if (!empty($existing['photo'])) @unlink($upload_dir_act . $existing['photo']);
+                    $update_data['photo'] = $photo_act;
+                }
+                $activityModel->update($activity_id, $update_data);
+                // Notifier tous les inscrits
+                foreach ($activityModel->getRegisteredUserIds($activity_id) as $uid) {
+                    notify($pdo, (int)$uid, 'activite_modifiee', 'Activité modifiée',
+                        "L'activité \"{$title}\" à laquelle vous êtes inscrit(e) a été modifiée.", $activity_id);
+                }
+                $_SESSION['flash'] = "Activité modifiée avec succès.";
+                header('Location: /sharetime/public/?page=detail&id=' . $activity_id);
+                exit;
+            }
         }
     }
 }
@@ -308,7 +345,15 @@ if ($page === 'annuler_activite' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $activity_id = intval($_POST['activity_id'] ?? 0);
     if ($activity_id > 0) {
         $activityModel = new Activity($pdo);
+        $act_to_cancel = $activityModel->getById($activity_id);
         if ($activityModel->cancelByOrganizer($activity_id, $_SESSION['user']['id'])) {
+            // Notifier tous les inscrits
+            if ($act_to_cancel) {
+                foreach ($activityModel->getRegisteredUserIds($activity_id) as $uid) {
+                    notify($pdo, (int)$uid, 'activite_annulee', 'Activité annulée',
+                        "L'activité \"{$act_to_cancel['title']}\" à laquelle vous étiez inscrit(e) a été annulée.", $activity_id);
+                }
+            }
             $_SESSION['flash'] = "Votre activité a été annulée.";
         } else {
             $_SESSION['flash']      = "Impossible d'annuler cette activité.";
@@ -334,30 +379,37 @@ if ($page === 'creer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $category            = in_array($_POST['category'] ?? '', array_keys($CATEGORY_MAP)) ? $_POST['category'] : 'autre';
     $liste_attente_active = isset($_POST['liste_attente_active']) ? 1 : 0;
 
-    if (empty($title) || empty($description) || empty($location) || empty($city) || empty($start_time) || empty($end_time)) {
-        $error = "Veuillez remplir tous les champs obligatoires.";
-    } elseif ($max_participants < 2) {
-        $error = "Le nombre de participants doit être d'au moins 2.";
-    } elseif (strtotime($end_time) <= strtotime($start_time)) {
-        $error = "La date de fin doit être postérieure à la date de début.";
-    } else {
-        $activityModel = new Activity($pdo);
-        $activityModel->create([
-            'title'               => $title,
-            'description'         => $description,
-            'location'            => $location,
-            'city'                => $city,
-            'start_time'          => $start_time,
-            'end_time'            => $end_time,
-            'max_participants'    => $max_participants,
-            'visibility'          => $visibility,
-            'category'            => $category,
-            'liste_attente_active' => $liste_attente_active,
-            'creator_id'          => $_SESSION['user']['id'],
-        ]);
-        $_SESSION['flash'] = "Activité créée avec succès !";
-        header('Location: /sharetime/public/?page=activites');
-        exit;
+    $photo_creer = null;
+    try { $photo_creer = upload_image('photo', dirname(__DIR__) . '/public/uploads/activites/'); }
+    catch (\RuntimeException $e) { $error = $e->getMessage(); }
+
+    if (empty($error)) {
+        if (empty($title) || empty($description) || empty($location) || empty($city) || empty($start_time) || empty($end_time)) {
+            $error = "Veuillez remplir tous les champs obligatoires.";
+        } elseif ($max_participants < 2) {
+            $error = "Le nombre de participants doit être d'au moins 2.";
+        } elseif (strtotime($end_time) <= strtotime($start_time)) {
+            $error = "La date de fin doit être postérieure à la date de début.";
+        } else {
+            $activityModel = new Activity($pdo);
+            $activityModel->create([
+                'title'               => $title,
+                'description'         => $description,
+                'photo'               => $photo_creer,
+                'location'            => $location,
+                'city'                => $city,
+                'start_time'          => $start_time,
+                'end_time'            => $end_time,
+                'max_participants'    => $max_participants,
+                'visibility'          => $visibility,
+                'category'            => $category,
+                'liste_attente_active' => $liste_attente_active,
+                'creator_id'          => $_SESSION['user']['id'],
+            ]);
+            $_SESSION['flash'] = "Activité créée avec succès !";
+            header('Location: /sharetime/public/?page=activites');
+            exit;
+        }
     }
 }
 
@@ -372,8 +424,11 @@ if ($page === 's_inscrire' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $reg_status    = $activityModel->getRegistrationStatus($activity_id, $_SESSION['user']['id']);
 
         if ($activity && $activity['status'] === 'active' && (!$reg_status || $reg_status === 'annule')) {
+            $pseudo = htmlspecialchars($_SESSION['user']['pseudo'] ?? $_SESSION['user']['prenom']);
             if ($activity['nb_inscrits'] < $activity['max_participants']) {
                 $activityModel->register($activity_id, $_SESSION['user']['id']);
+                notify($pdo, (int)$activity['creator_id'], 'nouvelle_inscription', 'Nouvelle inscription',
+                    "{$pseudo} s'est inscrit(e) à votre activité \"{$activity['title']}\".", $activity_id);
             } elseif (!empty($activity['liste_attente_active'])) {
                 $activityModel->registerWaitlist($activity_id, $_SESSION['user']['id']);
                 $_SESSION['flash'] = "Activité complète. Vous avez été ajouté(e) à la liste d'attente.";
@@ -396,7 +451,11 @@ if ($page === 'se_desinscrire' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $activityModel->unregister($activity_id, $_SESSION['user']['id']);
         // Promouvoir le premier de la liste d'attente si la place se libère
         if ($was_inscrit && $activity && !empty($activity['liste_attente_active'])) {
-            $activityModel->promoteFromWaitlist($activity_id);
+            $promoted = $activityModel->promoteFromWaitlist($activity_id);
+            if ($promoted) {
+                notify($pdo, (int)$promoted, 'promotion_attente', 'Place libérée !',
+                    "Vous avez été promu(e) de la liste d'attente pour \"{$activity['title']}\".", $activity_id);
+            }
         }
     }
     header('Location: /sharetime/public/?page=detail&id=' . $activity_id);
@@ -463,15 +522,28 @@ if ($page === 'profil_edit' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $ville  = trim($_POST['ville'] ?? '');
     $bio    = trim($_POST['bio'] ?? '');
 
-    if (empty($pseudo)) {
-        $error = "Le pseudo ne peut pas être vide.";
-    } else {
-        $userModel = new User($pdo);
-        $userModel->update($_SESSION['user']['id'], ['pseudo' => $pseudo, 'ville' => $ville, 'bio' => $bio]);
-        $_SESSION['user']['pseudo'] = $pseudo;
-        $_SESSION['flash'] = "Profil mis à jour avec succès.";
-        header('Location: /sharetime/public/?page=profil');
-        exit;
+    $upload_dir_prof = dirname(__DIR__) . '/public/uploads/profils/';
+    $photo_profil_new = null;
+    try { $photo_profil_new = upload_image('photo_profil', $upload_dir_prof); }
+    catch (\RuntimeException $e) { $error = $e->getMessage(); }
+
+    if (empty($error)) {
+        if (empty($pseudo)) {
+            $error = "Le pseudo ne peut pas être vide.";
+        } else {
+            $userModel   = new User($pdo);
+            $update_data = ['pseudo' => $pseudo, 'ville' => $ville, 'bio' => $bio];
+            if ($photo_profil_new !== null) {
+                $old_prof = $userModel->getById($_SESSION['user']['id']);
+                if (!empty($old_prof['photo_profil'])) @unlink($upload_dir_prof . $old_prof['photo_profil']);
+                $update_data['photo_profil'] = $photo_profil_new;
+            }
+            $userModel->update($_SESSION['user']['id'], $update_data);
+            $_SESSION['user']['pseudo'] = $pseudo;
+            $_SESSION['flash'] = "Profil mis à jour avec succès.";
+            header('Location: /sharetime/public/?page=profil');
+            exit;
+        }
     }
 }
 
@@ -619,6 +691,36 @@ function admin_nav(string $current): void {
     echo '</div></div>';
 }
 
+// ── SUIVRE / NE PLUS SUIVRE ────────────────────────────
+if ($page === 'suivre' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    csrf_check();
+    $target_id = intval($_POST['user_id'] ?? 0);
+    $me        = (int)$_SESSION['user']['id'];
+    if ($target_id > 0 && $target_id !== $me) {
+        $um = new User($pdo);
+        if ($um->isFollowing($me, $target_id)) {
+            $um->unfollow($me, $target_id);
+        } else {
+            $um->follow($me, $target_id);
+            notify($pdo, $target_id, 'nouveau_follower', 'Nouvel abonné',
+                htmlspecialchars($_SESSION['user']['pseudo'] ?? $_SESSION['user']['prenom']) . ' a commencé à vous suivre.');
+        }
+    }
+    header('Location: /sharetime/public/?page=profil&id=' . $target_id);
+    exit;
+}
+
+// ── MARQUER NOTIFICATIONS LUES ─────────────────────────
+if ($page === 'notifs_lues' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    csrf_check();
+    $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = :u")
+        ->execute(['u' => $_SESSION['user']['id']]);
+    header('Location: /sharetime/public/?page=notifications');
+    exit;
+}
+
 // ── DÉCONNEXION ────────────────────────────────────────
 if ($page === 'logout') {
     $_SESSION = [];
@@ -634,8 +736,18 @@ $allowed_pages = [
     's_inscrire', 'se_desinscrire', 'commenter', 'supprimer_commentaire', 'noter',
     'admin', 'admin_users', 'admin_activities', 'owner',
     'mot_de_passe_oublie', 'reinitialiser_mdp',
-    'modifier_activite',
+    'modifier_activite', 'notifications',
 ];
+
+// Compte les notifications non lues (disponible globalement pour la navbar)
+$notif_count = 0;
+if (isset($_SESSION['user'])) {
+    try {
+        $stmt_nc = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = :u AND is_read = 0");
+        $stmt_nc->execute(['u' => $_SESSION['user']['id']]);
+        $notif_count = (int)$stmt_nc->fetchColumn();
+    } catch (\Throwable $e) {}
+}
 if (!in_array($page, $allowed_pages)) $page = 'home';
 
 $activityModel = new Activity($pdo);
@@ -655,6 +767,9 @@ $admin_stats    = $admin_users_list = $admin_activities_list = $owner_users = []
 $admin_current_page = 1;
 $admin_total_pages  = 1;
 $admin_total_count  = 0;
+$follower_count  = $following_count = 0;
+$is_following    = false;
+$notifications   = [];
 
 if ($page === 'home') {
     $activities = $activityModel->getAll('', $_SESSION['user']['id'] ?? null, '', 'active');
@@ -709,6 +824,10 @@ if ($page === 'home') {
     $user_activities    = $profile ? $activityModel->getByCreator($profile_id) : [];
     $user_registrations = (isset($_SESSION['user']) && $profile_id === (int)$_SESSION['user']['id'])
                           ? $activityModel->getUserRegistrations($profile_id) : [];
+    $follower_count  = $profile ? $userModel->getFollowerCount($profile_id) : 0;
+    $following_count = $profile ? $userModel->getFollowingCount($profile_id) : 0;
+    $is_following    = (isset($_SESSION['user']) && $profile && (int)$_SESSION['user']['id'] !== $profile_id)
+                       ? $userModel->isFollowing((int)$_SESSION['user']['id'], $profile_id) : false;
 
 } elseif ($page === 'profil_edit') {
     if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
@@ -754,6 +873,19 @@ if ($page === 'home') {
     $admin_current_page    = max(1, min($admin_total_pages, intval($_GET['p'] ?? 1)));
     $admin_activities_list = $activityModel->getAllForAdmin($admin_current_page, $per_page_admin);
 
+} elseif ($page === 'notifications') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    $stmt_notifs = $pdo->prepare("
+        SELECT n.*, a.title AS activity_title
+        FROM notifications n
+        LEFT JOIN activities a ON a.idactivities = n.activity_id
+        WHERE n.user_id = :u
+        ORDER BY n.created_at DESC
+        LIMIT 50
+    ");
+    $stmt_notifs->execute(['u' => $_SESSION['user']['id']]);
+    $notifications = $stmt_notifs->fetchAll();
+
 } elseif ($page === 'owner') {
     require_owner();
     $valid_tabs  = ['dashboard', 'users', 'activities', 'admins'];
@@ -781,7 +913,7 @@ $php_pages = ['home', 'activites', 'connexion', 'inscription', 'creer', 'detail'
               'profil', 'profil_edit', 'faq', 'contact', 'cgu', 'mentions',
               'admin', 'admin_users', 'admin_activities', 'owner',
               'mot_de_passe_oublie', 'reinitialiser_mdp',
-              'modifier_activite'];
+              'modifier_activite', 'notifications'];
 
 if (in_array($page, $php_pages)) {
     require "pages/{$page}.php";

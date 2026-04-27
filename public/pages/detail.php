@@ -24,9 +24,15 @@
     </a>
 
     <!-- Image header -->
+    <?php if (!empty($activity['photo'])): ?>
+    <div style="border-radius:var(--radius-lg); height:220px; margin-bottom:24px; position:relative; overflow:hidden;
+                background-image:url('/sharetime/public/uploads/activites/<?= htmlspecialchars($activity['photo']) ?>');
+                background-size:cover; background-position:center;">
+    <?php else: ?>
     <div class="card-image <?= $cat[1] ?>"
          style="border-radius:var(--radius-lg); height:200px; margin-bottom:24px; font-size:4rem; position:relative;">
         <?= $cat[0] ?>
+    <?php endif; ?>
         <span class="card-badge-vis" style="font-size:0.85rem;">
             <?= $activity['visibility'] === 'publique' ? '🌍 Public' : '🔒 Privé' ?>
         </span>

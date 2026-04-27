@@ -63,6 +63,36 @@ try {
         is_read TINYINT(1) NOT NULL DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    // activities : colonne photo
+    if (!$pdo->query("SHOW COLUMNS FROM activities LIKE 'photo'")->fetch()) {
+        $pdo->exec("ALTER TABLE activities ADD COLUMN photo VARCHAR(255) DEFAULT NULL AFTER description");
+    }
+
+    // Tables sociales (créées à la volée si absentes)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS notifications (
+        idnotifications INT AUTO_INCREMENT PRIMARY KEY,
+        user_id     INT(11) NOT NULL,
+        activity_id INT(11) DEFAULT NULL,
+        type        VARCHAR(45)  DEFAULT NULL,
+        title       VARCHAR(150) DEFAULT NULL,
+        content     VARCHAR(500) DEFAULT NULL,
+        is_read     TINYINT(1)   DEFAULT 0,
+        created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
+        KEY (user_id),
+        CONSTRAINT notif_user_fk  FOREIGN KEY (user_id)      REFERENCES users (idusers) ON DELETE CASCADE,
+        CONSTRAINT notif_activ_fk FOREIGN KEY (activity_id)  REFERENCES activities (idactivities) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS followers (
+        follower_id  INT(11) NOT NULL,
+        following_id INT(11) NOT NULL,
+        created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (follower_id, following_id),
+        KEY (following_id),
+        CONSTRAINT fol_follower_fk  FOREIGN KEY (follower_id)  REFERENCES users (idusers) ON DELETE CASCADE,
+        CONSTRAINT fol_following_fk FOREIGN KEY (following_id) REFERENCES users (idusers) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
     // Nettoyage périodique des tokens expirés (environ 1 requête sur 50)
     if (mt_rand(1, 50) === 1) {
         $pdo->exec("DELETE FROM password_resets WHERE expires_at < NOW() OR used = 1");

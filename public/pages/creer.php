@@ -9,7 +9,7 @@
     <?php endif; ?>
 
     <div style="background:white; border:1.5px solid var(--gray-200); border-radius:var(--radius-lg); padding:32px;">
-        <form method="POST" action="/sharetime/public/?page=creer" style="display:flex; flex-direction:column; gap:20px;">
+        <form method="POST" action="/sharetime/public/?page=creer" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:20px;">
             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
 
             <div>
@@ -96,6 +96,16 @@
                     </span>
                 </span>
             </label>
+
+            <!-- Photo optionnelle -->
+            <div>
+                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">
+                    Photo de l'activité
+                    <span style="font-size:0.78rem; font-weight:400; color:var(--gray-400);">(optionnelle · JPG, PNG, WebP · max 2 Mo)</span>
+                </label>
+                <input type="file" name="photo" accept="image/jpeg,image/png,image/gif,image/webp"
+                       style="font-family:inherit; font-size:0.9rem; color:var(--gray-700);">
+            </div>
 
             <div style="display:flex; gap:12px; margin-top:8px;">
                 <button type="submit" class="btn btn-orange btn-lg">Créer l'activité</button>

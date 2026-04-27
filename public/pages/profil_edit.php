@@ -15,8 +15,26 @@
         <?php endif; ?>
 
         <form method="post" action="/sharetime/public/?page=profil_edit"
+              enctype="multipart/form-data"
               style="display:flex; flex-direction:column; gap:20px;">
             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+
+            <!-- Photo de profil -->
+            <div>
+                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">
+                    Photo de profil
+                    <span style="font-size:0.78rem; font-weight:400; color:var(--gray-400);">(JPG, PNG, WebP · max 2 Mo)</span>
+                </label>
+                <?php if (!empty($profile['photo_profil'])): ?>
+                <div style="margin-bottom:10px; display:flex; align-items:center; gap:12px;">
+                    <img src="/sharetime/public/uploads/profils/<?= htmlspecialchars($profile['photo_profil']) ?>"
+                         style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--gray-200);">
+                    <span style="font-size:0.82rem; color:var(--gray-500);">Photo actuelle — importer une nouvelle pour la remplacer</span>
+                </div>
+                <?php endif; ?>
+                <input type="file" name="photo_profil" accept="image/jpeg,image/png,image/gif,image/webp"
+                       style="font-family:inherit; font-size:0.9rem; color:var(--gray-700);">
+            </div>
 
             <div>
                 <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">

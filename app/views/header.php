@@ -154,6 +154,22 @@
                     </a>
                 <?php endif; ?>
                 <a href="/sharetime/public/?page=creer" class="btn btn-orange btn-sm">+ Créer</a>
+                <!-- Cloche notifications -->
+                <a href="/sharetime/public/?page=notifications"
+                   style="position:relative; display:inline-flex; align-items:center; justify-content:center;
+                          width:36px; height:36px; border-radius:8px; border:1.5px solid rgba(255,255,255,0.2);
+                          color:white; text-decoration:none; font-size:1.1rem; transition:background 0.15s;"
+                   onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'"
+                   title="Notifications">
+                    🔔
+                    <?php if (!empty($notif_count)): ?>
+                    <span style="position:absolute; top:-4px; right:-4px; background:var(--orange); color:white;
+                                 font-size:0.65rem; font-weight:700; min-width:16px; height:16px; border-radius:99px;
+                                 display:flex; align-items:center; justify-content:center; padding:0 3px; line-height:1;">
+                        <?= $notif_count > 9 ? '9+' : $notif_count ?>
+                    </span>
+                    <?php endif; ?>
+                </a>
                 <a href="/sharetime/public/?page=profil" class="btn btn-outline btn-sm">
                     <?= htmlspecialchars($_SESSION['user']['pseudo'] ?? $_SESSION['user']['prenom']) ?>
                 </a>

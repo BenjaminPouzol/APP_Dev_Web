@@ -122,13 +122,14 @@ class Activity {
     public function create($data) {
         $stmt = $this->pdo->prepare("
             INSERT INTO activities
-            (title, description, location, city, start_time, end_time, max_participants, visibility, category, liste_attente_active, status, creator_id, created_at)
+            (title, description, photo, location, city, start_time, end_time, max_participants, visibility, category, liste_attente_active, status, creator_id, created_at)
             VALUES
-            (:title, :description, :location, :city, :start_time, :end_time, :max_participants, :visibility, :category, :liste_attente_active, 'active', :creator_id, NOW())
+            (:title, :description, :photo, :location, :city, :start_time, :end_time, :max_participants, :visibility, :category, :liste_attente_active, 'active', :creator_id, NOW())
         ");
-        return $stmt->execute([
+        $ok = $stmt->execute([
             'title'               => $data['title'],
             'description'         => $data['description'],
+            'photo'               => $data['photo'] ?? null,
             'location'            => $data['location'],
             'city'                => $data['city'],
             'start_time'          => $data['start_time'],
@@ -139,19 +140,14 @@ class Activity {
             'liste_attente_active' => $data['liste_attente_active'] ? 1 : 0,
             'creator_id'          => $data['creator_id'],
         ]);
+        return $ok ? (int)$this->pdo->lastInsertId() : false;
     }
 
     // ── Mise à jour ────────────────────────────────────────
 
     public function update($id, $data) {
-        $stmt = $this->pdo->prepare("
-            UPDATE activities
-            SET title = :title, description = :description, location = :location, city = :city,
-                start_time = :start_time, end_time = :end_time, max_participants = :max_participants,
-                visibility = :visibility, category = :category, liste_attente_active = :liste_attente_active
-            WHERE idactivities = :id AND creator_id = :creator_id
-        ");
-        return $stmt->execute([
+        $photo_sql = array_key_exists('photo', $data) ? ", photo = :photo" : "";
+        $bind = [
             'title'               => $data['title'],
             'description'         => $data['description'],
             'location'            => $data['location'],
@@ -164,7 +160,21 @@ class Activity {
             'liste_attente_active' => $data['liste_attente_active'] ? 1 : 0,
             'id'                  => (int)$id,
             'creator_id'          => (int)$data['creator_id'],
-        ]);
+        ];
+        if (array_key_exists('photo', $data)) $bind['photo'] = $data['photo'];
+        return $this->pdo->prepare("
+            UPDATE activities
+            SET title = :title, description = :description, location = :location, city = :city,
+                start_time = :start_time, end_time = :end_time, max_participants = :max_participants,
+                visibility = :visibility, category = :category, liste_attente_active = :liste_attente_active{$photo_sql}
+            WHERE idactivities = :id AND creator_id = :creator_id
+        ")->execute($bind);
+    }
+
+    public function getRegisteredUserIds(int $activity_id): array {
+        $stmt = $this->pdo->prepare("SELECT user_id FROM registrations WHERE activity_id = :a AND status = 'inscrit'");
+        $stmt->execute(['a' => $activity_id]);
+        return array_column($stmt->fetchAll(), 'user_id');
     }
 
     public function cancelByOrganizer($id, $creator_id) {

@@ -11,7 +11,7 @@
     <?php endif; ?>
 
     <div style="background:white; border:1.5px solid var(--gray-200); border-radius:var(--radius-lg); padding:32px;">
-        <form method="POST" action="/sharetime/public/?page=modifier_activite" style="display:flex; flex-direction:column; gap:20px;">
+        <form method="POST" action="/sharetime/public/?page=modifier_activite" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:20px;">
             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
             <input type="hidden" name="activity_id" value="<?= (int)$activity['idactivities'] ?>">
 
@@ -111,6 +111,23 @@
                     </span>
                 </span>
             </label>
+
+            <!-- Photo de l'activité -->
+            <div>
+                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">
+                    Photo de l'activité
+                    <span style="font-size:0.78rem; font-weight:400; color:var(--gray-400);">(JPG, PNG, WebP · max 2 Mo)</span>
+                </label>
+                <?php if (!empty($activity['photo'])): ?>
+                <div style="margin-bottom:10px; display:flex; align-items:center; gap:12px;">
+                    <img src="/sharetime/public/uploads/activites/<?= htmlspecialchars($activity['photo']) ?>"
+                         style="width:80px; height:56px; object-fit:cover; border-radius:8px; border:2px solid var(--gray-200);">
+                    <span style="font-size:0.82rem; color:var(--gray-500);">Photo actuelle — importer une nouvelle pour la remplacer</span>
+                </div>
+                <?php endif; ?>
+                <input type="file" name="photo" accept="image/jpeg,image/png,image/gif,image/webp"
+                       style="font-family:inherit; font-size:0.9rem; color:var(--gray-700);">
+            </div>
 
             <div style="display:flex; gap:12px; margin-top:8px;">
                 <button type="submit" class="btn btn-orange btn-lg">Enregistrer les modifications</button>

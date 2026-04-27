@@ -66,16 +66,47 @@ class User {
     }
 
     public function update($id, $data) {
-        $stmt = $this->pdo->prepare("
-            UPDATE users SET pseudo = :pseudo, ville = :ville, bio = :bio
-            WHERE idusers = :id
-        ");
-        return $stmt->execute([
-            'pseudo' => $data['pseudo'],
-            'ville'  => $data['ville'],
-            'bio'    => $data['bio'],
-            'id'     => (int)$id,
-        ]);
+        $set  = "pseudo = :pseudo, ville = :ville, bio = :bio";
+        $bind = ['pseudo' => $data['pseudo'], 'ville' => $data['ville'], 'bio' => $data['bio'], 'id' => (int)$id];
+        if (array_key_exists('photo_profil', $data)) {
+            $set .= ", photo_profil = :photo_profil";
+            $bind['photo_profil'] = $data['photo_profil'];
+        }
+        return $this->pdo->prepare("UPDATE users SET {$set} WHERE idusers = :id")->execute($bind);
+    }
+
+    // ── Follow ─────────────────────────────────────────────
+
+    public function follow(int $follower_id, int $following_id): bool {
+        if ($follower_id === $following_id) return false;
+        try {
+            $this->pdo->prepare("INSERT IGNORE INTO followers (follower_id, following_id) VALUES (:f, :g)")
+                ->execute(['f' => $follower_id, 'g' => $following_id]);
+            return true;
+        } catch (\Throwable $e) { return false; }
+    }
+
+    public function unfollow(int $follower_id, int $following_id): bool {
+        return $this->pdo->prepare("DELETE FROM followers WHERE follower_id = :f AND following_id = :g")
+            ->execute(['f' => $follower_id, 'g' => $following_id]);
+    }
+
+    public function isFollowing(int $follower_id, int $following_id): bool {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM followers WHERE follower_id = :f AND following_id = :g");
+        $stmt->execute(['f' => $follower_id, 'g' => $following_id]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    public function getFollowerCount(int $user_id): int {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM followers WHERE following_id = :u");
+        $stmt->execute(['u' => $user_id]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    public function getFollowingCount(int $user_id): int {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM followers WHERE follower_id = :u");
+        $stmt->execute(['u' => $user_id]);
+        return (int)$stmt->fetchColumn();
     }
 
     // ── Administration ─────────────────────────────────────

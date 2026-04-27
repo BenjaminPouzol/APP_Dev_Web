@@ -11,22 +11,22 @@
 
 <main class="container" style="padding:40px 0; max-width:800px; margin:auto;">
 
-    <?php if (!empty($flash)): ?>
-        <div style="background:#D1FAE5; color:#065F46; padding:12px 16px; border-radius:10px; margin-bottom:24px; font-weight:500;">
-            ✅ <?= htmlspecialchars($flash) ?>
-        </div>
-    <?php endif; ?>
 
     <!-- En-tête profil -->
     <div style="background:white; border:1.5px solid var(--gray-200); border-radius:var(--radius-lg); padding:32px; margin-bottom:24px;">
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
             <div style="display:flex; align-items:center; gap:20px;">
+                <?php if (!empty($profile['photo_profil'])): ?>
+                <img src="/sharetime/public/uploads/profils/<?= htmlspecialchars($profile['photo_profil']) ?>"
+                     style="width:72px; height:72px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid var(--gray-200);">
+                <?php else: ?>
                 <div style="width:72px; height:72px; border-radius:50%;
                             background:linear-gradient(135deg, var(--navy), var(--navy-light));
                             display:flex; align-items:center; justify-content:center;
                             color:white; font-size:1.8rem; font-weight:700; flex-shrink:0;">
                     <?= strtoupper(mb_substr($profile['prenom'], 0, 1)) ?>
                 </div>
+                <?php endif; ?>
                 <div>
                     <h1 style="margin:0; color:var(--navy); font-size:1.5rem;">
                         <?= htmlspecialchars($profile['prenom'] . ' ' . $profile['nom']) ?>
@@ -50,9 +50,24 @@
                     <?php endif; ?>
                 </div>
             </div>
-            <?php if ($is_own): ?>
-                <a href="/sharetime/public/?page=profil_edit" class="btn btn-outline-navy">✏️ Modifier le profil</a>
-            <?php endif; ?>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
+                <!-- Compteurs follow -->
+                <div style="display:flex; gap:16px; font-size:0.85rem; color:var(--gray-600);">
+                    <span><strong style="color:var(--navy);"><?= $follower_count ?></strong> abonné<?= $follower_count > 1 ? 's' : '' ?></span>
+                    <span><strong style="color:var(--navy);"><?= $following_count ?></strong> abonnement<?= $following_count > 1 ? 's' : '' ?></span>
+                </div>
+                <?php if ($is_own): ?>
+                    <a href="/sharetime/public/?page=profil_edit" class="btn btn-outline-navy btn-sm">✏️ Modifier le profil</a>
+                <?php elseif (isset($_SESSION['user'])): ?>
+                    <form method="post" action="/sharetime/public/?page=suivre" style="margin:0;">
+                        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                        <input type="hidden" name="user_id" value="<?= $profile['idusers'] ?>">
+                        <button type="submit" class="btn btn-sm <?= $is_following ? 'btn-outline-navy' : 'btn-orange' ?>">
+                            <?= $is_following ? '✓ Abonné(e)' : '+ Suivre' ?>
+                        </button>
+                    </form>
+                <?php endif; ?>
+            </div>
         </div>
 
         <?php if (!empty($profile['bio'])): ?>

@@ -107,8 +107,12 @@
                 $auteur = $a['pseudo'] ?: $a['prenom'];
             ?>
             <a href="/sharetime/public/?page=detail&id=<?= $a['idactivities'] ?>" class="activity-card">
+                <?php if (!empty($a['photo'])): ?>
+                <div class="card-image" style="background-image:url('/sharetime/public/uploads/activites/<?= htmlspecialchars($a['photo']) ?>');background-size:cover;background-position:center;">
+                <?php else: ?>
                 <div class="card-image <?= $cat[1] ?>">
                     <?= $cat[0] ?>
+                <?php endif; ?>
                     <span class="card-badge"><?= htmlspecialchars($a['city']) ?></span>
                     <span class="card-badge-vis"><?= $a['visibility'] === 'publique' ? 'Public' : 'Privé' ?></span>
                 </div>
