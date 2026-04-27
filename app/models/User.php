@@ -158,17 +158,44 @@ class User {
         return $stmt->execute(['banned' => $banned ? 1 : 0, 'id' => (int)$id]);
     }
 
-    public function delete($id) {
-        // Nettoyage en cascade (les FK ne sont pas toutes ON DELETE CASCADE)
-        $this->pdo->prepare("DELETE FROM registrations WHERE user_id = :id")->execute(['id' => $id]);
-        $this->pdo->prepare("DELETE FROM comments WHERE user_id = :id")->execute(['id' => $id]);
-        $this->pdo->prepare("
-            DELETE FROM registrations
-            WHERE activity_id IN (SELECT idactivities FROM activities WHERE creator_id = :id)
-        ")->execute(['id' => $id]);
-        $this->pdo->prepare("DELETE FROM activities WHERE creator_id = :id")->execute(['id' => $id]);
-        // Jamais supprimer un owner
-        $stmt = $this->pdo->prepare("DELETE FROM users WHERE idusers = :id AND role != 'owner'");
-        return $stmt->execute(['id' => (int)$id]);
+    public function delete($id): bool {
+        $id = (int)$id;
+        $this->pdo->beginTransaction();
+        try {
+            // 1. Données liées aux activités créées par cet utilisateur
+            //    (doit précéder la suppression des activités)
+            $this->pdo->prepare("
+                DELETE FROM comments WHERE activity_id IN
+                (SELECT idactivities FROM activities WHERE creator_id = :id)
+            ")->execute(['id' => $id]);
+            $this->pdo->prepare("
+                DELETE FROM ratings WHERE activity_id IN
+                (SELECT idactivities FROM activities WHERE creator_id = :id)
+            ")->execute(['id' => $id]);
+            $this->pdo->prepare("
+                DELETE FROM registrations WHERE activity_id IN
+                (SELECT idactivities FROM activities WHERE creator_id = :id)
+            ")->execute(['id' => $id]);
+
+            // 2. Supprimer les activités
+            $this->pdo->prepare("DELETE FROM activities WHERE creator_id = :id")
+                ->execute(['id' => $id]);
+
+            // 3. Données de participation de cet utilisateur (en tant que membre)
+            $this->pdo->prepare("DELETE FROM registrations WHERE user_id = :id")->execute(['id' => $id]);
+            $this->pdo->prepare("DELETE FROM comments WHERE user_id = :id")->execute(['id' => $id]);
+            $this->pdo->prepare("DELETE FROM ratings WHERE notateur_id = :id")->execute(['id' => $id]);
+
+            // 4. Supprimer le compte (followers, messages, notifications,
+            //    email_verifications, admin_logs ont ON DELETE CASCADE)
+            $stmt = $this->pdo->prepare("DELETE FROM users WHERE idusers = :id AND role != 'owner'");
+            $stmt->execute(['id' => $id]);
+
+            $this->pdo->commit();
+            return $stmt->rowCount() > 0;
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 }
