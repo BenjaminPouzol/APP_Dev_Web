@@ -133,7 +133,39 @@ try {
         CONSTRAINT al_admin_fk FOREIGN KEY (admin_id) REFERENCES users (idusers) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // Nettoyage périodique des tokens expirés (environ 1 requête sur 50)
+    // ── Index pour les colonnes de filtrage et comptage ──────────
+    $idx_check = "SELECT COUNT(*) FROM information_schema.STATISTICS
+                  WHERE table_schema = DATABASE() AND table_name = :t AND index_name = :i";
+    $chk = $pdo->prepare($idx_check);
+
+    $chk->execute(['t' => 'activities', 'i' => 'idx_act_status']);
+    if (!$chk->fetchColumn()) $pdo->exec("ALTER TABLE activities ADD INDEX idx_act_status (status)");
+
+    $chk->execute(['t' => 'activities', 'i' => 'idx_act_category']);
+    if (!$chk->fetchColumn()) $pdo->exec("ALTER TABLE activities ADD INDEX idx_act_category (category)");
+
+    $chk->execute(['t' => 'activities', 'i' => 'idx_act_creator']);
+    if (!$chk->fetchColumn()) $pdo->exec("ALTER TABLE activities ADD INDEX idx_act_creator (creator_id)");
+
+    $chk->execute(['t' => 'activities', 'i' => 'idx_act_city']);
+    if (!$chk->fetchColumn()) $pdo->exec("ALTER TABLE activities ADD INDEX idx_act_city (city(50))");
+
+    $chk->execute(['t' => 'registrations', 'i' => 'idx_reg_act_status']);
+    if (!$chk->fetchColumn()) $pdo->exec("ALTER TABLE registrations ADD INDEX idx_reg_act_status (activity_id, status)");
+
+    $chk->execute(['t' => 'registrations', 'i' => 'idx_reg_user_status']);
+    if (!$chk->fetchColumn()) $pdo->exec("ALTER TABLE registrations ADD INDEX idx_reg_user_status (user_id, status)");
+
+    $chk->execute(['t' => 'notifications', 'i' => 'idx_notif_user_read']);
+    if (!$chk->fetchColumn()) $pdo->exec("ALTER TABLE notifications ADD INDEX idx_notif_user_read (user_id, is_read)");
+
+    $chk->execute(['t' => 'messages', 'i' => 'idx_msg_receiver_read']);
+    if (!$chk->fetchColumn()) $pdo->exec("ALTER TABLE messages ADD INDEX idx_msg_receiver_read (receiver_id, is_read)");
+
+    $chk->execute(['t' => 'users', 'i' => 'idx_users_email']);
+    if (!$chk->fetchColumn()) $pdo->exec("ALTER TABLE users ADD INDEX idx_users_email (email)");
+
+    // ── Nettoyage périodique des tokens expirés (environ 1 requête sur 50)
     if (mt_rand(1, 50) === 1) {
         $pdo->exec("DELETE FROM password_resets WHERE expires_at < NOW() OR used = 1");
         $pdo->exec("DELETE FROM email_verifications WHERE created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)");

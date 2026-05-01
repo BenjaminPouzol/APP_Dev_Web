@@ -100,7 +100,7 @@ $log_action_filter  = '';
 $log_admin_filter   = '';
 
 if ($page === 'home') {
-    $activities = $activityModel->getAll('', $_SESSION['user']['id'] ?? null, '', 'active');
+    $activities = $activityModel->getAll('', $_SESSION['user']['id'] ?? null, '', 'active', '', 1, 6);
 
 } elseif ($page === 'activites') {
     $city_filter     = trim($_GET['city'] ?? '');
@@ -170,12 +170,19 @@ if ($page === 'home') {
 } elseif ($page === 'admin') {
     if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; }
     require_admin();
+    $s = $pdo->query("SELECT
+        (SELECT SUM(role != 'owner') FROM users) AS membres,
+        (SELECT COUNT(*) FROM activities) AS activites,
+        (SELECT COUNT(*) FROM registrations WHERE status = 'inscrit') AS inscriptions,
+        (SELECT SUM(role = 'admin') FROM users) AS admins,
+        (SELECT SUM(is_banned = 1) FROM users) AS suspendus
+    ")->fetch();
     $admin_stats = [
-        'membres'      => $pdo->query("SELECT COUNT(*) FROM users WHERE role != 'owner'")->fetchColumn(),
-        'activites'    => $pdo->query("SELECT COUNT(*) FROM activities")->fetchColumn(),
-        'inscriptions' => $pdo->query("SELECT COUNT(*) FROM registrations WHERE status = 'inscrit'")->fetchColumn(),
-        'admins'       => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn(),
-        'suspendus'    => $pdo->query("SELECT COUNT(*) FROM users WHERE is_banned = 1")->fetchColumn(),
+        'membres'      => (int)$s['membres'],
+        'activites'    => (int)$s['activites'],
+        'inscriptions' => (int)$s['inscriptions'],
+        'admins'       => (int)$s['admins'],
+        'suspendus'    => (int)$s['suspendus'],
     ];
     $admin_recent_users = $pdo->query("SELECT * FROM users ORDER BY date_creation DESC LIMIT 5")->fetchAll();
     $admin_recent_activities = $pdo->query("
@@ -308,12 +315,19 @@ if ($page === 'home') {
     $owner_tab   = in_array($_GET['tab'] ?? '', $valid_tabs) ? $_GET['tab'] : 'dashboard';
     $owner_users = $userModel->getAllForAdmin();
     $admin_activities_list = $activityModel->getAllForAdmin();
+    $s = $pdo->query("SELECT
+        (SELECT SUM(role != 'owner') FROM users) AS membres,
+        (SELECT COUNT(*) FROM activities) AS activites,
+        (SELECT COUNT(*) FROM registrations WHERE status = 'inscrit') AS inscriptions,
+        (SELECT SUM(role = 'admin') FROM users) AS admins,
+        (SELECT SUM(is_banned = 1) FROM users) AS suspendus
+    ")->fetch();
     $admin_stats = [
-        'membres'      => $pdo->query("SELECT COUNT(*) FROM users WHERE role != 'owner'")->fetchColumn(),
-        'activites'    => $pdo->query("SELECT COUNT(*) FROM activities")->fetchColumn(),
-        'inscriptions' => $pdo->query("SELECT COUNT(*) FROM registrations WHERE status = 'inscrit'")->fetchColumn(),
-        'admins'       => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn(),
-        'suspendus'    => $pdo->query("SELECT COUNT(*) FROM users WHERE is_banned = 1")->fetchColumn(),
+        'membres'      => (int)$s['membres'],
+        'activites'    => (int)$s['activites'],
+        'inscriptions' => (int)$s['inscriptions'],
+        'admins'       => (int)$s['admins'],
+        'suspendus'    => (int)$s['suspendus'],
     ];
     $admin_recent_users = $pdo->query("SELECT * FROM users ORDER BY date_creation DESC LIMIT 5")->fetchAll();
     $admin_recent_activities = $pdo->query("
@@ -325,13 +339,14 @@ if ($page === 'home') {
 // ── COMPTEURS NAVBAR (calculés après data loading pour être à jour) ──
 if (isset($_SESSION['user'])) {
     try {
-        $stmt_nc = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
-        $stmt_nc->execute([$_SESSION['user']['id']]);
-        $notif_count = (int)$stmt_nc->fetchColumn();
-
-        $stmt_mc = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE receiver_id = ? AND is_read = 0");
-        $stmt_mc->execute([$_SESSION['user']['id']]);
-        $msg_count = (int)$stmt_mc->fetchColumn();
+        $stmt_counts = $pdo->prepare("SELECT
+            (SELECT COUNT(*) FROM notifications WHERE user_id = :u AND is_read = 0) AS nc,
+            (SELECT COUNT(*) FROM messages   WHERE receiver_id = :u2 AND is_read = 0) AS mc
+        ");
+        $stmt_counts->execute(['u' => $_SESSION['user']['id'], 'u2' => $_SESSION['user']['id']]);
+        $counts      = $stmt_counts->fetch();
+        $notif_count = (int)$counts['nc'];
+        $msg_count   = (int)$counts['mc'];
     } catch (\Throwable $e) {}
 }
 

@@ -34,9 +34,19 @@ class User {
     public function getAllForAdmin($page = 0, $per_page = 0) {
         $sql = "
             SELECT u.*,
-                   (SELECT COUNT(*) FROM activities WHERE creator_id = u.idusers) AS nb_activities,
-                   (SELECT COUNT(*) FROM registrations WHERE user_id = u.idusers AND status = 'inscrit') AS nb_registrations
+                   COALESCE(a_count.nb_activities, 0)    AS nb_activities,
+                   COALESCE(r_count.nb_registrations, 0) AS nb_registrations
             FROM users u
+            LEFT JOIN (
+                SELECT creator_id, COUNT(*) AS nb_activities
+                FROM activities
+                GROUP BY creator_id
+            ) a_count ON a_count.creator_id = u.idusers
+            LEFT JOIN (
+                SELECT user_id, COUNT(*) AS nb_registrations
+                FROM registrations WHERE status = 'inscrit'
+                GROUP BY user_id
+            ) r_count ON r_count.user_id = u.idusers
             ORDER BY FIELD(u.role,'owner','admin','utilisateur'), u.date_creation DESC
         ";
         if ($per_page > 0 && $page > 0) {

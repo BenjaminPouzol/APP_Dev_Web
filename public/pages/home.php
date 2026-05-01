@@ -1,7 +1,13 @@
 <?php
-$nb_users      = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
-$nb_activities = $pdo->query("SELECT COUNT(*) FROM activities WHERE status = 'active'")->fetchColumn();
-$nb_cities     = $pdo->query("SELECT COUNT(DISTINCT city) FROM activities WHERE city != ''")->fetchColumn();
+$home_stats = $pdo->query("
+    SELECT
+        (SELECT COUNT(*) FROM users) AS nb_users,
+        (SELECT COUNT(*) FROM activities WHERE status = 'active') AS nb_activities,
+        (SELECT COUNT(DISTINCT city) FROM activities WHERE city != '') AS nb_cities
+")->fetch();
+$nb_users      = $home_stats['nb_users'];
+$nb_activities = $home_stats['nb_activities'];
+$nb_cities     = $home_stats['nb_cities'];
 ?>
 
 <main>

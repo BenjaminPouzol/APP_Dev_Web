@@ -18,9 +18,14 @@ class Activity {
             $visibility_clause = "a.visibility = 'publique'";
         }
         $sql = "SELECT a.*, u.prenom, u.nom, u.pseudo,
-                       (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'inscrit') AS nb_inscrits
+                       COALESCE(r_count.nb_inscrits, 0) AS nb_inscrits
                 FROM activities a
                 JOIN users u ON u.idusers = a.creator_id
+                LEFT JOIN (
+                    SELECT activity_id, COUNT(*) AS nb_inscrits
+                    FROM registrations WHERE status = 'inscrit'
+                    GROUP BY activity_id
+                ) r_count ON r_count.activity_id = a.idactivities
                 WHERE {$visibility_clause}";
         if ($city !== '') {
             $sql .= " AND a.city LIKE :city";
@@ -83,21 +88,34 @@ class Activity {
     public function getById($id) {
         $stmt = $this->pdo->prepare("
             SELECT a.*, u.prenom, u.nom, u.pseudo, u.note_moyenne AS creator_note,
-                   (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'inscrit') AS nb_inscrits,
-                   (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'en_attente') AS nb_attente
+                   COALESCE(r_stats.nb_inscrits, 0) AS nb_inscrits,
+                   COALESCE(r_stats.nb_attente, 0) AS nb_attente
             FROM activities a
             JOIN users u ON u.idusers = a.creator_id
+            LEFT JOIN (
+                SELECT activity_id,
+                       SUM(status = 'inscrit')    AS nb_inscrits,
+                       SUM(status = 'en_attente') AS nb_attente
+                FROM registrations
+                WHERE activity_id = :id2
+                GROUP BY activity_id
+            ) r_stats ON r_stats.activity_id = a.idactivities
             WHERE a.idactivities = :id
         ");
-        $stmt->execute(['id' => (int)$id]);
+        $stmt->execute(['id' => (int)$id, 'id2' => (int)$id]);
         return $stmt->fetch();
     }
 
     public function getByCreator($user_id) {
         $stmt = $this->pdo->prepare("
             SELECT a.*,
-                   (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'inscrit') AS nb_inscrits
+                   COALESCE(r_count.nb_inscrits, 0) AS nb_inscrits
             FROM activities a
+            LEFT JOIN (
+                SELECT activity_id, COUNT(*) AS nb_inscrits
+                FROM registrations WHERE status = 'inscrit'
+                GROUP BY activity_id
+            ) r_count ON r_count.activity_id = a.idactivities
             WHERE a.creator_id = :id
             ORDER BY a.start_time DESC
         ");
@@ -341,11 +359,23 @@ class Activity {
     public function getAllForAdmin($page = 0, $per_page = 0) {
         $sql = "
             SELECT a.*, u.prenom, u.nom, u.pseudo,
-                   (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'inscrit') AS nb_inscrits,
-                   (SELECT COUNT(*) FROM registrations r WHERE r.activity_id = a.idactivities AND r.status = 'en_attente') AS nb_attente,
-                   (SELECT COUNT(*) FROM comments c WHERE c.activity_id = a.idactivities) AS nb_comments
+                   COALESCE(r_stats.nb_inscrits, 0)  AS nb_inscrits,
+                   COALESCE(r_stats.nb_attente, 0)   AS nb_attente,
+                   COALESCE(c_count.nb_comments, 0)  AS nb_comments
             FROM activities a
             JOIN users u ON u.idusers = a.creator_id
+            LEFT JOIN (
+                SELECT activity_id,
+                       SUM(status = 'inscrit')    AS nb_inscrits,
+                       SUM(status = 'en_attente') AS nb_attente
+                FROM registrations
+                GROUP BY activity_id
+            ) r_stats ON r_stats.activity_id = a.idactivities
+            LEFT JOIN (
+                SELECT activity_id, COUNT(*) AS nb_comments
+                FROM comments
+                GROUP BY activity_id
+            ) c_count ON c_count.activity_id = a.idactivities
             ORDER BY a.created_at DESC
         ";
         if ($per_page > 0 && $page > 0) {
