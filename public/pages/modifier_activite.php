@@ -1,7 +1,7 @@
 <main class="container" style="padding:40px 0; max-width:700px; margin:auto;">
     <h1 style="margin-bottom:8px; color:var(--navy);">Modifier l'activité</h1>
     <p style="color:var(--gray-500); margin-bottom:32px;">
-        Modifie les informations de ton activité. Les inscrits ne seront pas notifiés automatiquement.
+        Modifie les informations de ton activité. Les participants inscrits recevront une notification.
     </p>
 
     <?php if (!empty($error)): ?>
@@ -124,6 +124,8 @@
                          style="width:80px; height:56px; object-fit:cover; border-radius:8px; border:2px solid var(--gray-200);">
                     <span style="font-size:0.82rem; color:var(--gray-500);">Photo actuelle — importer une nouvelle pour la remplacer</span>
                 </div>
+                <?php else: ?>
+                <p style="font-size:0.82rem; color:var(--gray-400); margin:0 0 10px;">Aucune photo pour l'instant. Vous pouvez en ajouter une ci-dessous.</p>
                 <?php endif; ?>
                 <input type="file" name="photo" accept="image/jpeg,image/png,image/gif,image/webp"
                        style="font-family:inherit; font-size:0.9rem; color:var(--gray-700);">

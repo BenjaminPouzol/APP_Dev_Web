@@ -128,10 +128,15 @@ $nb_cities     = $pdo->query("SELECT COUNT(DISTINCT city) FROM activities WHERE 
                     $cat    = $CATEGORY_MAP[$a['category']] ?? $CATEGORY_MAP['autre'];
                     $places = $a['max_participants'] - $a['nb_inscrits'];
                     $start  = new DateTime($a['start_time']);
+                    $auteur = $a['pseudo'] ?: $a['prenom'];
                 ?>
                 <a href="/sharetime/public/?page=detail&id=<?= $a['idactivities'] ?>" class="activity-card">
+                    <?php if (!empty($a['photo'])): ?>
+                    <div class="card-image" style="background-image:url('/sharetime/public/uploads/activites/<?= htmlspecialchars($a['photo']) ?>');background-size:cover;background-position:center;">
+                    <?php else: ?>
                     <div class="card-image <?= $cat[1] ?>">
                         <?= $cat[0] ?>
+                    <?php endif; ?>
                         <span class="card-badge"><?= htmlspecialchars($a['city']) ?></span>
                         <span class="card-badge-vis"><?= $a['visibility'] === 'publique' ? 'Public' : 'Privé' ?></span>
                     </div>
@@ -140,7 +145,7 @@ $nb_cities     = $pdo->query("SELECT COUNT(DISTINCT city) FROM activities WHERE 
                         <div class="card-meta">
                             <span>📅 <?= $start->format('d/m/Y à H:i') ?></span>
                             <span>📍 <?= htmlspecialchars($a['location']) ?></span>
-                            <span>👤 <?= htmlspecialchars($a['prenom'] . ' ' . $a['nom']) ?></span>
+                            <span>👤 <?= htmlspecialchars($auteur) ?></span>
                         </div>
                         <div class="card-footer">
                             <?php if ($places <= 0): ?>

@@ -279,7 +279,8 @@
                 </div>
 
                 <!-- Formulaire d'envoi -->
-                <form method="post" action="/sharetime/public/?page=envoyer_message" class="msg-form-bar" id="msgForm">
+                <form method="post" action="/sharetime/public/?page=envoyer_message" class="msg-form-bar" id="msgForm"
+                      onsubmit="this.querySelector('button[type=submit]').disabled=true;">
                     <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                     <input type="hidden" name="receiver_id" value="<?= (int)$conversation_user['idusers'] ?>">
                     <textarea name="content" id="msgInput" placeholder="Votre message…" rows="1"

@@ -156,6 +156,7 @@ if ($page === 's_inscrire' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $activityModel->register($activity_id, $_SESSION['user']['id']);
                 notify($pdo, (int)$activity['creator_id'], 'nouvelle_inscription', 'Nouvelle inscription',
                     "{$pseudo} s'est inscrit(e) à votre activité \"{$activity['title']}\".", $activity_id);
+                $_SESSION['flash'] = "Inscription confirmée ! À bientôt.";
             } elseif (!empty($activity['liste_attente_active'])) {
                 $activityModel->registerWaitlist($activity_id, $_SESSION['user']['id']);
                 $_SESSION['flash'] = "Activité complète. Vous avez été ajouté(e) à la liste d'attente.";
@@ -176,6 +177,7 @@ if ($page === 'se_desinscrire' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $activity      = $activityModel->getById($activity_id);
         $was_inscrit   = $activityModel->getRegistrationStatus($activity_id, $_SESSION['user']['id']) === 'inscrit';
         $activityModel->unregister($activity_id, $_SESSION['user']['id']);
+        $_SESSION['flash'] = "Vous vous êtes désinscrit(e) de cette activité.";
         if ($was_inscrit && $activity && !empty($activity['liste_attente_active'])) {
             $promoted = $activityModel->promoteFromWaitlist($activity_id);
             if ($promoted) {
@@ -233,6 +235,7 @@ if ($page === 'noter' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $reg_status = $activityModel->getRegistrationStatus($activity_id, $_SESSION['user']['id']);
             if ($reg_status === 'inscrit') {
                 $activityModel->rate($_SESSION['user']['id'], $activity['creator_id'], $activity_id, $note);
+                $_SESSION['flash'] = "Votre note a bien été enregistrée. Merci !";
             }
         }
     }

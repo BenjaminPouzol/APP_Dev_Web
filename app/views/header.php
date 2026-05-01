@@ -109,19 +109,26 @@
             <li><a href="/sharetime/public/?page=faq" <?= ($page === 'faq') ? 'class="active"' : '' ?>>FAQ</a></li>
             <li><a href="/sharetime/public/?page=contact" <?= ($page === 'contact') ? 'class="active"' : '' ?>>Contact</a></li>
             <?php if (isset($_SESSION['user'])): ?>
-                <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin', 'owner'])): ?>
-                <li class="mobile-only" style="border-top: 1px solid rgba(255,255,255,0.08); margin-top:8px;">
-                    <?php if ($_SESSION['user']['role'] === 'owner'): ?>
-                        <a href="/sharetime/public/?page=owner" style="color:var(--orange); font-weight:700;">👑 Espace Propriétaire</a>
-                    <?php else: ?>
-                        <a href="/sharetime/public/?page=admin" style="color:var(--orange); font-weight:700;">⚙️ Administration</a>
-                    <?php endif; ?>
-                </li>
-                <?php else: ?>
                 <li class="mobile-only" style="border-top: 1px solid rgba(255,255,255,0.08); margin-top:8px;">
                     <a href="/sharetime/public/?page=creer" style="color:var(--orange); font-weight:700;">+ Créer une activité</a>
                 </li>
+                <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin', 'owner'])): ?>
+                <li class="mobile-only">
+                    <?php if ($_SESSION['user']['role'] === 'owner'): ?>
+                        <a href="/sharetime/public/?page=owner" style="color:var(--orange); font-weight:600;">👑 Espace Propriétaire</a>
+                    <?php else: ?>
+                        <a href="/sharetime/public/?page=admin" style="color:var(--orange); font-weight:600;">⚙️ Administration</a>
+                    <?php endif; ?>
+                </li>
                 <?php endif; ?>
+                <li class="mobile-only">
+                    <a href="/sharetime/public/?page=notifications">
+                        🔔 Notifications<?php if (!empty($notif_count)): ?>
+                        <span style="background:var(--orange);color:white;font-size:0.65rem;font-weight:700;
+                                     padding:1px 6px;border-radius:99px;margin-left:6px;"><?= $notif_count > 9 ? '9+' : $notif_count ?></span>
+                        <?php endif; ?>
+                    </a>
+                </li>
                 <li class="mobile-only">
                     <a href="/sharetime/public/?page=messages">
                         ✉️ Messages<?php if (!empty($msg_count)): ?>

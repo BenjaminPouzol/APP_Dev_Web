@@ -94,8 +94,10 @@ $admin_total_pages  = 1;
 $admin_total_count  = 0;
 $follower_count  = $following_count = 0;
 $is_following    = false;
-$notifications   = [];
-$admin_logs      = [];
+$notifications      = [];
+$admin_logs         = [];
+$log_action_filter  = '';
+$log_admin_filter   = '';
 
 if ($page === 'home') {
     $activities = $activityModel->getAll('', $_SESSION['user']['id'] ?? null, '', 'active');
@@ -202,18 +204,40 @@ if ($page === 'home') {
 } elseif ($page === 'admin_logs') {
     if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; }
     require_admin();
+    $valid_log_actions  = ['ban','unban','delete_user','delete_activity','set_role','set_status','transfer_ownership'];
+    $log_action_filter  = in_array($_GET['action'] ?? '', $valid_log_actions) ? $_GET['action'] : '';
+    $log_admin_filter   = trim($_GET['admin'] ?? '');
     $per_page_admin     = 50;
-    $admin_total_count  = (int)$pdo->query("SELECT COUNT(*) FROM admin_logs")->fetchColumn();
+
+    $where  = [];
+    $params = [];
+    if ($log_action_filter) {
+        $where[]           = 'l.action = :action';
+        $params['action']  = $log_action_filter;
+    }
+    if ($log_admin_filter) {
+        $where[]           = '(u.pseudo LIKE :adm1 OR u.prenom LIKE :adm2 OR u.nom LIKE :adm3)';
+        $params['adm1']    = $params['adm2'] = $params['adm3'] = '%' . $log_admin_filter . '%';
+    }
+    $where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+    $cnt_stmt = $pdo->prepare("SELECT COUNT(*) FROM admin_logs l JOIN users u ON u.idusers = l.admin_id $where_sql");
+    $cnt_stmt->execute($params);
+    $admin_total_count  = (int)$cnt_stmt->fetchColumn();
     $admin_total_pages  = max(1, (int)ceil($admin_total_count / $per_page_admin));
     $admin_current_page = max(1, min($admin_total_pages, intval($_GET['p'] ?? 1)));
     $offset = ($admin_current_page - 1) * $per_page_admin;
-    $admin_logs = $pdo->query("
+
+    $log_stmt = $pdo->prepare("
         SELECT l.*, u.pseudo AS admin_pseudo, u.prenom AS admin_prenom
         FROM admin_logs l
         JOIN users u ON u.idusers = l.admin_id
+        $where_sql
         ORDER BY l.created_at DESC
         LIMIT {$per_page_admin} OFFSET {$offset}
-    ")->fetchAll();
+    ");
+    $log_stmt->execute($params);
+    $admin_logs = $log_stmt->fetchAll();
 
 } elseif ($page === 'notifications') {
     if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }

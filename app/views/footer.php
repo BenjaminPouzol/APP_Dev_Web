@@ -1,7 +1,13 @@
+<style>
+@media (max-width: 640px) {
+    .footer-grid { grid-template-columns: 1fr 1fr !important; }
+    .footer-brand { grid-column: 1 / -1; }
+}
+</style>
 <footer style="background:#1E3A6E; color:white; padding:40px 0 20px;">
     <div class="container">
-        <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:36px; margin-bottom:32px; flex-wrap:wrap;">
-            <div>
+        <div class="footer-grid" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:36px; margin-bottom:32px;">
+            <div class="footer-brand">
                 <div style="font-family:'Poppins',sans-serif; font-size:1.3rem; font-weight:800; margin-bottom:12px;">
                     <span style="color:#E8811A;">Share</span><span style="color:white;">Time</span>
                 </div>

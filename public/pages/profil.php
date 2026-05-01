@@ -133,10 +133,14 @@
                             👥 <?= $a['nb_inscrits'] ?>/<?= $a['max_participants'] ?>
                         </p>
                     </div>
+                    <?php
+                        $status_labels = ['active' => 'Active', 'terminee' => 'Terminée', 'annulee' => 'Annulée'];
+                        $status_label  = $status_labels[$a['status']] ?? ucfirst($a['status']);
+                    ?>
                     <span style="font-size:0.78rem; padding:4px 12px; border-radius:99px; font-weight:600; white-space:nowrap;
                                  background:<?= $isActive ? '#D1FAE5' : 'var(--gray-100)' ?>;
                                  color:<?= $isActive ? '#065F46' : 'var(--gray-500)' ?>;">
-                        <?= $isActive ? 'Active' : ucfirst($a['status']) ?>
+                        <?= $status_label ?>
                     </span>
                 </a>
                 <?php endforeach; ?>
@@ -174,9 +178,15 @@
                             📅 <?= $start->format('d/m/Y à H:i') ?> &nbsp;·&nbsp; 📍 <?= htmlspecialchars($a['city']) ?>
                         </p>
                     </div>
-                    <span style="font-size:0.78rem; background:#D1FAE5; color:#065F46;
+                    <?php
+                        $rs = $a['reg_status'] ?? 'inscrit';
+                        $rs_bg    = $rs === 'en_attente' ? '#FEF3E2' : '#D1FAE5';
+                        $rs_color = $rs === 'en_attente' ? '#92400E' : '#065F46';
+                        $rs_label = $rs === 'en_attente' ? 'En attente' : 'Inscrit(e)';
+                    ?>
+                    <span style="font-size:0.78rem; background:<?= $rs_bg ?>; color:<?= $rs_color ?>;
                                  padding:4px 12px; border-radius:99px; font-weight:600; white-space:nowrap;">
-                        Inscrit(e)
+                        <?= $rs_label ?>
                     </span>
                 </a>
                 <?php endforeach; ?>
