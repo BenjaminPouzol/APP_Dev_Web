@@ -1,3 +1,16 @@
+<?php
+/**
+ * public/pages/mot_de_passe_oublie.php — Demande de réinitialisation de mot de passe
+ *
+ * Variables disponibles (préparées par app/handlers/auth.php) :
+ *   $success : message affiché à la place du formulaire après soumission valide
+ *              (même message qu'un email n'existe pas pour éviter l'énumération)
+ *   $error   : message d'erreur de validation (email invalide ou vide)
+ *
+ * Flux : l'utilisateur saisit son email → le handler génère un token → un email
+ * est envoyé avec un lien vers ?page=reinitialiser_mdp&token=…  (valable 1h).
+ */
+?>
 <main style="min-height:70vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;">
     <div style="width:100%; max-width:460px;">
 

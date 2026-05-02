@@ -1,4 +1,24 @@
 <?php
+/**
+ * public/pages/reinitialiser_mdp.php — Formulaire de réinitialisation de mot de passe
+ *
+ * Variables disponibles :
+ *   $error : message d'erreur (token invalide, mots de passe non conformes)
+ *            $error est défini par le handler POST dans app/handlers/auth.php
+ *
+ * Cette page fait deux choses :
+ *   1. En GET  : valide le token depuis password_resets (requête SQL directe ici,
+ *                exception au pattern car la validation du token est nécessaire
+ *                avant même d'afficher le formulaire).
+ *   2. En POST : le handler auth.php prend le relais pour changer le mot de passe.
+ *
+ * Si le token est absent ou expiré (> 1h ou déjà utilisé), un message d'erreur
+ * est affiché avec un lien vers la page de demande.
+ *
+ * Le JavaScript en fin de page calcule la force du mot de passe en temps réel
+ * et affiche une barre de progression colorée (rouge → vert).
+ */
+
 $token = trim($_GET['token'] ?? $_POST['token'] ?? '');
 
 // Vérifier le token (seulement en GET, le POST est géré dans index.php)

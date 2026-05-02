@@ -1,4 +1,22 @@
-<!-- En-tête admin -->
+<?php
+/**
+ * public/pages/admin_activities.php — Gestion des activités (panel admin)
+ *
+ * Variables disponibles (préparées par index.php routing) :
+ *   $admin_activities_list : tableau des activités de la page courante
+ *   $admin_total_count     : nombre total d'activités
+ *   $admin_total_pages     : nombre de pages de pagination
+ *   $admin_current_page    : page courante
+ *   $flash                 : message de succès/info après action
+ *
+ * Actions possibles (admin ET owner) :
+ *   - set_status : changer le statut (active / annulee / terminee)
+ *   - delete     : supprimer définitivement (supprime aussi inscriptions, commentaires, etc.)
+ *
+ * Les actions POST sont traitées par handlers/admin.php (page=admin_activities).
+ */
+?>
+<!-- ── EN-TÊTE ADMIN ──────────────────────────────────────────────────────── -->
 <div style="background:var(--navy);padding:28px 0;">
     <div class="container" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
         <div>
@@ -17,12 +35,14 @@
 
     <div class="container" style="padding-bottom:48px;">
 
+        <!-- Message de confirmation après action (changement de statut, suppression) -->
         <?php if ($flash): ?>
         <div style="background:#D1FAE5;color:#065F46;border:1px solid #A7F3D0;border-radius:10px;padding:12px 18px;margin-bottom:24px;font-weight:600;">
             <?= htmlspecialchars($flash) ?>
         </div>
         <?php endif; ?>
 
+        <!-- ── TABLEAU DES ACTIVITÉS ───────────────────────────────────────── -->
         <div style="background:white;border:1.5px solid var(--gray-200);border-radius:14px;overflow:hidden;">
             <div style="padding:18px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
                 <h2 style="margin:0;font-size:1rem;color:var(--navy);">
@@ -35,6 +55,7 @@
             </div>
 
             <?php if (empty($admin_activities_list)): ?>
+            <!-- État vide -->
             <div style="padding:48px;text-align:center;color:var(--gray-400);">
                 <p style="font-size:2rem;margin-bottom:8px;">🎯</p>
                 <p>Aucune activité enregistrée.</p>
@@ -54,6 +75,7 @@
                     </thead>
                     <tbody>
                     <?php
+                    // Couleurs des badges statut : vert active, rouge annulée, gris terminée
                     $statusColors = [
                         'active'   => ['#D1FAE5', '#065F46'],
                         'annulee'  => ['#FEE2E2', '#DC2626'],
@@ -62,12 +84,13 @@
                     foreach ($admin_activities_list as $a):
                         $start = new DateTime($a['start_time']);
                         [$sbg, $scol] = $statusColors[$a['status']] ?? ['#F3F4F6', '#6B7280'];
+                        // Badge violet "Privée" affiché si l'activité n'est pas publique
                         $visibility_badge = $a['visibility'] === 'privee'
                             ? '<span style="background:#EDE9FE;color:#7C3AED;font-size:0.7rem;padding:1px 7px;border-radius:99px;font-weight:600;margin-left:4px;">Privée</span>'
                             : '';
                     ?>
                     <tr style="border-bottom:1px solid var(--gray-50);">
-                        <!-- Activité -->
+                        <!-- Colonne Activité : titre (tronqué) + badge privée + ville -->
                         <td style="padding:12px 16px;max-width:220px;">
                             <p style="margin:0;font-weight:600;color:var(--gray-900);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                 <?= htmlspecialchars($a['title']) ?><?= $visibility_badge ?>
@@ -75,33 +98,33 @@
                             <p style="margin:0;color:var(--gray-500);font-size:0.78rem;"><?= htmlspecialchars($a['city']) ?></p>
                         </td>
 
-                        <!-- Créateur -->
+                        <!-- Colonne Créateur -->
                         <td style="padding:12px 16px;">
                             <p style="margin:0;color:var(--gray-700);"><?= htmlspecialchars($a['prenom'].' '.$a['nom']) ?></p>
                         </td>
 
-                        <!-- Participants -->
+                        <!-- Colonne Participants : inscrits / max -->
                         <td style="padding:12px 16px;text-align:center;">
                             <span style="font-weight:600;color:var(--gray-900);"><?= (int)$a['nb_inscrits'] ?></span>
                             <span style="color:var(--gray-400);">/</span>
                             <span style="color:var(--gray-500);"><?= (int)$a['max_participants'] ?></span>
                         </td>
 
-                        <!-- Date -->
+                        <!-- Colonne Date de début -->
                         <td style="padding:12px 16px;color:var(--gray-600);font-size:0.82rem;white-space:nowrap;"><?= $start->format('d/m/Y') ?></td>
 
-                        <!-- Statut actuel -->
+                        <!-- Colonne Statut : badge coloré selon l'état actuel -->
                         <td style="padding:12px 16px;text-align:center;">
                             <span style="background:<?= $sbg ?>;color:<?= $scol ?>;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:600;white-space:nowrap;">
                                 <?= ucfirst($a['status']) ?>
                             </span>
                         </td>
 
-                        <!-- Actions -->
+                        <!-- Colonne Actions : changer statut + voir + supprimer -->
                         <td style="padding:12px 16px;">
                             <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;align-items:center;">
 
-                                <!-- Changer le statut -->
+                                <!-- Formulaire de changement de statut : select + bouton OK -->
                                 <form method="POST" action="/sharetime/public/?page=admin_activities" style="display:flex;gap:4px;align-items:center;">
                                     <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                                     <input type="hidden" name="activity_id" value="<?= (int)$a['idactivities'] ?>">
@@ -114,12 +137,12 @@
                                     <button type="submit" style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--gray-300);background:white;color:var(--gray-700);font-size:0.78rem;font-weight:600;cursor:pointer;">OK</button>
                                 </form>
 
-                                <!-- Voir le détail -->
+                                <!-- Lien Voir : ouvre la page de détail public de l'activité -->
                                 <a href="/sharetime/public/?page=detail&id=<?= (int)$a['idactivities'] ?>"
                                    style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--gray-300);background:white;color:var(--gray-700);font-size:0.78rem;font-weight:600;text-decoration:none;"
                                    title="Voir l'activité">👁</a>
 
-                                <!-- Supprimer -->
+                                <!-- Bouton Supprimer : suppression définitive + confirmation JS -->
                                 <form method="POST" action="/sharetime/public/?page=admin_activities" style="display:inline;">
                                     <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                                     <input type="hidden" name="activity_id" value="<?= (int)$a['idactivities'] ?>">
@@ -141,7 +164,7 @@
             <?php endif; ?>
         </div>
 
-        <!-- Pagination -->
+        <!-- ── PAGINATION ─────────────────────────────────────────────────── -->
         <?php if ($admin_total_pages > 1): ?>
         <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:28px;flex-wrap:wrap;">
             <?php if ($admin_current_page > 1): ?>
@@ -164,6 +187,7 @@
     </div>
 </main>
 
+<!-- Table responsive sur mobile -->
 <style>
 @media (max-width: 768px) {
     table { font-size: 0.8rem !important; }

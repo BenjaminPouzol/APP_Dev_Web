@@ -1,8 +1,31 @@
 <?php
+/**
+ * public/pages/owner.php — Panel propriétaire (4 onglets)
+ *
+ * Variables disponibles (préparées par index.php routing) :
+ *   $owner_tab            : onglet actif — 'dashboard' | 'users' | 'activities' | 'admins'
+ *   $owner_users          : liste complète de tous les utilisateurs (pour les onglets users/admins)
+ *   $admin_stats          : statistiques globales (membres, admins, activités, inscriptions, suspendus)
+ *   $admin_recent_users   : 5 derniers membres inscrits
+ *   $admin_recent_activities: 5 dernières activités créées
+ *   $admin_activities_list: liste complète des activités (pour l'onglet activities)
+ *   $flash                : message de succès après action
+ *
+ * Accessible uniquement par l'owner (require_owner() dans index.php).
+ * Les actions POST sont traitées par handlers/admin.php (page=owner).
+ *
+ * Différences avec le panel admin classique :
+ *   - Onglet "Administrateurs" : nommer/révoquer des admins + transférer la propriété
+ *   - Aucune pagination (toutes les données chargées d'un coup — panel propriétaire)
+ *   - Navigation par onglets (tabs) au lieu de pages séparées
+ */
+
+// Validation de l'onglet actif : whitelist pour éviter les valeurs arbitraires
 $valid_tabs = ['dashboard', 'users', 'activities', 'admins'];
 $tab = in_array($owner_tab ?? '', $valid_tabs) ? $owner_tab : 'dashboard';
-$me  = (int)$_SESSION['user']['id'];
+$me  = (int)$_SESSION['user']['id'];  // ID de l'owner connecté (pour éviter auto-action)
 
+// Définition des onglets : slug → [emoji, libellé]
 $tab_def = [
     'dashboard'  => ['📊', 'Tableau de bord'],
     'users'      => ['👥', 'Utilisateurs'],
@@ -11,7 +34,9 @@ $tab_def = [
 ];
 ?>
 
-<!-- En-tête -->
+<!-- ── EN-TÊTE OWNER ──────────────────────────────────────────────────────────
+     Gradient orange (vs navy pour l'admin) pour signifier le niveau supérieur.
+     Affiche le badge de rôle owner + prénom/nom de l'owner connecté. -->
 <div style="background:linear-gradient(135deg,var(--orange) 0%,#c96a10 100%);padding:28px 0;">
     <div class="container" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
         <div>
@@ -25,7 +50,9 @@ $tab_def = [
     </div>
 </div>
 
-<!-- Navigation onglets -->
+<!-- ── NAVIGATION PAR ONGLETS ────────────────────────────────────────────────
+     Barre d'onglets en dessous du header. L'onglet actif a une bordure inférieure
+     orange et une couleur navy, les autres sont gris. overflow-x:auto pour mobile. -->
 <div style="background:white;border-bottom:2px solid var(--gray-200);margin-bottom:32px;">
     <div class="container" style="display:flex;gap:0;overflow-x:auto;">
         <?php foreach ($tab_def as $t => [$icon, $label]): ?>
@@ -43,19 +70,23 @@ $tab_def = [
 <main>
 <div class="container" style="padding-bottom:48px;">
 
+<!-- Message de succès après une action (ban, set_role, transfer, delete…) -->
 <?php if ($flash): ?>
 <div style="background:#D1FAE5;color:#065F46;border:1px solid #A7F3D0;border-radius:10px;padding:12px 18px;margin-bottom:24px;font-weight:600;">
     <?= htmlspecialchars($flash) ?>
 </div>
 <?php endif; ?>
 
-<?php /* ══════════════════════════════════════════
-   ONGLET : TABLEAU DE BORD
-══════════════════════════════════════════ */ ?>
+<?php /* ══════════════════════════════════════════════════════════════
+   ONGLET DASHBOARD : statistiques globales + derniers membres/activités
+   Même contenu que admin.php mais avec les liens qui pointent vers owner&tab=...
+══════════════════════════════════════════════════════════════════ */ ?>
 <?php if ($tab === 'dashboard'): ?>
 
+    <!-- Cards de statistiques globales -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:36px;">
         <?php
+        // Même structure que admin.php : [libellé, valeur, emoji, fond coloré, couleur texte]
         $cards = [
             ['Membres',      $admin_stats['membres'],      '👤', '#EBF0F8', 'var(--navy)'],
             ['Admins',       $admin_stats['admins'],       '🛡️', '#FEF3E2', 'var(--orange)'],
@@ -75,10 +106,13 @@ $tab_def = [
         <?php endforeach; ?>
     </div>
 
+    <!-- Deux colonnes : derniers membres + dernières activités -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <!-- Derniers membres inscrits -->
         <div style="background:white;border:1.5px solid var(--gray-200);border-radius:14px;overflow:hidden;">
             <div style="padding:18px 20px;border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center;">
                 <h2 style="margin:0;font-size:1rem;color:var(--navy);">Derniers membres</h2>
+                <!-- Lien "Tout voir" vers l'onglet users du même panel -->
                 <a href="/sharetime/public/?page=owner&tab=users" style="font-size:0.82rem;color:var(--orange);font-weight:600;text-decoration:none;">Tout voir →</a>
             </div>
             <?php foreach ($admin_recent_users as $u): ?>
@@ -97,6 +131,7 @@ $tab_def = [
             <?php endforeach; ?>
         </div>
 
+        <!-- Dernières activités créées -->
         <div style="background:white;border:1.5px solid var(--gray-200);border-radius:14px;overflow:hidden;">
             <div style="padding:18px 20px;border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center;">
                 <h2 style="margin:0;font-size:1rem;color:var(--navy);">Dernières activités</h2>
@@ -118,9 +153,11 @@ $tab_def = [
         </div>
     </div>
 
-<?php /* ══════════════════════════════════════════
-   ONGLET : UTILISATEURS
-══════════════════════════════════════════ */ ?>
+<?php /* ══════════════════════════════════════════════════════════════
+   ONGLET USERS : tableau complet de tous les utilisateurs
+   L'owner peut : ban/unban, set_role, supprimer, transférer la propriété.
+   Toutes les actions POST vers page=owner avec type=user + tab=users.
+══════════════════════════════════════════════════════════════════ */ ?>
 <?php elseif ($tab === 'users'): ?>
 
     <div style="background:white;border:1.5px solid var(--gray-200);border-radius:14px;overflow:hidden;">
@@ -144,13 +181,15 @@ $tab_def = [
                 </thead>
                 <tbody>
                 <?php foreach ($owner_users as $u):
-                    $uid      = (int)$u['idusers'];
-                    $is_me    = $uid === $me;
-                    $is_owner_row = $u['role'] === 'owner';
-                    $banned   = !empty($u['is_banned']);
-                    $can_act  = !$is_me && !$is_owner_row;
+                    $uid          = (int)$u['idusers'];
+                    $is_me        = $uid === $me;           // ligne de l'owner lui-même
+                    $is_owner_row = $u['role'] === 'owner'; // il n'y a qu'un seul owner = $me ici
+                    $banned       = !empty($u['is_banned']);
+                    // can_act = false sur sa propre ligne et sur la ligne owner (se protéger soi-même)
+                    $can_act      = !$is_me && !$is_owner_row;
                 ?>
                 <tr style="border-bottom:1px solid var(--gray-50);">
+                    <!-- Utilisateur : avatar initiale + nom + email -->
                     <td style="padding:12px 16px;">
                         <div style="display:flex;align-items:center;gap:10px;">
                             <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--navy-light));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.9rem;flex-shrink:0;">
@@ -172,7 +211,7 @@ $tab_def = [
                     <td style="padding:12px 16px;">
                         <?php if ($can_act): ?>
                         <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
-                            <!-- Suspendre / Réactiver -->
+                            <!-- Bouton Suspendre / Réactiver : type=user + tab=users pour retour correct -->
                             <form method="POST" action="/sharetime/public/?page=owner" style="display:inline;">
                                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                                 <input type="hidden" name="type" value="user">
@@ -185,7 +224,7 @@ $tab_def = [
                                     <?= $banned ? '✓ Réactiver' : '⊘ Suspendre' ?>
                                 </button>
                             </form>
-                            <!-- Changer le rôle -->
+                            <!-- Changer le rôle : masqué si banni -->
                             <?php if (!$banned): ?>
                             <form method="POST" action="/sharetime/public/?page=owner" style="display:flex;gap:4px;">
                                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
@@ -200,7 +239,7 @@ $tab_def = [
                                 <button type="submit" style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--gray-300);background:white;color:var(--gray-700);font-size:0.78rem;font-weight:600;cursor:pointer;">OK</button>
                             </form>
                             <?php endif; ?>
-                            <!-- Supprimer -->
+                            <!-- Suppression définitive -->
                             <form method="POST" action="/sharetime/public/?page=owner" style="display:inline;">
                                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                                 <input type="hidden" name="type" value="user">
@@ -215,6 +254,7 @@ $tab_def = [
                             </form>
                         </div>
                         <?php else: ?>
+                        <!-- Aucune action sur sa propre ligne -->
                         <span style="color:var(--gray-300);font-size:0.8rem;font-style:italic;"><?= $is_me ? 'Vous' : 'Protégé' ?></span>
                         <?php endif; ?>
                     </td>
@@ -225,9 +265,11 @@ $tab_def = [
         </div>
     </div>
 
-<?php /* ══════════════════════════════════════════
-   ONGLET : ACTIVITÉS
-══════════════════════════════════════════ */ ?>
+<?php /* ══════════════════════════════════════════════════════════════
+   ONGLET ACTIVITIES : tableau complet de toutes les activités
+   L'owner peut changer le statut et supprimer. Même structure que admin_activities.php.
+   Les actions POST vers page=owner avec type=activity + tab=activities.
+══════════════════════════════════════════════════════════════════ */ ?>
 <?php elseif ($tab === 'activities'): ?>
 
     <div style="background:white;border:1.5px solid var(--gray-200);border-radius:14px;overflow:hidden;">
@@ -276,6 +318,7 @@ $tab_def = [
                     </td>
                     <td style="padding:12px 16px;">
                         <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;flex-wrap:wrap;">
+                            <!-- Changer le statut : type=activity + tab=activities -->
                             <form method="POST" action="/sharetime/public/?page=owner" style="display:flex;gap:4px;align-items:center;">
                                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                                 <input type="hidden" name="type" value="activity">
@@ -289,8 +332,10 @@ $tab_def = [
                                 </select>
                                 <button type="submit" style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--gray-300);background:white;color:var(--gray-700);font-size:0.78rem;font-weight:600;cursor:pointer;">OK</button>
                             </form>
+                            <!-- Lien vers la page de détail publique de l'activité -->
                             <a href="/sharetime/public/?page=detail&id=<?= (int)$a['idactivities'] ?>"
                                style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--gray-300);background:white;color:var(--gray-700);font-size:0.78rem;font-weight:600;text-decoration:none;">👁</a>
+                            <!-- Suppression définitive de l'activité -->
                             <form method="POST" action="/sharetime/public/?page=owner" style="display:inline;">
                                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                                 <input type="hidden" name="type" value="activity">
@@ -311,16 +356,21 @@ $tab_def = [
         <?php endif; ?>
     </div>
 
-<?php /* ══════════════════════════════════════════
-   ONGLET : ADMINISTRATEURS
-══════════════════════════════════════════ */ ?>
+<?php /* ══════════════════════════════════════════════════════════════
+   ONGLET ADMINS : gestion des administrateurs
+   Deux sections :
+   1. Administrateurs actuels → révoquer ou transférer la propriété
+   2. Nommer un administrateur → liste des membres actifs non bannis
+══════════════════════════════════════════════════════════════════ */ ?>
 <?php elseif ($tab === 'admins'): ?>
 
     <?php
+    // Sépare les admins des membres pour deux tableaux distincts
     $admins  = array_values(array_filter($owner_users, fn($u) => $u['role'] === 'admin'));
     $members = array_values(array_filter($owner_users, fn($u) => $u['role'] === 'utilisateur' && empty($u['is_banned'])));
     ?>
 
+    <!-- Rappel des règles (transfert irréversible) -->
     <div style="background:#FEF3E2;border:1.5px solid rgba(232,129,26,0.3);border-radius:12px;padding:16px 20px;margin-bottom:28px;display:flex;align-items:center;gap:14px;">
         <span style="font-size:1.5rem;">👑</span>
         <p style="margin:0;font-size:0.88rem;color:var(--gray-700);">
@@ -329,7 +379,7 @@ $tab_def = [
         </p>
     </div>
 
-    <!-- Admins actuels -->
+    <!-- ── Section 1 : Administrateurs actuels ────────────────────────── -->
     <div style="background:white;border:1.5px solid var(--gray-200);border-radius:14px;overflow:hidden;margin-bottom:24px;">
         <div style="padding:18px 20px;border-bottom:1px solid var(--gray-100);">
             <h2 style="margin:0;font-size:1rem;color:var(--navy);">
@@ -362,6 +412,7 @@ $tab_def = [
                 <td style="padding:12px 16px;color:var(--gray-500);font-size:0.85rem;"><?= htmlspecialchars($u['email']) ?></td>
                 <td style="padding:12px 16px;">
                     <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
+                        <!-- Révoquer le rôle admin → repasse en membre (utilisateur) -->
                         <form method="POST" action="/sharetime/public/?page=owner" style="display:inline;">
                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                             <input type="hidden" name="type" value="user">
@@ -375,6 +426,7 @@ $tab_def = [
                                 ⊘ Révoquer
                             </button>
                         </form>
+                        <!-- Transférer la propriété : irréversible, double confirmation JS -->
                         <form method="POST" action="/sharetime/public/?page=owner" style="display:inline;">
                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                             <input type="hidden" name="type" value="user">
@@ -396,7 +448,8 @@ $tab_def = [
         <?php endif; ?>
     </div>
 
-    <!-- Nommer un admin -->
+    <!-- ── Section 2 : Nommer un administrateur ──────────────────────── -->
+    <!-- Liste filtrée : membres actifs (role='utilisateur') non bannis -->
     <div style="background:white;border:1.5px solid var(--gray-200);border-radius:14px;overflow:hidden;">
         <div style="padding:18px 20px;border-bottom:1px solid var(--gray-100);">
             <h2 style="margin:0;font-size:1rem;color:var(--navy);">
@@ -421,6 +474,7 @@ $tab_def = [
             <tr style="border-bottom:1px solid var(--gray-50);">
                 <td style="padding:12px 16px;">
                     <div style="display:flex;align-items:center;gap:10px;">
+                        <!-- Avatar gris (vs navy pour les admins déjà nommés) -->
                         <div style="width:36px;height:36px;border-radius:50%;background:var(--gray-200);display:flex;align-items:center;justify-content:center;color:var(--gray-600);font-weight:700;font-size:0.9rem;flex-shrink:0;">
                             <?= strtoupper(mb_substr($u['prenom'],0,1)) ?>
                         </div>
@@ -430,6 +484,7 @@ $tab_def = [
                 <td style="padding:12px 16px;color:var(--gray-500);font-size:0.85rem;"><?= htmlspecialchars($u['email']) ?></td>
                 <td style="padding:12px 16px;text-align:center;font-weight:600;color:var(--gray-700);"><?= (int)$u['nb_activities'] ?></td>
                 <td style="padding:12px 16px;text-align:right;">
+                    <!-- Nommer admin : set_role avec role=admin + tab=admins pour retour correct -->
                     <form method="POST" action="/sharetime/public/?page=owner" style="display:inline;">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                         <input type="hidden" name="type" value="user">
@@ -456,6 +511,7 @@ $tab_def = [
 </div>
 </main>
 
+<!-- Responsive : grilles 2 colonnes → 1 colonne, tables réduites sur mobile -->
 <style>
 @media (max-width: 768px) {
     div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }

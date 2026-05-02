@@ -1,3 +1,15 @@
+<?php
+/**
+ * public/pages/faq.php — Foire aux questions
+ *
+ * Variables disponibles (préparées par index.php routing) :
+ *   $faq_items : tableau des questions/réponses lues depuis la table `faq`
+ *                (colonnes : question, reponse), triées par idfaq ASC
+ *
+ * Chaque entrée est affichée dans un élément HTML <details> natif (accordéon CSS pur).
+ * Le signe "+" tourne à 45° via CSS pour former un "×" quand l'entrée est ouverte.
+ */
+?>
 <main class="container" style="padding:48px 0; max-width:720px; margin:auto;">
 
     <div style="text-align:center; margin-bottom:40px;">

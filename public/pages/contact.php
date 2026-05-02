@@ -1,3 +1,16 @@
+<?php
+/**
+ * public/pages/contact.php — Formulaire de contact
+ *
+ * Variables disponibles (préparées par index.php / handler user.php) :
+ *   $success : message de confirmation après envoi réussi (masque le formulaire)
+ *   $error   : message d'erreur de validation (affiché dans le formulaire)
+ *
+ * Si un utilisateur est connecté, nom et email sont préremplis depuis $_SESSION['user'].
+ * Le handler POST est dans app/handlers/user.php (page = 'contact').
+ * Le message est stocké en base (contact_messages) et un email est envoyé à l'admin.
+ */
+?>
 <main class="container" style="padding:48px 0; max-width:620px; margin:auto;">
 
     <div style="text-align:center; margin-bottom:40px;">

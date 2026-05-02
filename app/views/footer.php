@@ -1,5 +1,22 @@
+<?php
+/**
+ * app/views/footer.php — Pied de page commun à toutes les pages
+ *
+ * Inclus en dernier par public/index.php, après le fichier de page.
+ * Contient :
+ *   - Footer avec liens de navigation (activités, compte, légal)
+ *     Les liens "Compte" s'adaptent selon l'état de connexion ($_SESSION['user'])
+ *   - Toast pour les flash messages (si $flash ou $flash_html est défini)
+ *   - Scripts JS globaux :
+ *       · Auto-dismiss du toast après 4,5 secondes
+ *       · Désactivation du bouton submit après soumission (anti double-clic)
+ *       · Validation dates (fin > début) pour les formulaires d'activité
+ *       · Validation mots de passe (correspondance) pour inscription/reset
+ */
+?>
 <style>
 @media (max-width: 640px) {
+    /* Sur mobile, la grille 4 colonnes passe en 2 colonnes ; la colonne brand occupe toute la largeur */
     .footer-grid { grid-template-columns: 1fr 1fr !important; }
     .footer-brand { grid-column: 1 / -1; }
 }
@@ -51,6 +68,7 @@
 </footer>
 
 <?php if (!empty($flash) || !empty($flash_html)): ?>
+<!-- Toast flash : affiché seulement si un message a été défini en session par un handler POST -->
 <div id="toast-container">
     <div class="toast toast-<?= htmlspecialchars($flash_type ?? 'success') ?>" id="toast-msg">
         <div class="toast-icon"><?= ($flash_type ?? 'success') === 'error' ? '✕' : '✓' ?></div>

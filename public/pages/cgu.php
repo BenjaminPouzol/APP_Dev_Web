@@ -1,3 +1,11 @@
+<?php
+/**
+ * public/pages/cgu.php — Conditions Générales d'Utilisation
+ *
+ * Page statique sans données dynamiques. Accessible à tous (connecté ou non).
+ * Liée depuis le formulaire d'inscription (lien "CGU") et le footer.
+ */
+?>
 <main class="container" style="padding:48px 0; max-width:800px; margin:auto;">
 
     <h1 style="color:var(--navy); margin-bottom:8px;">Conditions Générales d'Utilisation</h1>

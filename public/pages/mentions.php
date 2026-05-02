@@ -1,3 +1,12 @@
+<?php
+/**
+ * public/pages/mentions.php — Mentions légales
+ *
+ * Page statique sans données dynamiques. Accessible à tous (connecté ou non).
+ * Couvre : éditeur du site, hébergement, RGPD, cookies, propriété intellectuelle,
+ * et limitation de responsabilité.
+ */
+?>
 <main class="container" style="padding:48px 0; max-width:800px; margin:auto;">
 
     <h1 style="color:var(--navy); margin-bottom:8px;">Mentions légales</h1>
