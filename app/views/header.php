@@ -126,6 +126,7 @@
         <ul class="navbar-links" id="navMenu">
             <li><a href="/sharetime/public/" <?= ($page === 'home') ? 'class="active"' : '' ?>>Accueil</a></li>
             <li><a href="/sharetime/public/?page=activites" <?= ($page === 'activites') ? 'class="active"' : '' ?>>Activités</a></li>
+            <li><a href="/sharetime/public/?page=carte"   <?= ($page === 'carte')    ? 'class="active"' : '' ?>>Carte</a></li>
             <li><a href="/sharetime/public/?page=faq"     <?= ($page === 'faq')      ? 'class="active"' : '' ?>>FAQ</a></li>
             <li><a href="/sharetime/public/?page=contact" <?= ($page === 'contact')  ? 'class="active"' : '' ?>>Contact</a></li>
 
