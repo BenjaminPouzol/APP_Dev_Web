@@ -22,26 +22,17 @@
 <main class="container" style="padding:40px 0; max-width:700px; margin:auto;">
 
     <!-- ── EN-TÊTE ────────────────────────────────────────────────────────── -->
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:28px;">
-        <div>
-            <h1 style="color:var(--navy); margin-bottom:4px;">Notifications</h1>
-            <?php
-            // Compte les notifications non lues (is_read = false/0)
-            $unread = count(array_filter($notifications, fn($n) => !$n['is_read']));
-            ?>
-            <?php if ($unread > 0): ?>
-                <!-- Compteur en orange si notifications non lues -->
-                <p style="color:var(--orange); font-size:0.88rem; font-weight:600;"><?= $unread ?> non lue<?= $unread > 1 ? 's' : '' ?></p>
-            <?php else: ?>
-                <p style="color:var(--gray-400); font-size:0.88rem;">Tout est lu</p>
-            <?php endif; ?>
-        </div>
-        <!-- Bouton "Tout marquer lu" : masqué si tout est déjà lu -->
+    <div style="margin-bottom:28px;">
+        <h1 style="color:var(--navy); margin-bottom:4px;">Notifications</h1>
+        <?php
+        // Compte les notifications affichées qui étaient non lues à l'arrivée sur la page
+        // (is_read est encore à 0 dans le tableau fetchié avant le UPDATE automatique)
+        $unread = count(array_filter($notifications, fn($n) => !$n['is_read']));
+        ?>
         <?php if ($unread > 0): ?>
-        <form method="post" action="/sharetime/public/?page=notifs_lues" style="margin:0;">
-            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-            <button type="submit" class="btn btn-outline-navy btn-sm">✓ Tout marquer comme lu</button>
-        </form>
+            <p style="color:var(--orange); font-size:0.88rem; font-weight:600;"><?= $unread ?> nouvelle<?= $unread > 1 ? 's' : '' ?></p>
+        <?php else: ?>
+            <p style="color:var(--gray-400); font-size:0.88rem;">Tout est lu</p>
         <?php endif; ?>
     </div>
 

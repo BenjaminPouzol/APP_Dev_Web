@@ -332,6 +332,12 @@ if ($page === 'home') {
     $stmt_notifs->execute(['u' => $_SESSION['user']['id']]);
     $notifications = $stmt_notifs->fetchAll();
 
+    // Marque toutes les notifications comme lues dès la visite de la page.
+    // On fait le fetch avant pour conserver les indicateurs visuels "non lu" sur cette page,
+    // mais le badge dans la navbar sera à 0 dès la prochaine requête.
+    $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = :u AND is_read = 0")
+        ->execute(['u' => $_SESSION['user']['id']]);
+
 } elseif ($page === 'messages') {
     if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
     $me      = (int)$_SESSION['user']['id'];
