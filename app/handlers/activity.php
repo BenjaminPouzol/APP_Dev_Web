@@ -22,6 +22,8 @@ if ($page === 'creer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $start_time          = $_POST['start_time']            ?? '';
     $end_time            = $_POST['end_time']              ?? '';
     $max_participants    = intval($_POST['max_participants'] ?? 0);
+    $latitude            = $_POST['latitude']              ?? '';
+    $longitude           = $_POST['longitude']             ?? '';
 
     // Whitelist sur visibility : seules ces deux valeurs sont acceptées
     $visibility = in_array($_POST['visibility'] ?? '', ['publique', 'privee']) ? $_POST['visibility'] : 'publique';
@@ -61,6 +63,8 @@ if ($page === 'creer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 'category'            => $category,
                 'liste_attente_active' => $liste_attente_active,
                 'creator_id'          => $_SESSION['user']['id'],
+                'latitude'            => $latitude,
+                'longitude'           => $longitude,
             ]);
             $_SESSION['flash'] = "Activité créée avec succès !";
             header('Location: /sharetime/public/?page=activites');
@@ -85,6 +89,8 @@ if ($page === 'modifier_activite' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $visibility           = in_array($_POST['visibility'] ?? '', ['publique', 'privee']) ? $_POST['visibility'] : 'publique';
     $category             = in_array($_POST['category']   ?? '', array_keys($CATEGORY_MAP)) ? $_POST['category'] : 'autre';
     $liste_attente_active = isset($_POST['liste_attente_active']) ? 1 : 0;
+    $latitude_mod         = $_POST['latitude']               ?? '';
+    $longitude_mod        = $_POST['longitude']              ?? '';
 
     if (empty($title) || empty($description) || empty($location) || empty($city) || empty($start_time) || empty($end_time)) {
         $error = "Veuillez remplir tous les champs obligatoires.";
@@ -124,6 +130,8 @@ if ($page === 'modifier_activite' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     'category'            => $category,
                     'liste_attente_active' => $liste_attente_active,
                     'creator_id'          => $_SESSION['user']['id'],
+                    'latitude'            => $latitude_mod,
+                    'longitude'           => $longitude_mod,
                 ];
 
                 if ($photo_act !== null) {

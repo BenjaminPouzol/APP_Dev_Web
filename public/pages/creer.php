@@ -67,6 +67,88 @@
                 </div>
             </div>
 
+            <!-- ── Localisation sur la carte ──────────────────────────────── -->
+            <link rel="stylesheet" href="/sharetime/public/css/leaflet.css">
+            <div>
+                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">
+                    Localisation sur la carte
+                    <span style="font-weight:400; color:var(--gray-400); font-size:0.82rem;">(optionnel — permet d'afficher l'activité sur la carte)</span>
+                </label>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <button type="button" id="geocode-btn"
+                            style="padding:8px 16px; background:var(--navy); color:white; border:none; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">
+                        📍 Géolocaliser l'adresse
+                    </button>
+                    <span id="geocode-status" style="font-size:0.82rem; color:var(--gray-500); align-self:center;"></span>
+                </div>
+                <div id="mini-map" style="height:220px; border-radius:10px; border:1.5px solid var(--gray-300); overflow:hidden;"></div>
+                <input type="hidden" name="latitude"  id="lat-input"  value="<?= htmlspecialchars($_POST['latitude']  ?? '') ?>">
+                <input type="hidden" name="longitude" id="lng-input"  value="<?= htmlspecialchars($_POST['longitude'] ?? '') ?>">
+                <p id="coords-display" style="font-size:0.78rem; color:var(--gray-400); margin:6px 0 0;">
+                    <?php if (!empty($_POST['latitude'])): ?>
+                        Position : <?= htmlspecialchars($_POST['latitude']) ?>, <?= htmlspecialchars($_POST['longitude']) ?>
+                    <?php else: ?>
+                        Cliquez sur la carte ou utilisez le bouton pour placer le marqueur.
+                    <?php endif; ?>
+                </p>
+            </div>
+            <script src="/sharetime/public/js/leaflet.js"></script>
+            <script>
+            (function() {
+                var map = L.map('mini-map').setView([46.5, 2.5], 5);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap', maxZoom: 18
+                }).addTo(map);
+
+                var marker = null;
+                var latIn  = document.getElementById('lat-input');
+                var lngIn  = document.getElementById('lng-input');
+                var disp   = document.getElementById('coords-display');
+
+                function setMarker(lat, lng) {
+                    if (marker) marker.setLatLng([lat, lng]);
+                    else marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                    marker.on('dragend', function(e) {
+                        var p = e.target.getLatLng();
+                        latIn.value = p.lat.toFixed(7);
+                        lngIn.value = p.lng.toFixed(7);
+                        disp.textContent = 'Position : ' + p.lat.toFixed(5) + ', ' + p.lng.toFixed(5);
+                    });
+                    latIn.value = lat.toFixed(7);
+                    lngIn.value = lng.toFixed(7);
+                    disp.textContent = 'Position : ' + lat.toFixed(5) + ', ' + lng.toFixed(5);
+                }
+
+                <?php if (!empty($_POST['latitude']) && !empty($_POST['longitude'])): ?>
+                setMarker(<?= (float)$_POST['latitude'] ?>, <?= (float)$_POST['longitude'] ?>);
+                map.setView([<?= (float)$_POST['latitude'] ?>, <?= (float)$_POST['longitude'] ?>], 13);
+                <?php endif; ?>
+
+                map.on('click', function(e) { setMarker(e.latlng.lat, e.latlng.lng); });
+
+                document.getElementById('geocode-btn').addEventListener('click', function() {
+                    var loc  = document.querySelector('[name="location"]').value.trim();
+                    var city = document.querySelector('[name="city"]').value.trim();
+                    var q    = [loc, city].filter(Boolean).join(', ');
+                    if (!q) { document.getElementById('geocode-status').textContent = 'Remplis d\'abord les champs Lieu et Ville.'; return; }
+                    var st = document.getElementById('geocode-status');
+                    st.textContent = 'Recherche…';
+                    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q), {
+                        headers: { 'Accept-Language': 'fr' }
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (!data.length) { st.textContent = 'Adresse introuvable, clique sur la carte.'; return; }
+                        var lat = parseFloat(data[0].lat), lng = parseFloat(data[0].lon);
+                        setMarker(lat, lng);
+                        map.setView([lat, lng], 14);
+                        st.textContent = '';
+                    })
+                    .catch(function() { st.textContent = 'Erreur réseau, clique sur la carte.'; });
+                });
+            })();
+            </script>
+
             <!-- ── Dates début + fin (2 colonnes) ────────────────────────── -->
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                 <div>

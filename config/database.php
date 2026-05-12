@@ -99,6 +99,14 @@ try {
         $pdo->exec("ALTER TABLE activities ADD COLUMN photo VARCHAR(255) DEFAULT NULL AFTER description");
     }
 
+    // -- Table activities : coordonnées géographiques pour la carte interactive
+    if (!$pdo->query("SHOW COLUMNS FROM activities LIKE 'latitude'")->fetch()) {
+        $pdo->exec("ALTER TABLE activities ADD COLUMN latitude DECIMAL(10,7) DEFAULT NULL");
+    }
+    if (!$pdo->query("SHOW COLUMNS FROM activities LIKE 'longitude'")->fetch()) {
+        $pdo->exec("ALTER TABLE activities ADD COLUMN longitude DECIMAL(10,7) DEFAULT NULL");
+    }
+
     // Notifications in-app (cloche dans la navbar)
     // KEY (user_id) : index simple pour accélérer la récupération par utilisateur
     // ON DELETE CASCADE : si l'utilisateur est supprimé, ses notifications le sont aussi

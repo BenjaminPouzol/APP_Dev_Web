@@ -210,14 +210,14 @@ class Activity {
     public function create($data) {
         $stmt = $this->pdo->prepare("
             INSERT INTO activities
-            (title, description, photo, location, city, start_time, end_time, max_participants, visibility, category, liste_attente_active, status, creator_id, created_at)
+            (title, description, photo, location, city, start_time, end_time, max_participants, visibility, category, liste_attente_active, status, creator_id, latitude, longitude, created_at)
             VALUES
-            (:title, :description, :photo, :location, :city, :start_time, :end_time, :max_participants, :visibility, :category, :liste_attente_active, 'active', :creator_id, NOW())
+            (:title, :description, :photo, :location, :city, :start_time, :end_time, :max_participants, :visibility, :category, :liste_attente_active, 'active', :creator_id, :latitude, :longitude, NOW())
         ");
         $ok = $stmt->execute([
             'title'               => $data['title'],
             'description'         => $data['description'],
-            'photo'               => $data['photo'] ?? null,        // null si pas d'image uploadée
+            'photo'               => $data['photo'] ?? null,
             'location'            => $data['location'],
             'city'                => $data['city'],
             'start_time'          => $data['start_time'],
@@ -225,8 +225,10 @@ class Activity {
             'max_participants'    => $data['max_participants'],
             'visibility'          => $data['visibility'],
             'category'            => $data['category'],
-            'liste_attente_active' => $data['liste_attente_active'] ? 1 : 0,  // booléen → entier pour MySQL
+            'liste_attente_active' => $data['liste_attente_active'] ? 1 : 0,
             'creator_id'          => $data['creator_id'],
+            'latitude'            => isset($data['latitude'])  && $data['latitude']  !== '' ? (float)$data['latitude']  : null,
+            'longitude'           => isset($data['longitude']) && $data['longitude'] !== '' ? (float)$data['longitude'] : null,
         ]);
         return $ok ? (int)$this->pdo->lastInsertId() : false;
     }
@@ -255,17 +257,38 @@ class Activity {
             'visibility'          => $data['visibility'],
             'category'            => $data['category'],
             'liste_attente_active' => $data['liste_attente_active'] ? 1 : 0,
+            'latitude'            => isset($data['latitude'])  && $data['latitude']  !== '' ? (float)$data['latitude']  : null,
+            'longitude'           => isset($data['longitude']) && $data['longitude'] !== '' ? (float)$data['longitude'] : null,
             'id'                  => (int)$id,
-            'creator_id'          => (int)$data['creator_id'],  // double sécurité : seul le créateur peut modifier
+            'creator_id'          => (int)$data['creator_id'],
         ];
         if (array_key_exists('photo', $data)) $bind['photo'] = $data['photo'];
         return $this->pdo->prepare("
             UPDATE activities
             SET title = :title, description = :description, location = :location, city = :city,
                 start_time = :start_time, end_time = :end_time, max_participants = :max_participants,
-                visibility = :visibility, category = :category, liste_attente_active = :liste_attente_active{$photo_sql}
+                visibility = :visibility, category = :category, liste_attente_active = :liste_attente_active,
+                latitude = :latitude, longitude = :longitude{$photo_sql}
             WHERE idactivities = :id AND creator_id = :creator_id
         ")->execute($bind);
+    }
+
+    /**
+     * Retourne toutes les activités publiques actives ayant des coordonnées, pour la carte interactive.
+     */
+    public function getForMap(): array {
+        $stmt = $this->pdo->query("
+            SELECT a.idactivities, a.title, a.location, a.city, a.category, a.start_time, a.latitude, a.longitude,
+                   u.prenom, u.nom, u.pseudo
+            FROM activities a
+            JOIN users u ON u.idusers = a.creator_id
+            WHERE a.status = 'active'
+              AND a.visibility = 'publique'
+              AND a.latitude IS NOT NULL
+              AND a.longitude IS NOT NULL
+            ORDER BY a.start_time ASC
+        ");
+        return $stmt->fetchAll();
     }
 
     /**
