@@ -88,7 +88,7 @@ $allowed_pages = [
     'admin', 'admin_users', 'admin_activities', 'admin_logs', 'owner',
     'mot_de_passe_oublie', 'reinitialiser_mdp',
     'modifier_activite', 'notifications', 'verifier_email', 'renvoyer_verification',
-    'messages', 'envoyer_message', 'logout', 'carte',
+    'messages', 'envoyer_message', 'logout', 'carte', 'admin_contact',
 ];
 if (!in_array($page, $allowed_pages)) $page = 'home';
 
@@ -394,10 +394,15 @@ if ($page === 'home') {
         }
     }
 
+} elseif ($page === 'admin_contact') {
+    require_admin();
+    $contact_messages = $pdo->query("SELECT * FROM contact_messages ORDER BY sent_at DESC")->fetchAll();
+    $contact_unread   = (int)$pdo->query("SELECT COUNT(*) FROM contact_messages WHERE is_read = 0")->fetchColumn();
+
 } elseif ($page === 'owner') {
     require_owner();  // Arrête si pas owner
-    $valid_tabs = ['dashboard', 'users', 'activities', 'admins'];
-    $owner_tab  = in_array($_GET['tab'] ?? '', $valid_tabs) ? $_GET['tab'] : 'dashboard';
+    $valid_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact'];
+    $owner_tab  = in_array($_GET['tab'] ?? '', $valid_tabs) ? ($_GET['tab'] ?? 'dashboard') : 'dashboard';
 
     // Charge tous les utilisateurs et activités sans pagination (panel owner = vision globale)
     $owner_users           = $userModel->getAllForAdmin();
@@ -423,6 +428,11 @@ if ($page === 'home') {
         SELECT a.*, u.prenom, u.nom FROM activities a
         JOIN users u ON u.idusers = a.creator_id ORDER BY a.created_at DESC LIMIT 5
     ")->fetchAll();
+
+    if ($owner_tab === 'contact') {
+        $contact_messages = $pdo->query("SELECT * FROM contact_messages ORDER BY sent_at DESC")->fetchAll();
+        $contact_unread   = (int)$pdo->query("SELECT COUNT(*) FROM contact_messages WHERE is_read = 0")->fetchColumn();
+    }
 }
 
 // ── COMPTEURS NAVBAR ───────────────────────────────────────────────────────────
@@ -452,7 +462,7 @@ $php_pages = [
     'profil', 'profil_edit', 'faq', 'contact', 'cgu', 'mentions',
     'admin', 'admin_users', 'admin_activities', 'admin_logs', 'owner',
     'mot_de_passe_oublie', 'reinitialiser_mdp',
-    'modifier_activite', 'notifications', 'verifier_email', 'messages', 'carte',
+    'modifier_activite', 'notifications', 'verifier_email', 'messages', 'carte', 'admin_contact',
 ];
 
 if (in_array($page, $php_pages)) {

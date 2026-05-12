@@ -166,3 +166,33 @@ if ($page === 'admin_activities' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: /sharetime/public/?page=admin_activities');
     exit;
 }
+
+// ── MESSAGES CONTACT : MARQUER LU / SUPPRIMER ─────────────────────────────────
+if (in_array($page, ['admin_contact', 'owner']) && $_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['contact_action'])) {
+    require_admin();
+    csrf_check();
+
+    $msg_id = intval($_POST['msg_id'] ?? 0);
+    $from   = $_POST['from'] ?? 'admin_contact';  // page de retour
+
+    if ($msg_id > 0) {
+        if ($_POST['contact_action'] === 'mark_read') {
+            $pdo->prepare("UPDATE contact_messages SET is_read = 1 WHERE id = :id")->execute(['id' => $msg_id]);
+        } elseif ($_POST['contact_action'] === 'mark_unread') {
+            $pdo->prepare("UPDATE contact_messages SET is_read = 0 WHERE id = :id")->execute(['id' => $msg_id]);
+        } elseif ($_POST['contact_action'] === 'delete') {
+            $pdo->prepare("DELETE FROM contact_messages WHERE id = :id")->execute(['id' => $msg_id]);
+        } elseif ($_POST['contact_action'] === 'mark_all_read') {
+            $pdo->exec("UPDATE contact_messages SET is_read = 1");
+        }
+    } elseif ($_POST['contact_action'] === 'mark_all_read') {
+        $pdo->exec("UPDATE contact_messages SET is_read = 1");
+    }
+
+    $redirect = $from === 'owner'
+        ? '/sharetime/public/?page=owner&tab=contact'
+        : '/sharetime/public/?page=admin_contact';
+    header('Location: ' . $redirect);
+    exit;
+}

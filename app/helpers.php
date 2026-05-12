@@ -182,6 +182,7 @@ function admin_nav(string $current): void {
         'admin'            => ['📊', 'Tableau de bord'],
         'admin_users'      => ['👥', 'Utilisateurs'],
         'admin_activities' => ['🎯', 'Activités'],
+        'admin_contact'    => ['✉️', 'Messages contact'],
         'admin_logs'       => ['📋', 'Logs'],
     ];
     echo '<div style="background:white;border-bottom:2px solid var(--gray-200);margin-bottom:32px;">';
