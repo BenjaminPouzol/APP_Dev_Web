@@ -10,8 +10,7 @@ $CAT_COLORS = [
     'autre'      => '#6B7280',
 ];
 ?>
-<!-- Leaflet CDN — plus fiable que les fichiers locaux pour l'initialisation -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="/sharetime/public/css/leaflet.css">
 
 <style>
     .map-wrap {
@@ -81,7 +80,7 @@ $CAT_COLORS = [
 
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
+<script src="/sharetime/public/js/leaflet.js"></script>
 <script>
 (function () {
     var activities = <?= json_encode(array_map(function ($a) use ($CATEGORY_MAP, $CAT_COLORS) {
