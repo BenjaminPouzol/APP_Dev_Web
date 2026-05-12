@@ -10,71 +10,154 @@ $CAT_COLORS = [
     'autre'      => '#6B7280',
 ];
 ?>
+<link rel="stylesheet" href="/sharetime/public/css/leaflet.css">
 <style>
-    /* Hauteur directe en px — pas de flex, pas de calc dépendant du DOM */
-    #carte-header { background:white; border-bottom:1.5px solid var(--gray-200); padding:12px 0; }
-    #carte-header h1 { font-size:1rem; font-weight:700; color:var(--navy); margin:0 0 2px; }
-    #carte-header .sub { font-size:0.8rem; color:var(--gray-500); }
-    #carte-header .legend { display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; }
-    #carte-header .legend-item { display:flex; align-items:center; gap:5px; font-size:0.75rem; color:var(--gray-600); font-weight:500; }
-    #carte-header .legend-dot { width:10px; height:10px; border-radius:50%; border:2px solid white; box-shadow:0 1px 3px rgba(0,0,0,.3); }
-
-    #map {
-        width: 100%;
-        height: 78vh;
-        min-height: 450px;
-        display: block;
-    }
-
-    /* Popup personnalisée */
-    .leaflet-popup-content-wrapper { border-radius:12px !important; padding:0 !important; box-shadow:0 4px 20px rgba(0,0,0,.15) !important; }
-    .leaflet-popup-content { margin:0 !important; width:230px !important; }
-    .mp { padding:14px 16px; font-family:inherit; }
-    .mp-cat { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
-    .mp-title { font-size:.92rem; font-weight:700; color:var(--navy); margin:0 0 4px; line-height:1.3; }
-    .mp-meta { font-size:.76rem; color:var(--gray-500); margin:0 0 10px; line-height:1.5; }
-    .mp-btn { display:inline-block; background:var(--orange); color:white; font-size:.76rem; font-weight:600; padding:6px 14px; border-radius:8px; text-decoration:none; }
-    .mp-btn:hover { background:#d4721a; }
-    .map-dot { width:14px; height:14px; border-radius:50%; border:2.5px solid white; box-shadow:0 2px 6px rgba(0,0,0,.4); cursor:pointer; }
+.carte-layout {
+    display: flex;
+    height: calc(100vh - 65px);
+}
+.carte-sidebar {
+    width: 320px;
+    flex-shrink: 0;
+    background: white;
+    border-right: 1.5px solid var(--gray-200);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.carte-sidebar-head {
+    padding: 16px;
+    border-bottom: 1.5px solid var(--gray-200);
+    flex-shrink: 0;
+}
+.carte-sidebar-head h1 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0 0 4px;
+}
+.carte-sidebar-head p {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin: 0;
+}
+.carte-sidebar-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 8px;
+}
+.carte-card {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--gray-200);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    text-decoration: none;
+    display: block;
+    background: white;
+}
+.carte-card:hover {
+    border-color: var(--orange);
+    box-shadow: 0 2px 8px rgba(232,129,26,0.15);
+}
+.carte-card-cat {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 4px;
+}
+.carte-card-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0 0 4px;
+}
+.carte-card-meta {
+    font-size: 0.76rem;
+    color: var(--gray-500);
+    margin: 0;
+    line-height: 1.5;
+}
+#map {
+    flex: 1;
+    min-width: 0;
+}
+.carte-empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--gray-400);
+}
+.carte-empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.carte-empty p { font-size: 0.85rem; margin: 4px 0; }
+/* popup */
+.leaflet-popup-content-wrapper { border-radius: 12px !important; padding: 0 !important; box-shadow: 0 4px 20px rgba(0,0,0,.15) !important; }
+.leaflet-popup-content { margin: 0 !important; width: 220px !important; }
+.mp { padding: 14px 16px; font-family: inherit; }
+.mp-cat { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
+.mp-title { font-size: .9rem; font-weight: 700; color: var(--navy); margin: 0 0 4px; line-height: 1.3; }
+.mp-meta { font-size: .75rem; color: var(--gray-500); margin: 0 0 10px; line-height: 1.5; }
+.mp-btn { display: inline-block; background: var(--orange); color: white; font-size: .75rem; font-weight: 600; padding: 6px 14px; border-radius: 8px; text-decoration: none; }
+.mp-btn:hover { background: #d4721a; }
+@media (max-width: 640px) {
+    .carte-layout { flex-direction: column; }
+    .carte-sidebar { width: 100%; height: 200px; border-right: none; border-bottom: 1.5px solid var(--gray-200); }
+    #map { flex: 1; min-height: 300px; }
+}
 </style>
 
-<div id="carte-header">
-    <div class="container">
-        <h1>Carte des activités</h1>
-        <p class="sub">
-            <?= count($map_activities) ?> activité<?= count($map_activities) !== 1 ? 's' : '' ?> localisée<?= count($map_activities) !== 1 ? 's' : '' ?>
-            &nbsp;·&nbsp;
-            <a href="/sharetime/public/?page=activites" style="color:var(--orange);text-decoration:none;font-weight:600;">Voir la liste</a>
-        </p>
-        <div class="legend">
-            <?php foreach ($CATEGORY_MAP as $key => [$emoji, , $label]): ?>
-            <div class="legend-item">
-                <div class="legend-dot" style="background:<?= $CAT_COLORS[$key] ?? '#6B7280' ?>"></div>
-                <?= $emoji ?> <?= htmlspecialchars($label) ?>
-            </div>
-            <?php endforeach; ?>
+<div class="carte-layout">
+
+    <!-- ── Sidebar liste des activités ── -->
+    <aside class="carte-sidebar">
+        <div class="carte-sidebar-head">
+            <h1>Activités à proximité</h1>
+            <p><?= count($map_activities) ?> activité<?= count($map_activities) !== 1 ? 's' : '' ?> localisée<?= count($map_activities) !== 1 ? 's' : '' ?></p>
         </div>
-    </div>
+        <div class="carte-sidebar-list">
+            <?php if (empty($map_activities)): ?>
+                <div class="carte-empty">
+                    <div class="carte-empty-icon">🗺️</div>
+                    <p style="font-weight:600; color:var(--navy);">Aucune activité localisée</p>
+                    <p>Les activités apparaissent ici une fois géolocalisées lors de leur création.</p>
+                    <?php if (isset($_SESSION['user'])): ?>
+                    <a href="/sharetime/public/?page=creer" class="btn btn-orange btn-sm" style="margin-top:12px; display:inline-block;">
+                        + Créer une activité
+                    </a>
+                    <?php endif; ?>
+                </div>
+            <?php else: ?>
+                <?php foreach ($map_activities as $a):
+                    $cat   = $CATEGORY_MAP[$a['category']] ?? $CATEGORY_MAP['autre'];
+                    $color = $CAT_COLORS[$a['category']]   ?? '#6B7280';
+                    $dt    = new DateTime($a['start_time']);
+                ?>
+                <a class="carte-card" href="/sharetime/public/?page=detail&id=<?= (int)$a['idactivities'] ?>"
+                   data-lat="<?= (float)$a['latitude'] ?>" data-lng="<?= (float)$a['longitude'] ?>"
+                   data-id="<?= (int)$a['idactivities'] ?>">
+                    <p class="carte-card-cat" style="color:<?= $color ?>">
+                        <?= $cat[0] ?> <?= htmlspecialchars($cat[2]) ?>
+                    </p>
+                    <p class="carte-card-title"><?= htmlspecialchars($a['title']) ?></p>
+                    <p class="carte-card-meta">
+                        📅 <?= $dt->format('d/m/Y à H\hi') ?><br>
+                        📍 <?= htmlspecialchars($a['location']) ?>, <?= htmlspecialchars($a['city']) ?>
+                    </p>
+                </a>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </aside>
+
+    <!-- ── Carte Leaflet ── -->
+    <div id="map"></div>
+
 </div>
 
-<!-- Le CSS Leaflet doit être chargé avant que le div#map soit dimensionné -->
-<link rel="stylesheet" href="/sharetime/public/css/leaflet.css">
-<div id="map"></div>
 <script src="/sharetime/public/js/leaflet.js"></script>
 <script>
 (function () {
-    var el = document.getElementById('map');
-
-    var map = L.map(el, { center: [46.5, 2.5], zoom: 6 });
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19
-    }).addTo(map);
-
-    /* Force Leaflet à recalculer la taille du conteneur après le rendu */
-    setTimeout(function () { map.invalidateSize(); }, 100);
-
     var activities = <?= json_encode(array_map(function ($a) use ($CATEGORY_MAP, $CAT_COLORS) {
         return [
             'id'       => (int)$a['idactivities'],
@@ -92,42 +175,75 @@ $CAT_COLORS = [
         ];
     }, $map_activities), JSON_UNESCAPED_UNICODE) ?>;
 
+    /* Initialisation de la carte */
+    var map = L.map('map', { center: [46.5, 2.5], zoom: 6 });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19
+    }).addTo(map);
+
+    /* Recalcul de taille après rendu complet */
+    setTimeout(function () { map.invalidateSize(); }, 200);
+
     if (!activities.length) return;
 
     function esc(s) {
-        return String(s)
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    var bounds = L.latLngBounds();
+    var markers = {};
+    var bounds  = L.latLngBounds();
 
     activities.forEach(function (a) {
+        /* Marqueur coloré avec pin SVG natif de Leaflet */
         var icon = L.divIcon({
             className: '',
-            html: '<div class="map-dot" style="background:' + a.color + '"></div>',
-            iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -10]
+            html: '<svg width="28" height="40" viewBox="0 0 28 40" xmlns="http://www.w3.org/2000/svg">'
+                + '<path d="M14 0C6.268 0 0 6.268 0 14c0 9.333 14 26 14 26S28 23.333 28 14C28 6.268 21.732 0 14 0z" fill="' + a.color + '" stroke="white" stroke-width="2"/>'
+                + '<circle cx="14" cy="14" r="6" fill="white"/>'
+                + '</svg>',
+            iconSize:   [28, 40],
+            iconAnchor: [14, 40],
+            popupAnchor:[0, -42]
         });
 
-        var d = new Date(a.date.replace(' ', 'T'));
-        var dateStr = d.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'long' });
+        var d    = new Date(a.date.replace(' ', 'T'));
+        var date = d.toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
 
-        var html = '<div class="mp">'
+        var popup = '<div class="mp">'
             + '<p class="mp-cat" style="color:' + a.color + '">' + a.emoji + ' ' + a.label + '</p>'
             + '<p class="mp-title">' + esc(a.title) + '</p>'
-            + '<p class="mp-meta">📅 ' + dateStr + '<br>📍 ' + esc(a.location) + ', ' + esc(a.city) + '</p>'
-            + '<a class="mp-btn" href="/sharetime/public/?page=detail&id=' + a.id + '">Voir →</a>'
+            + '<p class="mp-meta">📅 ' + date + '<br>📍 ' + esc(a.location) + ', ' + esc(a.city) + '</p>'
+            + '<a class="mp-btn" href="/sharetime/public/?page=detail&id=' + a.id + '">Voir l\'activité →</a>'
             + '</div>';
 
-        L.marker([a.lat, a.lng], { icon: icon })
-         .addTo(map)
-         .bindPopup(html, { maxWidth: 260 });
+        var m = L.marker([a.lat, a.lng], { icon: icon })
+                 .addTo(map)
+                 .bindPopup(popup, { maxWidth: 250 });
 
+        markers[a.id] = m;
         bounds.extend([a.lat, a.lng]);
     });
 
-    activities.length === 1
-        ? map.setView([activities[0].lat, activities[0].lng], 13)
-        : map.fitBounds(bounds, { padding: [60, 60], maxZoom: 13 });
+    /* Zoom automatique sur les marqueurs */
+    if (activities.length === 1) {
+        map.setView([activities[0].lat, activities[0].lng], 14);
+        markers[activities[0].id].openPopup();
+    } else {
+        map.fitBounds(bounds, { padding: [60, 60], maxZoom: 13 });
+    }
+
+    /* Clic sur une carte de la sidebar → centrer + ouvrir popup */
+    document.querySelectorAll('.carte-card[data-id]').forEach(function (card) {
+        card.addEventListener('click', function (e) {
+            e.preventDefault();
+            var id  = parseInt(card.dataset.id);
+            var lat = parseFloat(card.dataset.lat);
+            var lng = parseFloat(card.dataset.lng);
+            map.setView([lat, lng], 15);
+            if (markers[id]) markers[id].openPopup();
+        });
+    });
 })();
 </script>
