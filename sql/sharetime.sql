@@ -41,9 +41,12 @@ CREATE TABLE `activities` (
   `conditions` text DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`idactivities`),
-  KEY `creator_id` (`creator_id`),
+  KEY `idx_act_status` (`status`),
+  KEY `idx_act_category` (`category`),
+  KEY `idx_act_creator` (`creator_id`),
+  KEY `idx_act_city` (`city`(50)),
   CONSTRAINT `activities_ibfk_1` FOREIGN KEY (`creator_id`) REFERENCES `users` (`idusers`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -52,7 +55,6 @@ CREATE TABLE `activities` (
 
 LOCK TABLES `activities` WRITE;
 /*!40000 ALTER TABLE `activities` DISABLE KEYS */;
-INSERT INTO `activities` VALUES (1,1,'RandonnÚe en forÛt de Bondy','Promenade tranquille de 3h en forÛt. Niveau facile, adaptÚ Ó tous. PrÚvoir de bonnes chaussures et de l eau.',NULL,'ForÛt de Bondy','Bondy','2026-05-10 09:00:00','2026-05-10 12:00:00',15,'publique','autre','active',0,0,NULL,'2026-04-24 14:23:55'),(2,1,'Atelier peinture aquarelle','Initiation Ó l aquarelle pour dÚbutants absolus. MatÚriel fourni, venez juste avec votre bonne humeur !',NULL,'Centre culturel Picasso','Paris','2026-05-15 14:00:00','2026-05-15 17:00:00',8,'publique','autre','active',0,0,NULL,'2026-04-24 14:23:55'),(3,1,'Sortie vÚlo urbaine','Circuit de 25 km Ó travers la ville. VÚlos et casques recommandÚs. Pause cafÚ au milieu du parcours.',NULL,'Place de la RÚpublique','Paris','2026-05-18 10:00:00','2026-05-18 13:00:00',20,'publique','autre','active',0,0,NULL,'2026-04-24 14:23:55'),(4,1,'Club de lecture mensuel','Discussion autour du livre du mois. CafÚ et gÔteaux offerts. Inscrivez-vous pour recevoir le titre Ó l avance.',NULL,'CafÚ des artistes','Lyon','2026-05-20 18:30:00','2026-05-20 20:30:00',12,'publique','autre','active',0,0,NULL,'2026-04-24 14:23:55'),(5,1,'Yoga au lever du soleil','SÚance de yoga douce pour dÚbutants en plein air. Tapis Ó apporter. Tenue confortable recommandÚe.',NULL,'Parc de la TÛte d Or','Lyon','2026-05-22 07:30:00','2026-05-22 09:00:00',10,'publique','autre','active',0,0,NULL,'2026-04-24 14:23:55'),(6,1,'SoirÚe jeux de sociÚtÚ','Venez jouer Ó des classiques et des nouveautÚs dans une ambiance conviviale. DÚbutants et experts bienvenus.',NULL,'Bar Le Comptoir','Bordeaux','2026-05-25 19:00:00','2026-05-25 23:00:00',16,'publique','autre','active',0,0,NULL,'2026-04-24 14:23:55');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -162,7 +164,7 @@ CREATE TABLE `cgu` (
 
 LOCK TABLES `cgu` WRITE;
 /*!40000 ALTER TABLE `cgu` DISABLE KEYS */;
-INSERT INTO `cgu` VALUES (1,'En utilisant ShareTime, vous acceptez les règles de la plateforme.','v1.0','2026-04-07 11:32:20');
+INSERT INTO `cgu` VALUES (1,'En utilisant ShareTime, vous acceptez les règles de la plateforme.','v1.0','2026-04-04 12:50:59');
 /*!40000 ALTER TABLE `cgu` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -265,7 +267,7 @@ CREATE TABLE `faq` (
   `reponse` text NOT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`idfaq`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -274,7 +276,7 @@ CREATE TABLE `faq` (
 
 LOCK TABLES `faq` WRITE;
 /*!40000 ALTER TABLE `faq` DISABLE KEYS */;
-INSERT INTO `faq` VALUES (1,'Comment créer une activité ?','Cliquez sur créer une activité et remplissez le formulaire.','2026-04-07 11:32:20'),(2,'Comment annuler une inscription ?','Allez dans votre activité et cliquez sur annuler.','2026-04-07 11:32:20'),(3,'Comment signaler un utilisateur ?','Utilisez le bouton signaler sur son profil.','2026-04-07 11:32:20');
+INSERT INTO `faq` VALUES (1,'Comment créer une activité ?','Connectez-vous puis cliquez sur \"Créer une activité\" dans la barre de navigation. Remplissez le formulaire et validez.','2026-04-25 21:08:07'),(2,'Comment m\'inscrire à une activité ?','Rendez-vous sur la page de l\'activité et cliquez sur \"S\'inscrire\". Vous devez être connecté.','2026-04-25 21:08:07'),(3,'Comment annuler mon inscription ?','Allez sur la page de l\'activité concernée et cliquez sur \"Se désinscrire\". Si une liste d\'attente existe, la première personne en attente sera automatiquement promue.','2026-04-25 21:08:07'),(4,'Comment noter un organisateur ?','Une fois l\'activité terminée, retournez sur sa page. Si vous étiez inscrit(e), un formulaire de notation apparaîtra.','2026-04-25 21:08:07'),(5,'Comment signaler un problème ?','Utilisez le formulaire de la page \"Contact\" pour nous écrire directement.','2026-04-25 21:08:07');
 /*!40000 ALTER TABLE `faq` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -321,7 +323,7 @@ CREATE TABLE `messages` (
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`idmessage`),
   KEY `sender_id` (`sender_id`),
-  KEY `receiver_id` (`receiver_id`),
+  KEY `idx_msg_receiver_read` (`receiver_id`,`is_read`),
   CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`sender_id`) REFERENCES `users` (`idusers`) ON DELETE CASCADE,
   CONSTRAINT `messages_ibfk_2` FOREIGN KEY (`receiver_id`) REFERENCES `users` (`idusers`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -353,8 +355,8 @@ CREATE TABLE `notifications` (
   `is_read` tinyint(1) DEFAULT 0,
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`idnotifications`),
-  KEY `user_id` (`user_id`),
   KEY `activity_id` (`activity_id`),
+  KEY `idx_notif_user_read` (`user_id`,`is_read`),
   CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`idusers`) ON DELETE CASCADE,
   CONSTRAINT `notifications_ibfk_2` FOREIGN KEY (`activity_id`) REFERENCES `activities` (`idactivities`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -447,7 +449,8 @@ CREATE TABLE `registrations` (
   `cancelled_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idregistration`),
   UNIQUE KEY `activity_id` (`activity_id`,`user_id`),
-  KEY `user_id` (`user_id`),
+  KEY `idx_reg_act_status` (`activity_id`,`status`),
+  KEY `idx_reg_user_status` (`user_id`,`status`),
   CONSTRAINT `registrations_ibfk_1` FOREIGN KEY (`activity_id`) REFERENCES `activities` (`idactivities`) ON DELETE CASCADE,
   CONSTRAINT `registrations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`idusers`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -530,23 +533,24 @@ CREATE TABLE `users` (
   `idusers` int(11) NOT NULL AUTO_INCREMENT,
   `nom` varchar(100) NOT NULL,
   `prenom` varchar(100) NOT NULL,
-  `pseudo` varchar(100) DEFAULT NULL,
+  `pseudo` varchar(50) DEFAULT NULL,
   `email` varchar(150) NOT NULL,
   `email_verified` tinyint(1) NOT NULL DEFAULT 0,
   `mot_de_passe` varchar(255) NOT NULL,
   `ville` varchar(100) DEFAULT NULL,
-  `date_naissance` date DEFAULT NULL,
   `bio` text DEFAULT NULL,
   `photo_profil` varchar(255) DEFAULT NULL,
   `note_moyenne` float DEFAULT 0,
   `role` enum('utilisateur','admin','owner') NOT NULL DEFAULT 'utilisateur',
+  `is_banned` tinyint(1) NOT NULL DEFAULT 0,
+  `date_naissance` date DEFAULT NULL,
   `cgu_acceptees` tinyint(1) NOT NULL DEFAULT 0,
   `cgu_version` varchar(20) DEFAULT NULL,
   `date_creation` datetime DEFAULT current_timestamp(),
-  `is_banned` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`idusers`),
-  UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  UNIQUE KEY `email` (`email`),
+  KEY `idx_users_email` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -555,9 +559,13 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'Admin','ShareTime','Admin','ton.email@exemple.com',0,'OUI',NULL,NULL,NULL,NULL,0,'owner',1,NULL,'2026-04-07 11:32:20',0),(2,'test','test',NULL,'test@test.fr',0,'1234',NULL,NULL,NULL,NULL,0,'utilisateur',0,NULL,'2026-04-10 14:17:15',0),(3,'Dupont','Marie','marie_d','marie@example.com',0,'$2y$10$d2Omt3dYMXBHhrnP2A1H/.Y/BhPt09.TqOEG5H.0ILSAxZDAPP0l6','Paris',NULL,'PassionnÚe de sport et de nature. Toujours prÛte pour une nouvelle aventure !',NULL,0,'utilisateur',1,'v1.0','2026-04-24 14:23:55',0);
+INSERT INTO `users` VALUES (1,'Pouzol','Benjamin','Benjamin','pouzol.benji@gmail.com',1,'$2y$10$HGu9MxeWnvz7gXrOuvPBc.92i//WLZEoJid12KFut0EKHYjstXJVu','Paris',NULL,NULL,0,'owner',0,NULL,1,'1.0','2026-05-12 18:15:45');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Dumping routines for database 'sharetime'
+--
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -568,4 +576,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-27 16:37:37
+-- Dump completed on 2026-05-12 18:20:04
