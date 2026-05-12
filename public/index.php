@@ -452,7 +452,7 @@ $php_pages = [
     'profil', 'profil_edit', 'faq', 'contact', 'cgu', 'mentions',
     'admin', 'admin_users', 'admin_activities', 'admin_logs', 'owner',
     'mot_de_passe_oublie', 'reinitialiser_mdp',
-    'modifier_activite', 'notifications', 'verifier_email', 'messages',
+    'modifier_activite', 'notifications', 'verifier_email', 'messages', 'carte',
 ];
 
 if (in_array($page, $php_pages)) {
