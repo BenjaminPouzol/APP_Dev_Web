@@ -89,6 +89,7 @@ $allowed_pages = [
     'mot_de_passe_oublie', 'reinitialiser_mdp',
     'modifier_activite', 'notifications', 'verifier_email', 'renvoyer_verification',
     'messages', 'envoyer_message', 'logout', 'carte', 'admin_contact',
+    'suivre', 'signaler',
 ];
 if (!in_array($page, $allowed_pages)) $page = 'home';
 

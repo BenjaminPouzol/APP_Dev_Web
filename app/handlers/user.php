@@ -148,6 +148,45 @@ if ($page === 'envoyer_message' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// ── SIGNALEMENT D'UN UTILISATEUR ──────────────────────────────────────────────
+if ($page === 'signaler' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    csrf_check();
+
+    $me        = (int)$_SESSION['user']['id'];
+    $signale_id = intval($_POST['signale_id'] ?? 0);
+    $motif      = trim($_POST['motif'] ?? '');
+    $redirect   = trim($_POST['redirect'] ?? '/sharetime/public/');
+
+    if ($signale_id <= 0 || $signale_id === $me) {
+        $_SESSION['flash']      = "Signalement invalide.";
+        $_SESSION['flash_type'] = 'error';
+        header('Location: ' . $redirect); exit;
+    }
+
+    if (empty($motif)) {
+        $_SESSION['flash']      = "Veuillez indiquer un motif.";
+        $_SESSION['flash_type'] = 'error';
+        header('Location: ' . $redirect); exit;
+    }
+
+    // Empêche un doublon : un seul signalement en attente par (signaleur, signalé)
+    $exists = $pdo->prepare("SELECT COUNT(*) FROM reports WHERE signaleur_id = :s AND signale_id = :t AND status = 'en_attente'");
+    $exists->execute(['s' => $me, 't' => $signale_id]);
+    if ($exists->fetchColumn()) {
+        $_SESSION['flash']      = "Vous avez déjà signalé cet utilisateur (signalement en attente).";
+        $_SESSION['flash_type'] = 'error';
+        header('Location: ' . $redirect); exit;
+    }
+
+    $pdo->prepare("INSERT INTO reports (signaleur_id, signale_id, motif) VALUES (:s, :t, :m)")
+        ->execute(['s' => $me, 't' => $signale_id, 'm' => $motif]);
+
+    $_SESSION['flash'] = "Signalement envoyé. L'équipe le traitera dans les plus brefs délais.";
+    header('Location: ' . $redirect);
+    exit;
+}
+
 // ── MARQUER TOUTES LES NOTIFICATIONS COMME LUES ───────────────────────────────
 if ($page === 'notifs_lues' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }

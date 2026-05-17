@@ -23,7 +23,7 @@ if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $action     = $_POST['action'] ?? '';    // action demandée (ban, unban, set_role, delete, transfer_ownership…)
     $type       = $_POST['type']   ?? 'user'; // type de la cible : 'user' ou 'activity'
-    $valid_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact', 'contenu'];
+    $valid_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact', 'contenu', 'signalements'];
     $tab        = in_array($_POST['tab'] ?? '', $valid_tabs) ? $_POST['tab'] : 'dashboard';  // onglet de retour
     $me         = (int)$_SESSION['user']['id'];  // ID de l'owner connecté (pour éviter l'auto-action)
 
@@ -94,6 +94,19 @@ if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $am->delete($activity_id);
             }
         }
+
+    } elseif ($type === 'report') {
+        $report_id = intval($_POST['report_id'] ?? 0);
+        $new_status = in_array($_POST['status'] ?? '', ['traite', 'rejete']) ? $_POST['status'] : null;
+        if ($report_id && $new_status) {
+            $pdo->prepare("UPDATE reports SET status = :s WHERE idreports = :id")
+                ->execute(['s' => $new_status, 'id' => $report_id]);
+            log_admin_action($pdo, 'update_report', 'user', $report_id,
+                'Signalement #' . $report_id . ' → ' . $new_status);
+        }
+        $_SESSION['flash'] = "Signalement mis à jour.";
+        header('Location: /sharetime/public/?page=owner&tab=signalements');
+        exit;
 
     } elseif ($type === 'content') {
         // Gestion du contenu éditorial : FAQ, CGU, Mentions légales

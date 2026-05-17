@@ -106,20 +106,23 @@ if (!$profile): ?>
                     <!-- Profil propre : bouton de modification -->
                     <a href="/sharetime/public/?page=profil_edit" class="btn btn-outline-navy btn-sm">✏️ Modifier le profil</a>
                 <?php elseif (isset($_SESSION['user'])): ?>
-                    <!-- Profil d'un autre utilisateur : boutons Suivre/Se désabonner + Message -->
+                    <!-- Profil d'un autre utilisateur : boutons Suivre/Se désabonner + Message + Signaler -->
                     <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-                        <!-- Formulaire Follow/Unfollow : toggle côté serveur (handlers/user.php) -->
+                        <!-- Formulaire Follow/Unfollow -->
                         <form method="post" action="/sharetime/public/?page=suivre" style="margin:0;">
                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                             <input type="hidden" name="user_id" value="<?= $profile['idusers'] ?>">
-                            <!-- Bouton orange si non suivi, outline s'il l'est déjà -->
                             <button type="submit" class="btn btn-sm <?= $is_following ? 'btn-outline-navy' : 'btn-orange' ?>">
                                 <?= $is_following ? '✓ Abonné(e)' : '+ Suivre' ?>
                             </button>
                         </form>
-                        <!-- Lien messagerie : ouvre la conversation avec cet utilisateur -->
                         <a href="/sharetime/public/?page=messages&with=<?= $profile['idusers'] ?>"
                            class="btn btn-sm btn-outline-navy">✉️ Message</a>
+                        <!-- Bouton signalement -->
+                        <button type="button" onclick="document.getElementById('modal-report').style.display='flex'"
+                            style="padding:6px 14px;border-radius:8px;border:1.5px solid #FECACA;background:white;color:#DC2626;font-size:0.82rem;font-weight:600;cursor:pointer;">
+                            🚩 Signaler
+                        </button>
                     </div>
                 <?php endif; ?>
             </div>
@@ -240,5 +243,67 @@ if (!$profile): ?>
     <?php endif; ?>
 
 </main>
+
+<?php if (isset($_SESSION['user']) && !$is_own && $profile): ?>
+<!-- ── MODAL DE SIGNALEMENT ──────────────────────────────────────────────────── -->
+<div id="modal-report"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px;"
+     onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:white;border-radius:16px;padding:32px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h2 style="color:var(--navy);margin:0;font-size:1.15rem;">🚩 Signaler cet utilisateur</h2>
+            <button onclick="document.getElementById('modal-report').style.display='none'"
+                style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--gray-400);line-height:1;">×</button>
+        </div>
+        <p style="color:var(--gray-500);font-size:0.88rem;margin-bottom:20px;line-height:1.6;">
+            Vous signalez le profil de <strong><?= htmlspecialchars($profile['prenom'] . ' ' . $profile['nom']) ?></strong>.
+            Votre signalement sera examiné par l'équipe.
+        </p>
+        <form method="POST" action="/sharetime/public/?page=signaler"
+              style="display:flex;flex-direction:column;gap:14px;">
+            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+            <input type="hidden" name="signale_id" value="<?= (int)$profile['idusers'] ?>">
+            <input type="hidden" name="redirect" value="/sharetime/public/?page=profil&id=<?= (int)$profile['idusers'] ?>">
+            <div>
+                <label style="display:block;font-weight:600;color:var(--gray-700);margin-bottom:8px;font-size:0.9rem;">Motif du signalement *</label>
+                <select name="motif" required
+                    style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-300);border-radius:10px;font-size:0.9rem;font-family:inherit;background:white;box-sizing:border-box;"
+                    onchange="document.getElementById('motif-autre').style.display=this.value==='Autre'?'block':'none'">
+                    <option value="">— Choisissez un motif —</option>
+                    <option>Comportement abusif ou harcelant</option>
+                    <option>Faux profil / usurpation d'identité</option>
+                    <option>Contenu inapproprié</option>
+                    <option>Spam ou arnaque</option>
+                    <option>Autre</option>
+                </select>
+                <textarea id="motif-autre" name="motif_detail" rows="3" placeholder="Précisez..."
+                    style="display:none;width:100%;margin-top:8px;padding:10px 14px;border:1.5px solid var(--gray-300);border-radius:10px;font-size:0.9rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+                <button type="button" onclick="document.getElementById('modal-report').style.display='none'"
+                    style="padding:10px 20px;border:1.5px solid var(--gray-300);border-radius:10px;background:white;font-size:0.9rem;cursor:pointer;">
+                    Annuler
+                </button>
+                <button type="submit"
+                    style="padding:10px 20px;background:#DC2626;color:white;border:none;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;">
+                    Envoyer le signalement
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Fusionne la valeur du select et du textarea "Autre" avant soumission
+document.querySelector('#modal-report form').addEventListener('submit', function(e) {
+    var sel    = this.querySelector('select[name="motif"]');
+    var detail = document.getElementById('motif-autre');
+    if (sel.value === 'Autre') {
+        if (!detail.value.trim()) { e.preventDefault(); detail.focus(); return; }
+        sel.value = 'Autre : ' + detail.value.trim();
+    }
+});
+</script>
+<?php endif; ?>
 
 <?php endif; ?>

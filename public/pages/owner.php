@@ -21,7 +21,7 @@
  */
 
 // Validation de l'onglet actif : whitelist pour éviter les valeurs arbitraires
-$valid_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact', 'contenu'];
+$valid_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact', 'contenu', 'signalements'];
 $tab = in_array($owner_tab ?? '', $valid_tabs) ? $owner_tab : 'dashboard';
 $me  = (int)$_SESSION['user']['id'];  // ID de l'owner connecté (pour éviter auto-action)
 
@@ -32,8 +32,25 @@ $tab_def = [
     'activities' => ['🎯', 'Activités'],
     'admins'     => ['👑', 'Administrateurs'],
     'contact'    => ['✉️', 'Messages contact'],
-    'contenu'    => ['📝', 'Contenu du site'],
+    'contenu'       => ['📝', 'Contenu du site'],
+    'signalements'  => ['🚩', 'Signalements'],
 ];
+
+// Données pour l'onglet signalements
+$reports_list        = [];
+$reports_pending_count = 0;
+if ($tab === 'signalements') {
+    $reports_list = $pdo->query("
+        SELECT r.*,
+               u1.prenom AS sg_prenom, u1.nom AS sg_nom, u1.pseudo AS sg_pseudo,
+               u2.prenom AS sd_prenom, u2.nom AS sd_nom, u2.pseudo AS sd_pseudo
+        FROM reports r
+        JOIN users u1 ON u1.idusers = r.signaleur_id
+        JOIN users u2 ON u2.idusers = r.signale_id
+        ORDER BY FIELD(r.status,'en_attente','traite','rejete'), r.created_at DESC
+    ")->fetchAll();
+    $reports_pending_count = $pdo->query("SELECT COUNT(*) FROM reports WHERE status = 'en_attente'")->fetchColumn();
+}
 
 // Données pour l'onglet contenu
 $faq_items_owner   = [];
@@ -717,6 +734,98 @@ if ($tab === 'contenu') {
             </form>
         </div>
     </div>
+
+<?php elseif ($tab === 'signalements'): ?>
+
+    <!-- ── ONGLET SIGNALEMENTS ─────────────────────────────────────────────── -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <div>
+            <h2 style="color:var(--navy);margin:0 0 4px;">Signalements utilisateurs</h2>
+            <p style="color:var(--gray-500);font-size:0.9rem;margin:0;">
+                <?= count($reports_list) ?> signalement<?= count($reports_list) > 1 ? 's' : '' ?>
+                <?php if ($reports_pending_count > 0): ?>
+                    — <span style="color:#DC2626;font-weight:600;"><?= $reports_pending_count ?> en attente</span>
+                <?php endif; ?>
+            </p>
+        </div>
+    </div>
+
+    <?php if (empty($reports_list)): ?>
+        <div style="text-align:center;padding:60px 0;color:var(--gray-400);">
+            <p style="font-size:2rem;margin-bottom:12px;">✅</p>
+            <p>Aucun signalement pour le moment.</p>
+        </div>
+    <?php else: ?>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+    <?php foreach ($reports_list as $r):
+        $is_pending = $r['status'] === 'en_attente';
+        $status_style = match($r['status']) {
+            'en_attente' => 'background:#FEE2E2;color:#DC2626;',
+            'traite'     => 'background:#D1FAE5;color:#065F46;',
+            'rejete'     => 'background:#F3F4F6;color:var(--gray-500);',
+            default      => ''
+        };
+        $status_label = match($r['status']) {
+            'en_attente' => '⏳ En attente',
+            'traite'     => '✓ Traité',
+            'rejete'     => '✗ Rejeté',
+            default      => $r['status']
+        };
+        $sg_name = htmlspecialchars(($r['sg_pseudo'] ?: $r['sg_prenom']) . ' ' . $r['sg_nom']);
+        $sd_name = htmlspecialchars(($r['sd_pseudo'] ?: $r['sd_prenom']) . ' ' . $r['sd_nom']);
+    ?>
+    <div style="background:white;border:1.5px solid <?= $is_pending ? '#FECACA' : 'var(--gray-200)' ?>;border-radius:12px;padding:18px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+                    <span style="font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:99px;<?= $status_style ?>"><?= $status_label ?></span>
+                    <span style="color:var(--gray-400);font-size:0.8rem;"><?= date('d/m/Y à H:i', strtotime($r['created_at'])) ?></span>
+                </div>
+                <p style="margin:0 0 6px;font-size:0.9rem;color:var(--gray-700);">
+                    <strong>Signaleur :</strong>
+                    <a href="/sharetime/public/?page=profil&id=<?= $r['signaleur_id'] ?>" style="color:var(--navy);font-weight:600;"><?= $sg_name ?></a>
+                </p>
+                <p style="margin:0 0 8px;font-size:0.9rem;color:var(--gray-700);">
+                    <strong>Signalé :</strong>
+                    <a href="/sharetime/public/?page=profil&id=<?= $r['signale_id'] ?>" style="color:#DC2626;font-weight:600;"><?= $sd_name ?></a>
+                </p>
+                <p style="margin:0;font-size:0.88rem;color:var(--gray-600);background:var(--gray-50);padding:8px 12px;border-radius:8px;">
+                    <?= htmlspecialchars($r['motif']) ?>
+                </p>
+            </div>
+            <?php if ($is_pending): ?>
+            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+                <!-- Marquer traité -->
+                <form method="POST" action="/sharetime/public/?page=owner">
+                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                    <input type="hidden" name="type" value="report">
+                    <input type="hidden" name="action" value="update_report">
+                    <input type="hidden" name="report_id" value="<?= $r['idreports'] ?>">
+                    <input type="hidden" name="status" value="traite">
+                    <input type="hidden" name="tab" value="signalements">
+                    <button type="submit" style="width:100%;padding:6px 14px;border-radius:6px;border:1.5px solid #059669;background:white;color:#059669;font-size:0.78rem;font-weight:600;cursor:pointer;">
+                        ✓ Traité
+                    </button>
+                </form>
+                <!-- Rejeter -->
+                <form method="POST" action="/sharetime/public/?page=owner">
+                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                    <input type="hidden" name="type" value="report">
+                    <input type="hidden" name="action" value="update_report">
+                    <input type="hidden" name="report_id" value="<?= $r['idreports'] ?>">
+                    <input type="hidden" name="status" value="rejete">
+                    <input type="hidden" name="tab" value="signalements">
+                    <button type="submit" style="width:100%;padding:6px 14px;border-radius:6px;border:1.5px solid var(--gray-300);background:white;color:var(--gray-500);font-size:0.78rem;font-weight:600;cursor:pointer;">
+                        ✗ Rejeter
+                    </button>
+                </form>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
 
 <script>
 function openEditFaq(id, question, reponse) {

@@ -91,21 +91,26 @@ if (!$activity): ?>
         </div>
 
         <!-- ── ORGANISATEUR + NOTE ────────────────────────────────────────── -->
-        <p style="color:var(--gray-500); font-size:0.9rem; margin-bottom:28px;">
-            Organisée par
-            <!-- Lien vers le profil de l'organisateur -->
-            <a href="/sharetime/public/?page=profil&id=<?= $activity['creator_id'] ?>"
-               style="color:var(--orange); font-weight:600; text-decoration:none;">
-                <?= htmlspecialchars($activity['prenom'] . ' ' . $activity['nom']) ?>
-            </a>
-            <!-- Note moyenne de l'organisateur : masquée si 0 (pas encore noté) -->
-            <?php if ($activity['creator_note'] > 0): ?>
-                <span style="color:var(--gray-400); margin:0 4px;">·</span>
-                <span style="color:var(--orange);">★</span>
-                <!-- number_format(x, 1) = 1 décimale ex: "4.5" -->
-                <span style="font-weight:600; color:var(--gray-700);"><?= number_format($activity['creator_note'], 1) ?></span>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:28px;">
+            <p style="color:var(--gray-500); font-size:0.9rem; margin:0;">
+                Organisée par
+                <a href="/sharetime/public/?page=profil&id=<?= $activity['creator_id'] ?>"
+                   style="color:var(--orange); font-weight:600; text-decoration:none;">
+                    <?= htmlspecialchars($activity['prenom'] . ' ' . $activity['nom']) ?>
+                </a>
+                <?php if ($activity['creator_note'] > 0): ?>
+                    <span style="color:var(--gray-400); margin:0 4px;">·</span>
+                    <span style="color:var(--orange);">★</span>
+                    <span style="font-weight:600; color:var(--gray-700);"><?= number_format($activity['creator_note'], 1) ?></span>
+                <?php endif; ?>
+            </p>
+            <?php if (isset($_SESSION['user']) && !$is_organizer): ?>
+            <button type="button" onclick="document.getElementById('modal-report-detail').style.display='flex'"
+                style="padding:5px 12px;border-radius:8px;border:1.5px solid #FECACA;background:white;color:#DC2626;font-size:0.78rem;font-weight:600;cursor:pointer;flex-shrink:0;">
+                🚩 Signaler l'organisateur
+            </button>
             <?php endif; ?>
-        </p>
+        </div>
 
         <!-- ── GRILLE D'INFORMATIONS ──────────────────────────────────────── -->
         <!-- 4 tuiles en 2×2 : début / fin / lieu / participants -->
@@ -398,5 +403,66 @@ if (!$activity): ?>
     </div>
 
 </main>
+
+<?php if (isset($_SESSION['user']) && !$is_organizer && $activity): ?>
+<!-- ── MODAL SIGNALEMENT ORGANISATEUR ───────────────────────────────────────── -->
+<div id="modal-report-detail"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px;"
+     onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:white;border-radius:16px;padding:32px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h2 style="color:var(--navy);margin:0;font-size:1.15rem;">🚩 Signaler l'organisateur</h2>
+            <button onclick="document.getElementById('modal-report-detail').style.display='none'"
+                style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--gray-400);line-height:1;">×</button>
+        </div>
+        <p style="color:var(--gray-500);font-size:0.88rem;margin-bottom:20px;line-height:1.6;">
+            Vous signalez <strong><?= htmlspecialchars($activity['prenom'] . ' ' . $activity['nom']) ?></strong>,
+            organisateur de cette activité.
+        </p>
+        <form id="detail-report-form" method="POST" action="/sharetime/public/?page=signaler"
+              style="display:flex;flex-direction:column;gap:14px;">
+            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+            <input type="hidden" name="signale_id" value="<?= (int)$activity['creator_id'] ?>">
+            <input type="hidden" name="redirect" value="/sharetime/public/?page=detail&id=<?= (int)$activity['idactivities'] ?>">
+            <div>
+                <label style="display:block;font-weight:600;color:var(--gray-700);margin-bottom:8px;font-size:0.9rem;">Motif du signalement *</label>
+                <select name="motif" required
+                    style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-300);border-radius:10px;font-size:0.9rem;font-family:inherit;background:white;box-sizing:border-box;"
+                    onchange="document.getElementById('motif-autre-detail').style.display=this.value==='Autre'?'block':'none'">
+                    <option value="">— Choisissez un motif —</option>
+                    <option>Comportement abusif ou harcelant</option>
+                    <option>Faux profil / usurpation d'identité</option>
+                    <option>Contenu inapproprié dans l'activité</option>
+                    <option>Activité frauduleuse ou trompeuse</option>
+                    <option>Spam ou arnaque</option>
+                    <option>Autre</option>
+                </select>
+                <textarea id="motif-autre-detail" name="motif_detail" rows="3" placeholder="Précisez..."
+                    style="display:none;width:100%;margin-top:8px;padding:10px 14px;border:1.5px solid var(--gray-300);border-radius:10px;font-size:0.9rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+                <button type="button" onclick="document.getElementById('modal-report-detail').style.display='none'"
+                    style="padding:10px 20px;border:1.5px solid var(--gray-300);border-radius:10px;background:white;font-size:0.9rem;cursor:pointer;">
+                    Annuler
+                </button>
+                <button type="submit"
+                    style="padding:10px 20px;background:#DC2626;color:white;border:none;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;">
+                    Envoyer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+document.getElementById('detail-report-form').addEventListener('submit', function(e) {
+    var sel    = this.querySelector('select[name="motif"]');
+    var detail = document.getElementById('motif-autre-detail');
+    if (sel.value === 'Autre') {
+        if (!detail.value.trim()) { e.preventDefault(); detail.focus(); return; }
+        sel.value = 'Autre : ' + detail.value.trim();
+    }
+});
+</script>
+<?php endif; ?>
 
 <?php endif; ?>
