@@ -402,7 +402,7 @@ if ($page === 'home') {
 
 } elseif ($page === 'owner') {
     require_owner();  // Arrête si pas owner
-    $valid_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact'];
+    $valid_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact', 'contenu', 'signalements'];
     $owner_tab  = in_array($_GET['tab'] ?? '', $valid_tabs) ? ($_GET['tab'] ?? 'dashboard') : 'dashboard';
 
     // Charge tous les utilisateurs et activités sans pagination (panel owner = vision globale)
