@@ -56,7 +56,7 @@ $me = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (pour bloq
                 <p style="margin:0;font-weight:700;color:var(--orange);font-size:0.9rem;">Vous êtes propriétaire</p>
                 <p style="margin:2px 0 0;font-size:0.82rem;color:var(--gray-600);">
                     Vous pouvez nommer ou révoquer des administrateurs, et transférer la propriété du site à un autre membre.
-                    Le transfert est <strong>irréversible</strong> sans intervention du nouveau propriétaire.
+                    Le transfert est <strong>irréversible</strong> sans intervention du nouveau super-admin.
                 </p>
             </div>
         </div>
@@ -178,8 +178,8 @@ $me = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (pour bloq
                                             <!-- addslashes dans onclick pour échapper le nom dans la chaîne JS -->
                                             <button type="submit"
                                                 style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--orange);background:white;color:var(--orange);font-size:0.78rem;font-weight:600;cursor:pointer;"
-                                                onclick="return confirm('Transférer la propriété du site à <?= htmlspecialchars(addslashes($u['prenom'].' '.$u['nom'])) ?> ?\n\nVous deviendrez administrateur. Cette action est irréversible sans intervention du nouveau propriétaire.')">
-                                                👑 Propriétaire
+                                                onclick="return confirm('Transférer le rôle Super-Admin à <?= htmlspecialchars(addslashes($u['prenom'].' '.$u['nom'])) ?> ?\n\nVous deviendrez administrateur. Cette action est irréversible sans intervention du nouveau super-admin.')">
+                                                👑 Super-Admin
                                             </button>
                                         </form>
 

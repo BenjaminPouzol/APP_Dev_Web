@@ -138,7 +138,7 @@
                 <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin', 'owner'])): ?>
                 <li class="mobile-only">
                     <?php if ($_SESSION['user']['role'] === 'owner'): ?>
-                        <a href="/sharetime/public/?page=owner" style="color:var(--orange); font-weight:600;">👑 Espace Propriétaire</a>
+                        <a href="/sharetime/public/?page=owner" style="color:var(--orange); font-weight:600;">👑 Super-Admin</a>
                     <?php else: ?>
                         <a href="/sharetime/public/?page=admin" style="color:var(--orange); font-weight:600;">⚙️ Administration</a>
                     <?php endif; ?>
@@ -182,7 +182,7 @@
                     <a href="/sharetime/public/?page=owner"
                        class="btn btn-sm"
                        style="background:var(--orange-pale);color:var(--orange);border:1.5px solid rgba(232,129,26,0.4);">
-                        👑 Propriétaire
+                        👑 Super-Admin
                     </a>
                 <?php elseif ($_SESSION['user']['role'] === 'admin'): ?>
                     <a href="/sharetime/public/?page=admin"

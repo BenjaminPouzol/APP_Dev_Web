@@ -21,7 +21,7 @@
  */
 
 // Validation de l'onglet actif : whitelist pour éviter les valeurs arbitraires
-$valid_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact'];
+$valid_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact', 'contenu'];
 $tab = in_array($owner_tab ?? '', $valid_tabs) ? $owner_tab : 'dashboard';
 $me  = (int)$_SESSION['user']['id'];  // ID de l'owner connecté (pour éviter auto-action)
 
@@ -32,7 +32,22 @@ $tab_def = [
     'activities' => ['🎯', 'Activités'],
     'admins'     => ['👑', 'Administrateurs'],
     'contact'    => ['✉️', 'Messages contact'],
+    'contenu'    => ['📝', 'Contenu du site'],
 ];
+
+// Données pour l'onglet contenu
+$faq_items_owner   = [];
+$cgu_owner         = '';
+$cgu_version_owner = '';
+$mentions_owner    = '';
+if ($tab === 'contenu') {
+    $faq_items_owner   = $pdo->query("SELECT * FROM faq ORDER BY idfaq ASC")->fetchAll();
+    $cgu_row           = $pdo->query("SELECT contenu, version FROM cgu ORDER BY idcgu DESC LIMIT 1")->fetch();
+    $cgu_owner         = $cgu_row['contenu'] ?? '';
+    $cgu_version_owner = $cgu_row['version'] ?? '';
+    $mentions_row      = $pdo->query("SELECT contenu FROM mentions ORDER BY idmentions DESC LIMIT 1")->fetch();
+    $mentions_owner    = $mentions_row['contenu'] ?? '';
+}
 ?>
 
 <!-- ── EN-TÊTE OWNER ──────────────────────────────────────────────────────────
@@ -41,8 +56,8 @@ $tab_def = [
 <div style="background:linear-gradient(135deg,var(--orange) 0%,#c96a10 100%);padding:28px 0;">
     <div class="container" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
         <div>
-            <p style="color:rgba(255,255,255,0.65);font-size:0.8rem;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Propriétaire</p>
-            <h1 style="color:white;margin:0;font-size:1.6rem;">Panel Propriétaire</h1>
+            <p style="color:rgba(255,255,255,0.65);font-size:0.8rem;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Super-Admin</p>
+            <h1 style="color:white;margin:0;font-size:1.6rem;">Panel Super-Admin</h1>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
             <?= role_badge($_SESSION['user']['role']) ?>
@@ -375,8 +390,8 @@ $tab_def = [
     <div style="background:#FEF3E2;border:1.5px solid rgba(232,129,26,0.3);border-radius:12px;padding:16px 20px;margin-bottom:28px;display:flex;align-items:center;gap:14px;">
         <span style="font-size:1.5rem;">👑</span>
         <p style="margin:0;font-size:0.88rem;color:var(--gray-700);">
-            <strong>Seul le propriétaire</strong> peut nommer ou révoquer des administrateurs et transférer la propriété du site.
-            Le transfert est <strong>irréversible</strong> sans intervention du nouveau propriétaire.
+            <strong>Seul le super-admin</strong> peut nommer ou révoquer des administrateurs et transférer la propriété du site.
+            Le transfert est <strong>irréversible</strong> sans intervention du nouveau super-admin.
         </p>
     </div>
 
@@ -436,7 +451,7 @@ $tab_def = [
                             <input type="hidden" name="action" value="transfer_ownership">
                             <button type="submit"
                                 style="padding:5px 12px;border-radius:6px;border:1.5px solid var(--orange);background:white;color:var(--orange);font-size:0.78rem;font-weight:600;cursor:pointer;"
-                                onclick="return confirm('Transférer la propriété à <?= htmlspecialchars(addslashes($u['prenom'].' '.$u['nom'])) ?> ?\n\nVous deviendrez administrateur. Action irréversible.')">
+                                onclick="return confirm('Transférer le rôle Super-Admin à <?= htmlspecialchars(addslashes($u['prenom'].' '.$u['nom'])) ?> ?\n\nVous deviendrez administrateur. Action irréversible.')">
                                 👑 Transférer
                             </button>
                         </form>
@@ -590,6 +605,138 @@ $tab_def = [
         <?php endforeach; ?>
     </div>
     <?php endif; ?>
+
+<?php elseif ($tab === 'contenu'): ?>
+
+    <!-- ── ONGLET CONTENU DU SITE : FAQ, CGU, Mentions ──────────────────────── -->
+
+    <!-- ── FAQ ──────────────────────────────────────────────────────────────── -->
+    <div style="margin-bottom:36px;">
+        <h2 style="color:var(--navy);margin-bottom:16px;font-size:1.1rem;">📋 Foire aux questions</h2>
+
+        <!-- Liste des questions existantes -->
+        <?php if (empty($faq_items_owner)): ?>
+            <p style="color:var(--gray-500);margin-bottom:16px;">Aucune question pour le moment.</p>
+        <?php else: ?>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+            <?php foreach ($faq_items_owner as $fq): ?>
+            <div style="background:white;border:1.5px solid var(--gray-200);border-radius:10px;padding:14px 16px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+                    <div style="flex:1;">
+                        <p style="font-weight:600;color:var(--gray-900);margin:0 0 4px;"><?= htmlspecialchars($fq['question']) ?></p>
+                        <p style="color:var(--gray-500);font-size:0.88rem;margin:0;"><?= htmlspecialchars(mb_substr($fq['reponse'], 0, 120)) ?>...</p>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-shrink:0;">
+                        <!-- Bouton éditer : ouvre le formulaire pré-rempli via JS -->
+                        <button type="button"
+                            onclick="openEditFaq(<?= $fq['idfaq'] ?>, <?= htmlspecialchars(json_encode($fq['question'])) ?>, <?= htmlspecialchars(json_encode($fq['reponse'])) ?>)"
+                            style="padding:5px 12px;border-radius:6px;border:1.5px solid var(--navy);background:white;color:var(--navy);font-size:0.78rem;font-weight:600;cursor:pointer;">
+                            ✏️ Éditer
+                        </button>
+                        <form method="POST" action="/sharetime/public/?page=owner" onsubmit="return confirm('Supprimer cette question ?')">
+                            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                            <input type="hidden" name="type" value="content">
+                            <input type="hidden" name="action" value="delete_faq">
+                            <input type="hidden" name="faq_id" value="<?= $fq['idfaq'] ?>">
+                            <button type="submit" style="padding:5px 12px;border-radius:6px;border:1.5px solid #FECACA;background:white;color:#DC2626;font-size:0.78rem;font-weight:600;cursor:pointer;">
+                                🗑
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Formulaire ajout/édition FAQ -->
+        <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px;padding:20px;">
+            <h3 id="faq-form-title" style="color:var(--navy);margin:0 0 14px;font-size:0.95rem;">+ Ajouter une question</h3>
+            <form id="faq-form" method="POST" action="/sharetime/public/?page=owner" style="display:flex;flex-direction:column;gap:12px;">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="type" value="content">
+                <input type="hidden" id="faq-action" name="action" value="add_faq">
+                <input type="hidden" id="faq-id" name="faq_id" value="">
+                <div>
+                    <label style="display:block;font-weight:600;color:var(--gray-700);margin-bottom:6px;font-size:0.88rem;">Question *</label>
+                    <input type="text" id="faq-q" name="question" required placeholder="Ex : Comment créer une activité ?"
+                        style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="display:block;font-weight:600;color:var(--gray-700);margin-bottom:6px;font-size:0.88rem;">Réponse *</label>
+                    <textarea id="faq-r" name="reponse" required rows="3" placeholder="Réponse complète..."
+                        style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:0.9rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button type="submit" class="btn btn-navy">Enregistrer</button>
+                    <button type="button" id="faq-cancel" onclick="resetFaqForm()" style="display:none;padding:10px 18px;border:1.5px solid var(--gray-300);border-radius:8px;background:white;font-size:0.9rem;cursor:pointer;">Annuler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── CGU ───────────────────────────────────────────────────────────────── -->
+    <div style="margin-bottom:36px;">
+        <h2 style="color:var(--navy);margin-bottom:16px;font-size:1.1rem;">📄 Conditions Générales d'Utilisation</h2>
+        <div style="background:white;border:1.5px solid var(--gray-200);border-radius:12px;padding:20px;">
+            <form method="POST" action="/sharetime/public/?page=owner" style="display:flex;flex-direction:column;gap:12px;">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="type" value="content">
+                <input type="hidden" name="action" value="update_cgu">
+                <div>
+                    <label style="display:block;font-weight:600;color:var(--gray-700);margin-bottom:6px;font-size:0.88rem;">Version (ex : v1.1)</label>
+                    <input type="text" name="version" value="<?= htmlspecialchars($cgu_version_owner) ?>" placeholder="v1.0"
+                        style="width:200px;padding:10px 14px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:0.9rem;font-family:inherit;">
+                </div>
+                <div>
+                    <label style="display:block;font-weight:600;color:var(--gray-700);margin-bottom:6px;font-size:0.88rem;">Contenu *</label>
+                    <p style="font-size:0.8rem;color:var(--gray-500);margin:0 0 8px;">Le texte sera affiché tel quel sur la page CGU. Utilisez des sauts de ligne pour structurer.</p>
+                    <textarea name="contenu" required rows="12"
+                        style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:0.88rem;font-family:inherit;resize:vertical;box-sizing:border-box;line-height:1.6;"><?= htmlspecialchars($cgu_owner) ?></textarea>
+                </div>
+                <button type="submit" class="btn btn-navy" style="width:fit-content;">Enregistrer les CGU</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── MENTIONS LÉGALES ──────────────────────────────────────────────────── -->
+    <div>
+        <h2 style="color:var(--navy);margin-bottom:16px;font-size:1.1rem;">⚖️ Mentions légales</h2>
+        <div style="background:white;border:1.5px solid var(--gray-200);border-radius:12px;padding:20px;">
+            <form method="POST" action="/sharetime/public/?page=owner" style="display:flex;flex-direction:column;gap:12px;">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="type" value="content">
+                <input type="hidden" name="action" value="update_mentions">
+                <div>
+                    <label style="display:block;font-weight:600;color:var(--gray-700);margin-bottom:6px;font-size:0.88rem;">Contenu *</label>
+                    <p style="font-size:0.8rem;color:var(--gray-500);margin:0 0 8px;">Affiché sur la page Mentions légales. Sauts de ligne préservés.</p>
+                    <textarea name="contenu" required rows="12"
+                        style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:0.88rem;font-family:inherit;resize:vertical;box-sizing:border-box;line-height:1.6;"><?= htmlspecialchars($mentions_owner) ?></textarea>
+                </div>
+                <button type="submit" class="btn btn-navy" style="width:fit-content;">Enregistrer les mentions</button>
+            </form>
+        </div>
+    </div>
+
+<script>
+function openEditFaq(id, question, reponse) {
+    document.getElementById('faq-form-title').textContent = '✏️ Modifier la question';
+    document.getElementById('faq-action').value = 'edit_faq';
+    document.getElementById('faq-id').value = id;
+    document.getElementById('faq-q').value = question;
+    document.getElementById('faq-r').value = reponse;
+    document.getElementById('faq-cancel').style.display = 'block';
+    document.getElementById('faq-form').scrollIntoView({behavior:'smooth', block:'center'});
+}
+function resetFaqForm() {
+    document.getElementById('faq-form-title').textContent = '+ Ajouter une question';
+    document.getElementById('faq-action').value = 'add_faq';
+    document.getElementById('faq-id').value = '';
+    document.getElementById('faq-q').value = '';
+    document.getElementById('faq-r').value = '';
+    document.getElementById('faq-cancel').style.display = 'none';
+}
+</script>
 
 <?php endif; ?>
 

@@ -23,7 +23,7 @@ if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $action     = $_POST['action'] ?? '';    // action demandée (ban, unban, set_role, delete, transfer_ownership…)
     $type       = $_POST['type']   ?? 'user'; // type de la cible : 'user' ou 'activity'
-    $valid_tabs = ['dashboard', 'users', 'activities', 'admins'];
+    $valid_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact', 'contenu'];
     $tab        = in_array($_POST['tab'] ?? '', $valid_tabs) ? $_POST['tab'] : 'dashboard';  // onglet de retour
     $me         = (int)$_SESSION['user']['id'];  // ID de l'owner connecté (pour éviter l'auto-action)
 
@@ -94,6 +94,62 @@ if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $am->delete($activity_id);
             }
         }
+
+    } elseif ($type === 'content') {
+        // Gestion du contenu éditorial : FAQ, CGU, Mentions légales
+        if ($action === 'add_faq') {
+            $q = trim($_POST['question'] ?? '');
+            $r = trim($_POST['reponse']  ?? '');
+            if ($q && $r) {
+                $pdo->prepare("INSERT INTO faq (question, reponse) VALUES (:q, :r)")
+                    ->execute(['q' => $q, 'r' => $r]);
+                log_admin_action($pdo, 'add_faq', 'user', $me, 'Ajout FAQ : ' . mb_substr($q, 0, 80));
+            }
+            $_SESSION['flash'] = "Question ajoutée.";
+
+        } elseif ($action === 'edit_faq') {
+            $fid = intval($_POST['faq_id'] ?? 0);
+            $q   = trim($_POST['question'] ?? '');
+            $r   = trim($_POST['reponse']  ?? '');
+            if ($fid && $q && $r) {
+                $pdo->prepare("UPDATE faq SET question = :q, reponse = :r WHERE idfaq = :id")
+                    ->execute(['q' => $q, 'r' => $r, 'id' => $fid]);
+                log_admin_action($pdo, 'edit_faq', 'user', $me, 'Modif FAQ #' . $fid);
+            }
+            $_SESSION['flash'] = "Question mise à jour.";
+
+        } elseif ($action === 'delete_faq') {
+            $fid = intval($_POST['faq_id'] ?? 0);
+            if ($fid) {
+                $pdo->prepare("DELETE FROM faq WHERE idfaq = :id")->execute(['id' => $fid]);
+                log_admin_action($pdo, 'delete_faq', 'user', $me, 'Suppression FAQ #' . $fid);
+            }
+            $_SESSION['flash'] = "Question supprimée.";
+
+        } elseif ($action === 'update_cgu') {
+            $contenu = trim($_POST['contenu'] ?? '');
+            $version = trim($_POST['version'] ?? '');
+            if ($contenu) {
+                // Vide la table et réinsère (une seule ligne active, jamais de doublon)
+                $pdo->exec("DELETE FROM cgu");
+                $pdo->prepare("INSERT INTO cgu (contenu, version) VALUES (:c, :v)")
+                    ->execute(['c' => $contenu, 'v' => $version ?: null]);
+                log_admin_action($pdo, 'update_cgu', 'user', $me, 'Mise à jour CGU');
+            }
+            $_SESSION['flash'] = "CGU mises à jour.";
+
+        } elseif ($action === 'update_mentions') {
+            $contenu = trim($_POST['contenu'] ?? '');
+            if ($contenu) {
+                $pdo->exec("DELETE FROM mentions");
+                $pdo->prepare("INSERT INTO mentions (contenu) VALUES (:c)")->execute(['c' => $contenu]);
+                log_admin_action($pdo, 'update_mentions', 'user', $me, 'Mise à jour mentions légales');
+            }
+            $_SESSION['flash'] = "Mentions légales mises à jour.";
+        }
+
+        header('Location: /sharetime/public/?page=owner&tab=contenu');
+        exit;
     }
 
     $_SESSION['flash'] = "Action effectuée.";

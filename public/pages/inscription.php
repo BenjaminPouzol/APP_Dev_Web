@@ -96,18 +96,25 @@
                            value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
                 </div>
 
-                <!-- Ligne 3 : mot de passe + confirmation (2 colonnes).
-                     Les champs password ne sont jamais pré-remplis pour des raisons de sécurité. -->
+                <!-- Ligne 3 : mot de passe + confirmation (2 colonnes). -->
                 <div class="form-row">
                     <div class="form-group">
                         <label>Mot de passe *</label>
-                        <input type="password" name="password" placeholder="••••••••" required>
+                        <input type="password" name="password" id="reg-password" placeholder="••••••••" required>
                     </div>
                     <div class="form-group">
                         <label>Confirmer *</label>
-                        <!-- Le footer.php ajoute une validation JS côté client pour comparer les deux champs -->
-                        <input type="password" name="confirm-password" placeholder="••••••••" required>
+                        <input type="password" name="confirm-password" id="reg-confirm" placeholder="••••••••" required>
+                        <p id="match-msg" style="font-size:0.78rem;margin:4px 0 0;display:none;"></p>
                     </div>
+                </div>
+                <!-- Checklist de contraintes affichée dès la saisie -->
+                <div id="pwd-rules" style="display:none;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:12px 16px;display:none;gap:6px;flex-direction:column;">
+                    <p style="font-size:0.78rem;font-weight:600;color:var(--gray-600);margin-bottom:4px;">Votre mot de passe doit contenir :</p>
+                    <p id="rule-len"  class="pwd-rule">✗ Au moins 8 caractères</p>
+                    <p id="rule-up"   class="pwd-rule">✗ Une lettre majuscule</p>
+                    <p id="rule-low"  class="pwd-rule">✗ Une lettre minuscule</p>
+                    <p id="rule-num"  class="pwd-rule">✗ Un chiffre</p>
                 </div>
 
                 <!-- Date de naissance (optionnelle, stockée dans users.date_naissance) -->
@@ -209,6 +216,11 @@
     margin-bottom: 16px; font-weight: 500; font-size: 0.92rem;
 }
 
+/* Checklist règles mot de passe */
+.pwd-rule { font-size:0.8rem; margin:0; color:var(--gray-500); transition:color 0.15s; }
+.pwd-rule.ok  { color:#16A34A; }
+.pwd-rule.nok { color:#EF4444; }
+
 /* Responsive : passage en 1 colonne à 900px (tablette) */
 @media (max-width: 900px) {
     .register-wrapper { grid-template-columns: 1fr; }
@@ -220,3 +232,39 @@
     .form-row { grid-template-columns: 1fr; }
 }
 </style>
+
+<script>
+(function () {
+    var pwd     = document.getElementById('reg-password');
+    var confirm = document.getElementById('reg-confirm');
+    var rules   = document.getElementById('pwd-rules');
+    var matchMsg = document.getElementById('match-msg');
+    if (!pwd) return;
+
+    function checkRule(id, ok) {
+        var el = document.getElementById(id);
+        var label = el.textContent.replace(/^[✓✗] /, '');
+        el.textContent = (ok ? '✓ ' : '✗ ') + label;
+        el.className = 'pwd-rule ' + (ok ? 'ok' : 'nok');
+    }
+
+    pwd.addEventListener('input', function () {
+        var v = this.value;
+        rules.style.display = v ? 'flex' : 'none';
+        checkRule('rule-len', v.length >= 8);
+        checkRule('rule-up',  /[A-Z]/.test(v));
+        checkRule('rule-low', /[a-z]/.test(v));
+        checkRule('rule-num', /[0-9]/.test(v));
+        if (confirm.value) checkMatch();
+    });
+
+    function checkMatch() {
+        var ok = pwd.value === confirm.value;
+        matchMsg.style.display = confirm.value ? 'block' : 'none';
+        matchMsg.textContent = ok ? '✓ Les mots de passe correspondent' : '✗ Les mots de passe ne correspondent pas';
+        matchMsg.style.color = ok ? '#16A34A' : '#EF4444';
+    }
+
+    confirm.addEventListener('input', checkMatch);
+})();
+</script>

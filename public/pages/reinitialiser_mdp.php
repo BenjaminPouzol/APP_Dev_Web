@@ -89,29 +89,33 @@ if ($token && $_SERVER['REQUEST_METHOD'] === 'GET') {
                         <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">
                             Nouveau mot de passe
                         </label>
-                        <input type="password" name="password" required minlength="8"
+                        <input type="password" name="password" id="rst-password" required minlength="8"
                                placeholder="8 caractères minimum"
                                style="width:100%; padding:14px 16px; border:1.5px solid var(--gray-300); border-radius:12px;
                                       font-size:0.95rem; font-family:inherit; box-sizing:border-box; outline:none; transition:border-color 0.2s;"
                                onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--gray-300)'">
                     </div>
 
+                    <!-- Checklist de contraintes -->
+                    <div id="rst-rules" style="display:none;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:12px 16px;gap:5px;flex-direction:column;">
+                        <p style="font-size:0.78rem;font-weight:600;color:var(--gray-600);margin-bottom:4px;">Votre mot de passe doit contenir :</p>
+                        <p id="rst-rule-len" style="font-size:0.8rem;margin:0;color:var(--gray-500);">✗ Au moins 8 caractères</p>
+                        <p id="rst-rule-up"  style="font-size:0.8rem;margin:0;color:var(--gray-500);">✗ Une lettre majuscule</p>
+                        <p id="rst-rule-low" style="font-size:0.8rem;margin:0;color:var(--gray-500);">✗ Une lettre minuscule</p>
+                        <p id="rst-rule-num" style="font-size:0.8rem;margin:0;color:var(--gray-500);">✗ Un chiffre</p>
+                    </div>
+
                     <div>
                         <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">
                             Confirmer le mot de passe
                         </label>
-                        <input type="password" name="confirm" required minlength="8"
+                        <input type="password" name="confirm" id="rst-confirm" required minlength="8"
                                placeholder="Répétez le mot de passe"
                                style="width:100%; padding:14px 16px; border:1.5px solid var(--gray-300); border-radius:12px;
                                       font-size:0.95rem; font-family:inherit; box-sizing:border-box; outline:none; transition:border-color 0.2s;"
                                onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--gray-300)'">
+                        <p id="rst-match" style="font-size:0.78rem;margin:4px 0 0;display:none;"></p>
                     </div>
-
-                    <!-- Indicateur de force du mot de passe -->
-                    <div id="strength-bar" style="height:4px; border-radius:2px; background:var(--gray-200); transition:all 0.3s; display:none;">
-                        <div id="strength-fill" style="height:100%; border-radius:2px; width:0; transition:width 0.3s;"></div>
-                    </div>
-                    <p id="strength-label" style="font-size:0.78rem; color:var(--gray-400); margin:-10px 0 0; display:none;"></p>
 
                     <button type="submit"
                             style="padding:15px; background:var(--navy); color:white; border:none; border-radius:14px;
@@ -133,34 +137,37 @@ if ($token && $_SERVER['REQUEST_METHOD'] === 'GET') {
 
 <script>
 (function () {
-    var pwd = document.querySelector('input[name="password"]');
+    var pwd     = document.getElementById('rst-password');
+    var confirm = document.getElementById('rst-confirm');
+    var rules   = document.getElementById('rst-rules');
+    var matchEl = document.getElementById('rst-match');
     if (!pwd) return;
-    var bar   = document.getElementById('strength-bar');
-    var fill  = document.getElementById('strength-fill');
-    var label = document.getElementById('strength-label');
+
+    function chk(id, ok) {
+        var el = document.getElementById(id);
+        var txt = el.textContent.replace(/^[✓✗] /, '');
+        el.textContent = (ok ? '✓ ' : '✗ ') + txt;
+        el.style.color = ok ? '#16A34A' : '#EF4444';
+    }
 
     pwd.addEventListener('input', function () {
         var v = this.value;
-        bar.style.display = label.style.display = v ? 'block' : 'none';
-        var score = 0;
-        if (v.length >= 8)  score++;
-        if (v.length >= 12) score++;
-        if (/[A-Z]/.test(v)) score++;
-        if (/[0-9]/.test(v)) score++;
-        if (/[^A-Za-z0-9]/.test(v)) score++;
-
-        var levels = [
-            ['#EF4444', '20%',  'Très faible'],
-            ['#F97316', '40%',  'Faible'],
-            ['#EAB308', '60%',  'Moyen'],
-            ['#22C55E', '80%',  'Fort'],
-            ['#16A34A', '100%', 'Très fort'],
-        ];
-        var l = levels[Math.max(0, Math.min(score - 1, 4))] || levels[0];
-        fill.style.background = l[0];
-        fill.style.width = l[1];
-        label.textContent = 'Force : ' + l[2];
-        label.style.color = l[0];
+        rules.style.display = v ? 'flex' : 'none';
+        chk('rst-rule-len', v.length >= 8);
+        chk('rst-rule-up',  /[A-Z]/.test(v));
+        chk('rst-rule-low', /[a-z]/.test(v));
+        chk('rst-rule-num', /[0-9]/.test(v));
+        if (confirm && confirm.value) checkMatch();
     });
+
+    function checkMatch() {
+        if (!confirm) return;
+        var ok = pwd.value === confirm.value;
+        matchEl.style.display = confirm.value ? 'block' : 'none';
+        matchEl.textContent = ok ? '✓ Les mots de passe correspondent' : '✗ Les mots de passe ne correspondent pas';
+        matchEl.style.color = ok ? '#16A34A' : '#EF4444';
+    }
+
+    if (confirm) confirm.addEventListener('input', checkMatch);
 })();
 </script>

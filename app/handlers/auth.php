@@ -102,6 +102,12 @@ if ($page === 'inscription' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Les mots de passe ne correspondent pas.";
     } elseif (strlen($password) < 8) {
         $error = "Le mot de passe doit contenir au moins 8 caractères.";
+    } elseif (!preg_match('/[A-Z]/', $password)) {
+        $error = "Le mot de passe doit contenir au moins une lettre majuscule.";
+    } elseif (!preg_match('/[a-z]/', $password)) {
+        $error = "Le mot de passe doit contenir au moins une lettre minuscule.";
+    } elseif (!preg_match('/[0-9]/', $password)) {
+        $error = "Le mot de passe doit contenir au moins un chiffre.";
     } elseif (!$terms) {
         $error = "Vous devez accepter les conditions générales d'utilisation.";
     } else {
@@ -196,6 +202,12 @@ if ($page === 'reinitialiser_mdp' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Token invalide.";
     } elseif (strlen($new_pass) < 8) {
         $error = "Le mot de passe doit contenir au moins 8 caractères.";
+    } elseif (!preg_match('/[A-Z]/', $new_pass)) {
+        $error = "Le mot de passe doit contenir au moins une lettre majuscule.";
+    } elseif (!preg_match('/[a-z]/', $new_pass)) {
+        $error = "Le mot de passe doit contenir au moins une lettre minuscule.";
+    } elseif (!preg_match('/[0-9]/', $new_pass)) {
+        $error = "Le mot de passe doit contenir au moins un chiffre.";
     } elseif ($new_pass !== $confirm) {
         $error = "Les mots de passe ne correspondent pas.";
     } else {

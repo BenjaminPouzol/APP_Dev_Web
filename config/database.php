@@ -180,6 +180,43 @@ try {
         CONSTRAINT al_admin_fk FOREIGN KEY (admin_id) REFERENCES users (idusers) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    // FAQ (questions/réponses dynamiques, éditables par le super-admin)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS faq (
+        idfaq      INT AUTO_INCREMENT PRIMARY KEY,
+        question   VARCHAR(255) NOT NULL,
+        reponse    TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Signalements entre utilisateurs (signaleur_id signale signale_id)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS reports (
+        idreports    INT AUTO_INCREMENT PRIMARY KEY,
+        signaleur_id INT NOT NULL,
+        signale_id   INT NOT NULL,
+        motif        TEXT NOT NULL,
+        status       ENUM('en_attente','traite','rejete') DEFAULT 'en_attente',
+        created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+        KEY (signaleur_id),
+        KEY (signale_id),
+        CONSTRAINT rpt_signaleur_fk FOREIGN KEY (signaleur_id) REFERENCES users (idusers) ON DELETE CASCADE,
+        CONSTRAINT rpt_signale_fk   FOREIGN KEY (signale_id)   REFERENCES users (idusers) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Contenu CGU géré depuis le panel super-admin (une seule ligne active)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS cgu (
+        idcgu      INT AUTO_INCREMENT PRIMARY KEY,
+        contenu    TEXT NOT NULL,
+        version    VARCHAR(20) DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Mentions légales gérées depuis le panel super-admin (une seule ligne active)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS mentions (
+        idmentions INT AUTO_INCREMENT PRIMARY KEY,
+        contenu    TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
     // ── Index pour les colonnes de filtrage et comptage ──────────────────────
     // Ces index sont créés une seule fois (vérification via information_schema).
     // Ils accélèrent les filtres de recherche et les COUNT fréquents.

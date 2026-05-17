@@ -101,7 +101,7 @@ $nb_cities     = $home_stats['nb_cities'];
                  onmouseout="this.style.transform='';this.style.boxShadow='0 4px 18px rgba(232,129,26,0.3)'">
                 <div>
                     <p style="color:rgba(255,255,255,0.75);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Accès rapide</p>
-                    <p style="color:white;font-size:1.15rem;font-weight:800;margin:0;">👑 Espace Propriétaire</p>
+                    <p style="color:white;font-size:1.15rem;font-weight:800;margin:0;">👑 Espace Super-Admin</p>
                     <p style="color:rgba(255,255,255,0.7);font-size:0.82rem;margin:4px 0 0;">Gérer les administrateurs · Transférer la propriété</p>
                 </div>
                 <span style="color:white;font-size:1.8rem;opacity:0.6;">→</span>
