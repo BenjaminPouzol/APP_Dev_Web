@@ -73,6 +73,10 @@ if (!$activity): ?>
             <div style="background:#FEE2E2; color:#DC2626; padding:12px 16px; border-radius:8px; margin-bottom:20px; font-weight:600;">
                 ❌ Cette activité a été annulée.
             </div>
+        <?php elseif ($activity['status'] === 'en_cours'): ?>
+            <div style="background:#FEF3C7; color:#92400E; padding:12px 16px; border-radius:8px; margin-bottom:20px; font-weight:600;">
+                🔴 Cette activité est en cours.
+            </div>
         <?php elseif ($activity['status'] === 'terminee'): ?>
             <div style="background:#F3F4F6; color:var(--gray-500); padding:12px 16px; border-radius:8px; margin-bottom:20px; font-weight:600;">
                 ✅ Cette activité est terminée.

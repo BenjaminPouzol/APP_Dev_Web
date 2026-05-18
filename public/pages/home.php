@@ -17,7 +17,7 @@
 $home_stats = $pdo->query("
     SELECT
         (SELECT COUNT(*) FROM users) AS nb_users,                                       -- nombre total de membres inscrits
-        (SELECT COUNT(*) FROM activities WHERE status = 'active') AS nb_activities,     -- activités ouvertes aux inscriptions
+        (SELECT COUNT(*) FROM activities WHERE status IN ('active','en_cours')) AS nb_activities,  -- activités à venir ou en cours
         (SELECT COUNT(DISTINCT city) FROM activities WHERE city != '') AS nb_cities     -- nombre de villes différentes représentées
 ")->fetch();
 $nb_users      = $home_stats['nb_users'];

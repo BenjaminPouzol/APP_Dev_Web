@@ -155,7 +155,7 @@ if (!$profile): ?>
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <?php foreach ($user_activities as $a):
                     $start    = new DateTime($a['start_time']);
-                    $isActive = $a['status'] === 'active';
+                    $isActive = in_array($a['status'], ['active', 'en_cours']);
                 ?>
                 <!-- Ligne activité : lien vers la page de détail, hover avec box-shadow navy -->
                 <a href="/sharetime/public/?page=detail&id=<?= $a['idactivities'] ?>"
@@ -177,13 +177,17 @@ if (!$profile): ?>
                     </div>
                     <?php
                         // Libellé du statut avec fallback sur ucfirst pour les états inattendus
-                        $status_labels = ['active' => 'Active', 'terminee' => 'Terminée', 'annulee' => 'Annulée'];
+                        $status_labels = ['active' => 'À venir', 'en_cours' => 'En cours', 'terminee' => 'Terminée', 'annulee' => 'Annulée'];
                         $status_label  = $status_labels[$a['status']] ?? ucfirst($a['status']);
                     ?>
-                    <!-- Badge statut : vert pour active, gris pour les autres -->
+                    <!-- Badge statut : vert à venir, orange en cours, gris sinon -->
+                    <?php
+                        $badge_bg  = ['active'=>'#D1FAE5','en_cours'=>'#FEF3C7','annulee'=>'var(--gray-100)','terminee'=>'var(--gray-100)'];
+                        $badge_col = ['active'=>'#065F46','en_cours'=>'#92400E','annulee'=>'var(--gray-500)','terminee'=>'var(--gray-500)'];
+                    ?>
                     <span style="font-size:0.78rem; padding:4px 12px; border-radius:99px; font-weight:600; white-space:nowrap;
-                                 background:<?= $isActive ? '#D1FAE5' : 'var(--gray-100)' ?>;
-                                 color:<?= $isActive ? '#065F46' : 'var(--gray-500)' ?>;">
+                                 background:<?= $badge_bg[$a['status']] ?? 'var(--gray-100)' ?>;
+                                 color:<?= $badge_col[$a['status']] ?? 'var(--gray-500)' ?>;">
                         <?= $status_label ?>
                     </span>
                 </a>

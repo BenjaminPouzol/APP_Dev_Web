@@ -261,6 +261,20 @@ try {
     $chk->execute(['t' => 'users', 'i' => 'idx_users_email']);
     if (!$chk->fetchColumn()) $pdo->exec("ALTER TABLE users ADD INDEX idx_users_email (email)");
 
+    // ── Migration : ajout du statut 'en_cours' à l'ENUM activities.status ───
+    $statusType = $pdo->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+                               WHERE TABLE_SCHEMA = DATABASE()
+                               AND TABLE_NAME = 'activities' AND COLUMN_NAME = 'status'")->fetchColumn();
+    if (strpos($statusType, 'en_cours') === false) {
+        $pdo->exec("ALTER TABLE activities MODIFY COLUMN status ENUM('active','annulee','terminee','en_cours') DEFAULT 'active'");
+    }
+
+    // ── Mise à jour automatique du statut des activités ───────────────────
+    // Ordre important : terminée d'abord, puis en_cours, pour ne pas re-marquer
+    // en 'en_cours' une activité dont end_time vient juste de passer.
+    $pdo->exec("UPDATE activities SET status = 'terminee' WHERE status IN ('active','en_cours') AND end_time < NOW()");
+    $pdo->exec("UPDATE activities SET status = 'en_cours' WHERE status = 'active' AND start_time <= NOW() AND end_time >= NOW()");
+
     // ── Nettoyage périodique des tokens expirés (environ 1 requête sur 50) ──
     // Évite que les tables password_resets et email_verifications grossissent indéfiniment.
     // mt_rand(1,50) === 1 signifie que le nettoyage n'a lieu qu'en moyenne 1 fois sur 50 requêtes,

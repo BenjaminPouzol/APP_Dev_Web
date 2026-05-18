@@ -556,7 +556,7 @@ class Activity {
      * Valeurs autorisées : 'active', 'annulee', 'terminee'.
      */
     public function setStatus($id, $status) {
-        if (!in_array($status, ['active', 'annulee', 'terminee'])) return false;  // whitelist stricte
+        if (!in_array($status, ['active', 'en_cours', 'annulee', 'terminee'])) return false;  // whitelist stricte
         $stmt = $this->pdo->prepare("UPDATE activities SET status = :status WHERE idactivities = :id");
         return $stmt->execute(['status' => $status, 'id' => (int)$id]);
     }
