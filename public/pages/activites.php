@@ -112,7 +112,7 @@
         'category' => $category_filter,
     ]));
     // Libellés des 4 états possibles (vide = toutes)
-    $statuts = ['' => '🗂 Toutes', 'active' => '✅ Actives', 'terminee' => '🏁 Terminées', 'annulee' => '❌ Annulées'];
+    $statuts = ['' => '🗂 Toutes', 'active' => '✅ À venir', 'en_cours' => '🔴 En cours', 'terminee' => '🏁 Terminées', 'annulee' => '❌ Annulées'];
     ?>
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;">
         <?php foreach ($statuts as $val => $label): ?>
@@ -167,12 +167,16 @@
                     <span class="card-badge-vis"><?= $a['visibility'] === 'publique' ? 'Public' : 'Privé' ?></span>
                 </div>
                 <div class="card-body">
-                    <!-- Bandeau de statut (rouge annulée / gris terminée) — masqué si active -->
+                    <!-- Bandeau de statut — masqué si active -->
                     <?php if ($a['status'] !== 'active'): ?>
+                        <?php
+                            $status_colors = ['annulee' => '#DC2626', 'en_cours' => '#C05621', 'terminee' => 'var(--gray-500)'];
+                            $status_labels = ['annulee' => '❌ Annulée', 'en_cours' => '🔴 En cours', 'terminee' => '🏁 Terminée'];
+                        ?>
                         <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
-                                     color:<?= $a['status'] === 'annulee' ? '#DC2626' : 'var(--gray-500)' ?>;
+                                     color:<?= $status_colors[$a['status']] ?? 'var(--gray-500)' ?>;
                                      margin-bottom:4px; display:block;">
-                            <?= $a['status'] === 'annulee' ? '❌ Annulée' : '🏁 Terminée' ?>
+                            <?= $status_labels[$a['status']] ?? ucfirst($a['status']) ?>
                         </span>
                     <?php endif; ?>
                     <div class="card-title"><?= htmlspecialchars($a['title']) ?></div>
@@ -182,7 +186,7 @@
                         <span>👤 Par <?= htmlspecialchars($auteur) ?></span>
                     </div>
                     <div class="card-footer">
-                        <!-- Indicateur de places : masqué (—) si activité non active -->
+                        <!-- Indicateur de places : masqué (—) si activité non active ou en cours -->
                         <?php if ($a['status'] !== 'active'): ?>
                             <span style="color:var(--gray-400); font-size:0.85rem;">—</span>
                         <?php elseif ($places <= 0): ?>

@@ -152,7 +152,7 @@ if ($page === 'home') {
     $raw_cat         = trim($_GET['category'] ?? '');
     $category_filter = isset($CATEGORY_MAP[$raw_cat]) ? $raw_cat : '';  // whitelist via $CATEGORY_MAP
     $title_filter    = trim($_GET['search']   ?? '');
-    $valid_statuts   = ['active', 'annulee', 'terminee'];
+    $valid_statuts   = ['active', 'en_cours', 'annulee', 'terminee'];
     $status_filter   = in_array($_GET['statut'] ?? '', $valid_statuts) ? $_GET['statut'] : '';
 
     // Pagination

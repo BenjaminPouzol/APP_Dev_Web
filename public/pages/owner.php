@@ -172,15 +172,16 @@ if ($tab === 'contenu') {
             </div>
             <?php foreach ($admin_recent_activities as $a):
                 $start = new DateTime($a['start_time']);
-                $statusColors = ['active'=>['#D1FAE5','#065F46'],'annulee'=>['#FEE2E2','#DC2626'],'terminee'=>['#F3F4F6','#6B7280']];
-                [$sbg,$scol] = $statusColors[$a['status']] ?? ['#F3F4F6','#6B7280'];
+                $statusColors = ['active'=>['#D1FAE5','#065F46'],'en_cours'=>['#FEF3C7','#92400E'],'annulee'=>['#FEE2E2','#DC2626'],'terminee'=>['#F3F4F6','#6B7280']];
+                $statusLabels = ['active'=>'À venir','en_cours'=>'En cours','annulee'=>'Annulée','terminee'=>'Terminée'];
+                [$sbg,$scol]  = $statusColors[$a['status']] ?? ['#F3F4F6','#6B7280'];
             ?>
             <div style="padding:12px 20px;border-bottom:1px solid var(--gray-50);display:flex;align-items:center;justify-content:space-between;gap:10px;">
                 <div>
                     <p style="margin:0;font-size:0.88rem;font-weight:600;color:var(--gray-900);"><?= htmlspecialchars($a['title']) ?></p>
                     <p style="margin:0;font-size:0.78rem;color:var(--gray-500);"><?= htmlspecialchars($a['city']) ?> · <?= $start->format('d/m/Y') ?></p>
                 </div>
-                <span style="background:<?= $sbg ?>;color:<?= $scol ?>;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:600;white-space:nowrap;"><?= ucfirst($a['status']) ?></span>
+                <span style="background:<?= $sbg ?>;color:<?= $scol ?>;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:600;white-space:nowrap;"><?= $statusLabels[$a['status']] ?? ucfirst($a['status']) ?></span>
             </div>
             <?php endforeach; ?>
         </div>
@@ -331,7 +332,8 @@ if ($tab === 'contenu') {
                 </thead>
                 <tbody>
                 <?php
-                $statusColors = ['active'=>['#D1FAE5','#065F46'],'annulee'=>['#FEE2E2','#DC2626'],'terminee'=>['#F3F4F6','#6B7280']];
+                $statusColors = ['active'=>['#D1FAE5','#065F46'],'en_cours'=>['#FEF3C7','#92400E'],'annulee'=>['#FEE2E2','#DC2626'],'terminee'=>['#F3F4F6','#6B7280']];
+                $statusLabels = ['active'=>'À venir','en_cours'=>'En cours','annulee'=>'Annulée','terminee'=>'Terminée'];
                 foreach ($admin_activities_list as $a):
                     $start = new DateTime($a['start_time']);
                     [$sbg, $scol] = $statusColors[$a['status']] ?? ['#F3F4F6','#6B7280'];
@@ -347,7 +349,7 @@ if ($tab === 'contenu') {
                     </td>
                     <td style="padding:12px 16px;color:var(--gray-600);font-size:0.82rem;white-space:nowrap;"><?= $start->format('d/m/Y') ?></td>
                     <td style="padding:12px 16px;text-align:center;">
-                        <span style="background:<?= $sbg ?>;color:<?= $scol ?>;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:600;"><?= ucfirst($a['status']) ?></span>
+                        <span style="background:<?= $sbg ?>;color:<?= $scol ?>;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:600;"><?= $statusLabels[$a['status']] ?? ucfirst($a['status']) ?></span>
                     </td>
                     <td style="padding:12px 16px;">
                         <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;flex-wrap:wrap;">
@@ -359,9 +361,10 @@ if ($tab === 'contenu') {
                                 <input type="hidden" name="activity_id" value="<?= (int)$a['idactivities'] ?>">
                                 <input type="hidden" name="action" value="set_status">
                                 <select name="status" style="padding:5px 8px;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.78rem;color:var(--gray-700);">
-                                    <option value="active"   <?= $a['status']==='active'  ?'selected':'' ?>>Active</option>
-                                    <option value="annulee"  <?= $a['status']==='annulee' ?'selected':'' ?>>Annulée</option>
-                                    <option value="terminee" <?= $a['status']==='terminee'?'selected':'' ?>>Terminée</option>
+                                    <option value="active"   <?= $a['status']==='active'   ?'selected':'' ?>>À venir</option>
+                                    <option value="en_cours" <?= $a['status']==='en_cours' ?'selected':'' ?>>En cours</option>
+                                    <option value="annulee"  <?= $a['status']==='annulee'  ?'selected':'' ?>>Annulée</option>
+                                    <option value="terminee" <?= $a['status']==='terminee' ?'selected':'' ?>>Terminée</option>
                                 </select>
                                 <button type="submit" style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--gray-300);background:white;color:var(--gray-700);font-size:0.78rem;font-weight:600;cursor:pointer;">OK</button>
                             </form>

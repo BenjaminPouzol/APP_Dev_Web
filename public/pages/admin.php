@@ -99,8 +99,9 @@
                 <?php foreach ($admin_recent_activities as $a):
                     $start = new DateTime($a['start_time']);
                     // Couleurs du badge statut : vert active, rouge annulée, gris terminée
-                    $statusColors = ['active'=>['#D1FAE5','#065F46'],'annulee'=>['#FEE2E2','#DC2626'],'terminee'=>['#F3F4F6','#6B7280']];
-                    [$sbg,$scol] = $statusColors[$a['status']] ?? ['#F3F4F6','#6B7280'];
+                    $statusColors  = ['active'=>['#D1FAE5','#065F46'],'en_cours'=>['#FEF3C7','#92400E'],'annulee'=>['#FEE2E2','#DC2626'],'terminee'=>['#F3F4F6','#6B7280']];
+                    $statusLabels  = ['active'=>'À venir','en_cours'=>'En cours','annulee'=>'Annulée','terminee'=>'Terminée'];
+                    [$sbg,$scol]   = $statusColors[$a['status']] ?? ['#F3F4F6','#6B7280'];
                 ?>
                 <div style="padding:12px 20px;border-bottom:1px solid var(--gray-50);display:flex;align-items:center;justify-content:space-between;gap:10px;">
                     <div>
@@ -108,7 +109,7 @@
                         <p style="margin:0;font-size:0.78rem;color:var(--gray-500);"><?= htmlspecialchars($a['city']) ?> · <?= $start->format('d/m/Y') ?></p>
                     </div>
                     <!-- Badge statut coloré -->
-                    <span style="background:<?= $sbg ?>;color:<?= $scol ?>;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:600;white-space:nowrap;"><?= ucfirst($a['status']) ?></span>
+                    <span style="background:<?= $sbg ?>;color:<?= $scol ?>;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:600;white-space:nowrap;"><?= $statusLabels[$a['status']] ?? ucfirst($a['status']) ?></span>
                 </div>
                 <?php endforeach; ?>
             </div>
