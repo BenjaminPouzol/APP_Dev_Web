@@ -133,12 +133,10 @@
                     if (!q) { document.getElementById('geocode-status').textContent = 'Remplis d\'abord les champs Lieu et Ville.'; return; }
                     var st = document.getElementById('geocode-status');
                     st.textContent = 'Recherche…';
-                    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q), {
-                        headers: { 'Accept-Language': 'fr' }
-                    })
+                    fetch('/sharetime/public/api/geocode.php?q=' + encodeURIComponent(q))
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
-                        if (!data.length) { st.textContent = 'Adresse introuvable, clique sur la carte.'; return; }
+                        if (!data.length) { st.textContent = 'Introuvable — vérifiez l\'orthographe (surtout la ville), ou cliquez sur la carte.'; return; }
                         var lat = parseFloat(data[0].lat), lng = parseFloat(data[0].lon);
                         setMarker(lat, lng);
                         map.setView([lat, lng], 14);

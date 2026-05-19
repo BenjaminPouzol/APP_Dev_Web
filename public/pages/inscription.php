@@ -14,7 +14,7 @@
 ?>
 <!-- ── CONTENEUR PRINCIPAL ────────────────────────────────────────────────────
      Même structure que connexion.php : min-height + flex pour centrage vertical. -->
-<main style="min-height:70vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;">
+<main style="display:flex; align-items:flex-start; justify-content:center; padding:40px 20px; box-sizing:border-box;">
     <!-- register-wrapper : grille 2 colonnes (gauche déco / droite formulaire) -->
     <div class="register-wrapper">
 
@@ -221,15 +221,14 @@
 .pwd-rule.ok  { color:#16A34A; }
 .pwd-rule.nok { color:#EF4444; }
 
-/* Responsive : passage en 1 colonne à 900px (tablette) */
 @media (max-width: 900px) {
-    .register-wrapper { grid-template-columns: 1fr; }
-    .register-left { padding: 40px 30px; }
-    .register-right { padding: 30px 25px; }
+    .register-wrapper { grid-template-columns: 1fr; box-shadow: none; border-radius: 16px; }
+    .register-left { display: none; }
+    .register-right { padding: 32px 24px; }
 }
-/* Les .form-row passent aussi en 1 colonne sur petit mobile */
 @media (max-width: 640px) {
     .form-row { grid-template-columns: 1fr; }
+    .register-right { padding: 24px 16px; }
 }
 </style>
 

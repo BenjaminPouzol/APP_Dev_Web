@@ -14,7 +14,7 @@
 <!-- ── CONTENEUR PRINCIPAL ────────────────────────────────────────────────────
      min-height:70vh pour que la card soit centrée verticalement même si peu
      de contenu. flex+center assure le centrage horizontal et vertical. -->
-<main style="min-height:70vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;">
+<main style="display:flex; align-items:flex-start; justify-content:center; padding:40px 20px; box-sizing:border-box;">
     <!-- login-wrapper : grille 2 colonnes (gauche déco / droite formulaire) -->
     <div class="login-wrapper">
 
@@ -162,10 +162,9 @@
     margin-bottom: 20px; font-weight: 500; font-size: 0.95rem;
 }
 
-/* Sur mobile : la grille passe en 1 colonne (panneau déco disparaît visuellement) */
 @media (max-width: 700px) {
-    .login-wrapper { grid-template-columns: 1fr; }
-    .login-left { padding: 40px 30px; }
-    .login-right { padding: 35px 25px; }
+    .login-wrapper { grid-template-columns: 1fr; box-shadow: none; border-radius: 16px; }
+    .login-left { display: none; }
+    .login-right { padding: 32px 24px; }
 }
 </style>

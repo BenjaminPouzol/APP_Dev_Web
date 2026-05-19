@@ -38,7 +38,7 @@ if ($token && $_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 ?>
 
-<main style="min-height:70vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;">
+<main style="display:flex; align-items:flex-start; justify-content:center; padding:40px 20px; box-sizing:border-box;">
     <div style="width:100%; max-width:460px;">
 
         <div style="text-align:center; margin-bottom:32px;">
