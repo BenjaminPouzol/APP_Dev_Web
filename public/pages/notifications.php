@@ -25,12 +25,12 @@
     <div style="margin-bottom:28px;">
         <h1 style="color:var(--navy); margin-bottom:4px;">Notifications</h1>
         <?php
-        // Compte les notifications affichées qui étaient non lues à l'arrivée sur la page
-        // (is_read est encore à 0 dans le tableau fetchié avant le UPDATE automatique)
-        $unread = count(array_filter($notifications, fn($n) => !$n['is_read']));
+        // Compte les notifications non lues dans le tableau récupéré avant le rendu
+        // (is_read = 0 au moment du fetch — permet l'affichage du compteur sans requête supplémentaire)
+        $unread_notif_count = count(array_filter($notifications, fn($notif_item) => !$notif_item['is_read']));
         ?>
-        <?php if ($unread > 0): ?>
-            <p style="color:var(--orange); font-size:0.88rem; font-weight:600;"><?= $unread ?> nouvelle<?= $unread > 1 ? 's' : '' ?></p>
+        <?php if ($unread_notif_count > 0): ?>
+            <p style="color:var(--orange); font-size:0.88rem; font-weight:600;"><?= $unread_notif_count ?> nouvelle<?= $unread_notif_count > 1 ? 's' : '' ?></p>
         <?php else: ?>
             <p style="color:var(--gray-400); font-size:0.88rem;">Tout est lu</p>
         <?php endif; ?>
@@ -46,40 +46,40 @@
     <?php else: ?>
         <!-- ── LISTE DES NOTIFICATIONS ────────────────────────────────────── -->
         <div style="display:flex; flex-direction:column; gap:10px;">
-        <?php foreach ($notifications as $n):
-            // Mapping type → emoji pour distinguer visuellement les notifications
-            $icons = [
-                'nouvelle_inscription' => '👤',  // quelqu'un s'est inscrit à ton activité
-                'promotion_attente'    => '🎉',  // promu de la liste d'attente
-                'activite_modifiee'    => '✏️',  // une activité inscrite a été modifiée
-                'activite_annulee'     => '❌',  // une activité inscrite a été annulée
-                'nouveau_follower'     => '⭐',  // quelqu'un te suit
+        <?php foreach ($notifications as $notif_item):
+            // Mapping type de notification → emoji pour distinguer visuellement chaque catégorie
+            $type_icon_map = [
+                'nouvelle_inscription' => '👤',  // quelqu'un s'est inscrit à une activité que l'utilisateur organise
+                'promotion_attente'    => '🎉',  // l'utilisateur a été promu de la liste d'attente vers les inscrits
+                'activite_modifiee'    => '✏️',  // une activité à laquelle l'utilisateur est inscrit a été modifiée
+                'activite_annulee'     => '❌',  // une activité à laquelle l'utilisateur est inscrit a été annulée
+                'nouveau_follower'     => '⭐',  // un autre utilisateur a commencé à suivre ce profil
             ];
-            $icon    = $icons[$n['type']] ?? '🔔';   // 🔔 par défaut si type inconnu
-            $is_read = !empty($n['is_read']);
-            $date    = (new DateTime($n['created_at']))->format('d/m/Y à H:i');
+            $notif_icon          = $type_icon_map[$notif_item['type']] ?? '🔔';  // 🔔 par défaut si type inconnu
+            $is_already_read     = !empty($notif_item['is_read']);
+            $notif_formatted_date = (new DateTime($notif_item['created_at']))->format('d/m/Y à H:i');
         ?>
         <!-- Card notification : fond légèrement orangé + bordure orange si non lue,
-             blanc + gris si déjà lue — différenciation visuelle pour les non-lues. -->
-        <div style="background:<?= $is_read ? 'white' : '#FFF8F0' ?>; border:1.5px solid <?= $is_read ? 'var(--gray-200)' : 'rgba(232,129,26,0.3)' ?>;
+             fond blanc + gris si déjà lue — différenciation visuelle pour les non-lues. -->
+        <div style="background:<?= $is_already_read ? 'white' : '#FFF8F0' ?>; border:1.5px solid <?= $is_already_read ? 'var(--gray-200)' : 'rgba(232,129,26,0.3)' ?>;
                     border-radius:12px; padding:16px 20px; display:flex; gap:14px; align-items:flex-start;">
-            <!-- Emoji de type -->
-            <span style="font-size:1.4rem; flex-shrink:0; line-height:1.2;"><?= $icon ?></span>
+            <!-- Emoji de type de notification -->
+            <span style="font-size:1.4rem; flex-shrink:0; line-height:1.2;"><?= $notif_icon ?></span>
             <div style="flex:1; min-width:0;">
-                <!-- Titre : gras si non lu, normal si lu -->
-                <p style="margin:0 0 4px; font-weight:<?= $is_read ? '400' : '600' ?>; color:var(--gray-900); font-size:0.92rem;">
-                    <?= htmlspecialchars($n['title']) ?>
+                <!-- Titre : gras si non lu, grammage normal si lu — accentue visuellement le non-lu -->
+                <p style="margin:0 0 4px; font-weight:<?= $is_already_read ? '400' : '600' ?>; color:var(--gray-900); font-size:0.92rem;">
+                    <?= htmlspecialchars($notif_item['title']) ?>
                 </p>
-                <!-- Contenu détaillé de la notification -->
+                <!-- Contenu détaillé de la notification (nom de l'utilisateur concerné, etc.) -->
                 <p style="margin:0 0 6px; color:var(--gray-600); font-size:0.85rem; line-height:1.5;">
-                    <?= htmlspecialchars($n['content']) ?>
+                    <?= htmlspecialchars($notif_item['content']) ?>
                 </p>
-                <!-- Méta : date + lien vers l'activité si la notification en a une -->
+                <!-- Méta : date + lien vers l'activité si la notification y est liée -->
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                    <span style="font-size:0.78rem; color:var(--gray-400);"><?= $date ?></span>
-                    <?php if ($n['activity_id']): ?>
-                    <!-- Lien contextuel vers l'activité concernée -->
-                    <a href="/sharetime/public/?page=detail&id=<?= (int)$n['activity_id'] ?>"
+                    <span style="font-size:0.78rem; color:var(--gray-400);"><?= $notif_formatted_date ?></span>
+                    <?php if ($notif_item['activity_id']): ?>
+                    <!-- Lien contextuel vers l'activité concernée par la notification -->
+                    <a href="/sharetime/public/?page=detail&id=<?= (int)$notif_item['activity_id'] ?>"
                        style="font-size:0.8rem; color:var(--orange); font-weight:600; text-decoration:none;">
                         Voir l'activité →
                     </a>
@@ -87,7 +87,7 @@
                 </div>
             </div>
             <!-- Point orange indicateur de non-lu : affiché seulement si is_read = 0 -->
-            <?php if (!$is_read): ?>
+            <?php if (!$is_already_read): ?>
             <div style="width:8px; height:8px; border-radius:50%; background:var(--orange); flex-shrink:0; margin-top:6px;"></div>
             <?php endif; ?>
         </div>

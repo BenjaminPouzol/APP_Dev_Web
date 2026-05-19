@@ -22,7 +22,7 @@
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
         <div>
             <h1 style="color:var(--navy); margin-bottom:4px;">Activités</h1>
-            <!-- Compteur de résultats : accord au pluriel + mention du filtre actif -->
+            <!-- Compteur de résultats : accord au pluriel + mention du filtre ville actif -->
             <p style="color:var(--gray-500); font-size:0.9rem;">
                 <?= $total_count ?> activité<?= $total_count > 1 ? 's' : '' ?> trouvée<?= $total_count > 1 ? 's' : '' ?>
                 <?= !empty($city_filter) ? ' à "' . htmlspecialchars($city_filter) . '"' : '' ?>
@@ -42,7 +42,7 @@
          Sans eux, les chips actives seraient perdues à la soumission. -->
     <form method="get" action="/sharetime/public/" style="margin-bottom:16px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
         <input type="hidden" name="page" value="activites">
-        <!-- Préserve le filtre catégorie si actif (sinon non présent dans la querystring) -->
+        <!-- Préserve le filtre catégorie si actif (sinon absent de la querystring) -->
         <?php if (!empty($category_filter)): ?>
             <input type="hidden" name="category" value="<?= htmlspecialchars($category_filter) ?>">
         <?php endif; ?>
@@ -50,7 +50,7 @@
         <?php if (!empty($status_filter)): ?>
             <input type="hidden" name="statut" value="<?= htmlspecialchars($status_filter) ?>">
         <?php endif; ?>
-        <!-- Champ ville : recherche exacte (LIKE %...% côté SQL) -->
+        <!-- Champ ville : recherche LIKE %...% côté SQL -->
         <input type="text" name="city" value="<?= htmlspecialchars($city_filter) ?>"
                placeholder="Ville..."
                style="padding:10px 16px; border:1.5px solid var(--gray-300); border-radius:8px; font-size:0.9rem; font-family:inherit; min-width:160px;">
@@ -68,60 +68,59 @@
     <!-- ── CHIPS DE CATÉGORIES ────────────────────────────────────────────────
          Chaque chip est un lien GET qui ajoute/remplace le paramètre category
          tout en préservant les autres filtres actifs (ville, texte, statut).
-         $base_qs est construit avec array_filter pour exclure les valeurs vides. -->
+         $base_querystring est construit avec array_filter pour exclure les valeurs vides. -->
     <?php
-    // Base de la querystring sans catégorie ni numéro de page : utilisée pour construire
-    // les liens des chips en conservant ville, texte et statut.
-    $base_qs = http_build_query(array_filter([
-        'page'     => 'activites',
-        'city'     => $city_filter,
-        'search'   => $title_filter,
-        'statut'   => $status_filter,
+    // Querystring de base sans catégorie ni page : préserve ville, texte et statut pour les chips catégorie
+    $base_querystring = http_build_query(array_filter([
+        'page'   => 'activites',
+        'city'   => $city_filter,
+        'search' => $title_filter,
+        'statut' => $status_filter,
     ]));
     ?>
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-        <!-- Chip "Toutes" : remet category à vide (pas de paramètre category dans l'URL) -->
-        <a href="/sharetime/public/?<?= $base_qs ?>"
+        <!-- Chip "Toutes" : supprime le filtre catégorie (pas de paramètre category dans l'URL) -->
+        <a href="/sharetime/public/?<?= $base_querystring ?>"
            style="padding:6px 16px; border-radius:99px; font-size:0.85rem; font-weight:600; text-decoration:none;
                   background:<?= empty($category_filter) ? 'var(--navy)' : 'var(--gray-100)' ?>;
                   color:<?= empty($category_filter) ? 'white' : 'var(--gray-600)' ?>;">
             Toutes
         </a>
-        <!-- Une chip par catégorie (sauf 'autre' peu utile comme filtre) -->
-        <?php foreach ($CATEGORY_MAP as $val => [$emoji, , $label]): if ($val === 'autre') continue; ?>
-        <!-- La chip active est navy/blanc, les autres sont grises -->
-        <a href="/sharetime/public/?<?= $base_qs ?>&category=<?= $val ?>"
+        <!-- Une chip par catégorie (sauf 'autre', peu pertinente comme filtre) -->
+        <?php foreach ($CATEGORY_MAP as $category_slug => [$category_emoji, , $category_label]): if ($category_slug === 'autre') continue; ?>
+        <!-- Chip active = fond navy/blanc, inactive = fond gris clair -->
+        <a href="/sharetime/public/?<?= $base_querystring ?>&category=<?= $category_slug ?>"
            style="padding:6px 16px; border-radius:99px; font-size:0.85rem; font-weight:600; text-decoration:none;
-                  background:<?= $category_filter === $val ? 'var(--navy)' : 'var(--gray-100)' ?>;
-                  color:<?= $category_filter === $val ? 'white' : 'var(--gray-600)' ?>;">
-            <?= $emoji ?> <?= $label ?>
+                  background:<?= $category_filter === $category_slug ? 'var(--navy)' : 'var(--gray-100)' ?>;
+                  color:<?= $category_filter === $category_slug ? 'white' : 'var(--gray-600)' ?>;">
+            <?= $category_emoji ?> <?= $category_label ?>
         </a>
         <?php endforeach; ?>
     </div>
 
     <!-- ── CHIPS DE STATUT ────────────────────────────────────────────────────
          Même principe que les chips catégorie mais pour le statut de l'activité.
-         $base_qs_cat préserve ville, texte et catégorie mais pas le statut
-         (car c'est ce paramètre-là qu'on remplace). -->
+         $base_querystring_no_status préserve ville, texte et catégorie mais pas le statut
+         (car c'est ce paramètre-là qu'on remplace à chaque clic). -->
     <?php
     // Querystring sans statut : conserve ville, texte et catégorie
-    $base_qs_cat = http_build_query(array_filter([
+    $base_querystring_no_status = http_build_query(array_filter([
         'page'     => 'activites',
         'city'     => $city_filter,
         'search'   => $title_filter,
         'category' => $category_filter,
     ]));
-    // Libellés des 4 états possibles (vide = toutes)
-    $statuts = ['' => '🗂 Toutes', 'active' => '✅ À venir', 'en_cours' => '🔴 En cours', 'terminee' => '🏁 Terminées', 'annulee' => '❌ Annulées'];
+    // Libellés des états possibles (clé vide = afficher tous les statuts)
+    $status_filter_options = ['' => '🗂 Toutes', 'active' => '✅ À venir', 'en_cours' => '🔴 En cours', 'terminee' => '🏁 Terminées', 'annulee' => '❌ Annulées'];
     ?>
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;">
-        <?php foreach ($statuts as $val => $label): ?>
-        <!-- Chip orange si active, grise sinon ; $val vide = pas de paramètre statut dans l'URL -->
-        <a href="/sharetime/public/?<?= $base_qs_cat ?><?= $val ? '&statut='.$val : '' ?>"
+        <?php foreach ($status_filter_options as $status_slug => $status_chip_label): ?>
+        <!-- Chip orange si sélectionnée, grise sinon ; clé vide = pas de paramètre statut dans l'URL -->
+        <a href="/sharetime/public/?<?= $base_querystring_no_status ?><?= $status_slug ? '&statut='.$status_slug : '' ?>"
            style="padding:5px 14px; border-radius:99px; font-size:0.82rem; font-weight:600; text-decoration:none;
-                  background:<?= $status_filter === $val ? 'var(--orange)' : 'var(--gray-100)' ?>;
-                  color:<?= $status_filter === $val ? 'white' : 'var(--gray-600)' ?>;">
-            <?= $label ?>
+                  background:<?= $status_filter === $status_slug ? 'var(--orange)' : 'var(--gray-100)' ?>;
+                  color:<?= $status_filter === $status_slug ? 'white' : 'var(--gray-600)' ?>;">
+            <?= $status_chip_label ?>
         </a>
         <?php endforeach; ?>
     </div>
@@ -149,52 +148,57 @@
              Même classe .cards-grid que la home. Chaque carte est un <a> pour
              que le clic entier soit cliquable (accessibilité). -->
         <div class="cards-grid">
-            <?php foreach ($activities as $a):
-                $cat    = $CATEGORY_MAP[$a['category']] ?? $CATEGORY_MAP['autre'];  // fallback si catégorie inconnue
-                $places = $a['max_participants'] - $a['nb_inscrits'];                // places restantes calculées
-                $start  = new DateTime($a['start_time']);
-                $auteur = $a['pseudo'] ?: $a['prenom'];                             // pseudo préféré, prénom en fallback
+            <?php foreach ($activities as $activity_item):
+                // Récupère les infos de catégorie avec fallback sur 'autre' si catégorie inconnue
+                $category_info      = $CATEGORY_MAP[$activity_item['category']] ?? $CATEGORY_MAP['autre'];
+                // Places disponibles = max inscrits - inscrits confirmés
+                $available_places   = $activity_item['max_participants'] - $activity_item['nb_inscrits'];
+                // Objet DateTime pour formater la date de début
+                $start_datetime     = new DateTime($activity_item['start_time']);
+                // Préfère le pseudo, fallback sur le prénom pour les comptes sans pseudo
+                $organizer_display_name = $activity_item['pseudo'] ?: $activity_item['prenom'];
             ?>
-            <a href="/sharetime/public/?page=detail&id=<?= $a['idactivities'] ?>" class="activity-card">
-                <!-- Image de couverture ou fond coloré par catégorie -->
-                <?php if (!empty($a['photo'])): ?>
-                <div class="card-image" style="background-image:url('/sharetime/public/uploads/activites/<?= htmlspecialchars($a['photo']) ?>');background-size:cover;background-position:center;">
+            <a href="/sharetime/public/?page=detail&id=<?= $activity_item['idactivities'] ?>" class="activity-card">
+                <!-- Image de couverture ou fond coloré par catégorie si aucune photo -->
+                <?php if (!empty($activity_item['photo'])): ?>
+                <div class="card-image" style="background-image:url('/sharetime/public/uploads/activites/<?= htmlspecialchars($activity_item['photo']) ?>');background-size:cover;background-position:center;">
                 <?php else: ?>
-                <div class="card-image <?= $cat[1] ?>">
-                    <?= $cat[0] ?>
+                <div class="card-image <?= $category_info[1] ?>">
+                    <?= $category_info[0] ?>
                 <?php endif; ?>
-                    <span class="card-badge"><?= htmlspecialchars($a['city']) ?></span>
-                    <span class="card-badge-vis"><?= $a['visibility'] === 'publique' ? 'Public' : 'Privé' ?></span>
+                    <span class="card-badge"><?= htmlspecialchars($activity_item['city']) ?></span>
+                    <span class="card-badge-vis"><?= $activity_item['visibility'] === 'publique' ? 'Public' : 'Privé' ?></span>
                 </div>
                 <div class="card-body">
-                    <!-- Bandeau de statut — masqué si active -->
-                    <?php if ($a['status'] !== 'active'): ?>
+                    <!-- Bandeau de statut — masqué si active (état normal, pas besoin de le signaler) -->
+                    <?php if ($activity_item['status'] !== 'active'): ?>
                         <?php
-                            $status_colors = ['annulee' => '#DC2626', 'en_cours' => '#C05621', 'terminee' => 'var(--gray-500)'];
-                            $status_labels = ['annulee' => '❌ Annulée', 'en_cours' => '🔴 En cours', 'terminee' => '🏁 Terminée'];
+                            // Couleurs et libellés des statuts non actifs
+                            $non_active_status_colors = ['annulee' => '#DC2626', 'en_cours' => '#C05621', 'terminee' => 'var(--gray-500)'];
+                            $non_active_status_labels = ['annulee' => '❌ Annulée', 'en_cours' => '🔴 En cours', 'terminee' => '🏁 Terminée'];
                         ?>
                         <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
-                                     color:<?= $status_colors[$a['status']] ?? 'var(--gray-500)' ?>;
+                                     color:<?= $non_active_status_colors[$activity_item['status']] ?? 'var(--gray-500)' ?>;
                                      margin-bottom:4px; display:block;">
-                            <?= $status_labels[$a['status']] ?? ucfirst($a['status']) ?>
+                            <?= $non_active_status_labels[$activity_item['status']] ?? ucfirst($activity_item['status']) ?>
                         </span>
                     <?php endif; ?>
-                    <div class="card-title"><?= htmlspecialchars($a['title']) ?></div>
+                    <div class="card-title"><?= htmlspecialchars($activity_item['title']) ?></div>
                     <div class="card-meta">
-                        <span>📅 <?= $start->format('d/m/Y à H:i') ?></span>
-                        <span>📍 <?= htmlspecialchars($a['location']) ?>, <?= htmlspecialchars($a['city']) ?></span>
-                        <span>👤 Par <?= htmlspecialchars($auteur) ?></span>
+                        <span>📅 <?= $start_datetime->format('d/m/Y à H:i') ?></span>
+                        <span>📍 <?= htmlspecialchars($activity_item['location']) ?>, <?= htmlspecialchars($activity_item['city']) ?></span>
+                        <span>👤 Par <?= htmlspecialchars($organizer_display_name) ?></span>
                     </div>
                     <div class="card-footer">
                         <!-- Indicateur de places : masqué (—) si activité non active ou en cours -->
-                        <?php if ($a['status'] !== 'active'): ?>
+                        <?php if ($activity_item['status'] !== 'active'): ?>
                             <span style="color:var(--gray-400); font-size:0.85rem;">—</span>
-                        <?php elseif ($places <= 0): ?>
+                        <?php elseif ($available_places <= 0): ?>
                             <span class="places-full">Complet</span>
-                        <?php elseif ($places <= 2): ?>
-                            <span class="places-few"><?= $places ?> place(s)</span>
+                        <?php elseif ($available_places <= 2): ?>
+                            <span class="places-few"><?= $available_places ?> place(s)</span>
                         <?php else: ?>
-                            <span class="places-ok"><?= $places ?> places libres</span>
+                            <span class="places-ok"><?= $available_places ?> places libres</span>
                         <?php endif; ?>
                         <span class="btn btn-sm btn-orange">Voir →</span>
                     </div>
@@ -208,8 +212,8 @@
              5 pages (±2 autour de la page courante) pour ne pas surcharger. -->
         <?php if ($total_pages > 1): ?>
             <?php
-            // Querystring complète pour les liens de pagination : tous les filtres + paramètre p
-            $page_qs = http_build_query(array_filter([
+            // Querystring complète pour les liens de pagination : tous les filtres actifs + paramètre p
+            $pagination_querystring = http_build_query(array_filter([
                 'page'     => 'activites',
                 'city'     => $city_filter,
                 'search'   => $title_filter,
@@ -220,26 +224,26 @@
             <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:40px; flex-wrap:wrap;">
                 <!-- Bouton "Précédent" : masqué sur la première page -->
                 <?php if ($current_page > 1): ?>
-                    <a href="/sharetime/public/?<?= $page_qs ?>&p=<?= $current_page - 1 ?>"
+                    <a href="/sharetime/public/?<?= $pagination_querystring ?>&p=<?= $current_page - 1 ?>"
                        class="btn btn-outline-navy btn-sm">← Précédent</a>
                 <?php endif; ?>
 
                 <!-- Numéros de pages : fenêtre [current-2 … current+2] clampée aux bornes -->
-                <?php for ($i = max(1, $current_page - 2); $i <= min($total_pages, $current_page + 2); $i++): ?>
-                    <!-- Page courante : fond navy ; autres : fond gris clair -->
-                    <a href="/sharetime/public/?<?= $page_qs ?>&p=<?= $i ?>"
+                <?php for ($page_number = max(1, $current_page - 2); $page_number <= min($total_pages, $current_page + 2); $page_number++): ?>
+                    <!-- Page courante : fond navy ; autres pages : fond gris clair -->
+                    <a href="/sharetime/public/?<?= $pagination_querystring ?>&p=<?= $page_number ?>"
                        style="display:inline-flex; align-items:center; justify-content:center;
                               width:36px; height:36px; border-radius:8px; font-size:0.9rem; font-weight:600;
                               text-decoration:none;
-                              background:<?= $i === $current_page ? 'var(--navy)' : 'var(--gray-100)' ?>;
-                              color:<?= $i === $current_page ? 'white' : 'var(--gray-600)' ?>;">
-                        <?= $i ?>
+                              background:<?= $page_number === $current_page ? 'var(--navy)' : 'var(--gray-100)' ?>;
+                              color:<?= $page_number === $current_page ? 'white' : 'var(--gray-600)' ?>;">
+                        <?= $page_number ?>
                     </a>
                 <?php endfor; ?>
 
                 <!-- Bouton "Suivant" : masqué sur la dernière page -->
                 <?php if ($current_page < $total_pages): ?>
-                    <a href="/sharetime/public/?<?= $page_qs ?>&p=<?= $current_page + 1 ?>"
+                    <a href="/sharetime/public/?<?= $pagination_querystring ?>&p=<?= $current_page + 1 ?>"
                        class="btn btn-outline-navy btn-sm">Suivant →</a>
                 <?php endif; ?>
             </div>

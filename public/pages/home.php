@@ -54,8 +54,8 @@ $nb_cities     = $home_stats['nb_cities'];
         <!-- Chips de catégories : chaque chip redirige vers la liste filtrée.
              On exclut 'autre' qui est une catégorie générique peu utile comme filtre. -->
         <div class="hero-chips">
-            <?php foreach ($CATEGORY_MAP as $val => [$emoji, , $label]): if ($val === 'autre') continue; ?>
-            <a href="/sharetime/public/?page=activites&category=<?= $val ?>" class="chip"><?= $emoji ?> <?= $label ?></a>
+            <?php foreach ($CATEGORY_MAP as $category_slug => [$category_emoji, , $category_label]): if ($category_slug === 'autre') continue; ?>
+            <a href="/sharetime/public/?page=activites&category=<?= $category_slug ?>" class="chip"><?= $category_emoji ?> <?= $category_label ?></a>
             <?php endforeach; ?>
         </div>
     </div>
@@ -162,42 +162,46 @@ $nb_cities     = $home_stats['nb_cities'];
         <?php else: ?>
             <div class="cards-grid">
                 <?php
-                $shown = 0;
-                foreach ($activities as $a):
-                    if ($shown >= 6) break;  // limite à 6 cartes même si index.php en a retourné plus
-                    $shown++;
-                    $cat    = $CATEGORY_MAP[$a['category']] ?? $CATEGORY_MAP['autre'];  // fallback sur 'autre' si catégorie inconnue
-                    $places = $a['max_participants'] - $a['nb_inscrits'];                // places restantes
-                    $start  = new DateTime($a['start_time']);                            // objet DateTime pour le formatage
-                    $auteur = $a['pseudo'] ?: $a['prenom'];                             // préfère le pseudo, fallback sur le prénom
+                $shown_activities_count = 0;
+                foreach ($activities as $activity_item):
+                    if ($shown_activities_count >= 6) break;  // limite à 6 cartes même si index.php en a retourné plus
+                    $shown_activities_count++;
+                    // Récupère les infos de catégorie (emoji, classe CSS, libellé) avec fallback sur 'autre'
+                    $category_info     = $CATEGORY_MAP[$activity_item['category']] ?? $CATEGORY_MAP['autre'];
+                    // Places disponibles = max - inscrits confirmés
+                    $available_places  = $activity_item['max_participants'] - $activity_item['nb_inscrits'];
+                    // Objet DateTime pour formater la date de début
+                    $start_datetime    = new DateTime($activity_item['start_time']);
+                    // Préfère le pseudo si défini, fallback sur le prénom pour les comptes sans pseudo
+                    $organizer_display_name = $activity_item['pseudo'] ?: $activity_item['prenom'];
                 ?>
                 <!-- Carte activité : lien vers la page de détail -->
-                <a href="/sharetime/public/?page=detail&id=<?= $a['idactivities'] ?>" class="activity-card">
-                    <!-- Image de couverture ou fond coloré par catégorie -->
-                    <?php if (!empty($a['photo'])): ?>
-                    <div class="card-image" style="background-image:url('/sharetime/public/uploads/activites/<?= htmlspecialchars($a['photo']) ?>');background-size:cover;background-position:center;">
+                <a href="/sharetime/public/?page=detail&id=<?= $activity_item['idactivities'] ?>" class="activity-card">
+                    <!-- Image de couverture ou fond coloré par catégorie si aucune photo -->
+                    <?php if (!empty($activity_item['photo'])): ?>
+                    <div class="card-image" style="background-image:url('/sharetime/public/uploads/activites/<?= htmlspecialchars($activity_item['photo']) ?>');background-size:cover;background-position:center;">
                     <?php else: ?>
-                    <div class="card-image <?= $cat[1] ?>"><!-- classe CSS de couleur selon la catégorie -->
-                        <?= $cat[0] ?><!-- emoji de la catégorie -->
+                    <div class="card-image <?= $category_info[1] ?>"><!-- classe CSS de couleur selon la catégorie -->
+                        <?= $category_info[0] ?><!-- emoji de la catégorie -->
                     <?php endif; ?>
-                        <span class="card-badge"><?= htmlspecialchars($a['city']) ?></span><!-- badge ville -->
-                        <span class="card-badge-vis"><?= $a['visibility'] === 'publique' ? 'Public' : 'Privé' ?></span><!-- badge visibilité -->
+                        <span class="card-badge"><?= htmlspecialchars($activity_item['city']) ?></span><!-- badge ville -->
+                        <span class="card-badge-vis"><?= $activity_item['visibility'] === 'publique' ? 'Public' : 'Privé' ?></span><!-- badge visibilité -->
                     </div>
                     <div class="card-body">
-                        <div class="card-title"><?= htmlspecialchars($a['title']) ?></div>
+                        <div class="card-title"><?= htmlspecialchars($activity_item['title']) ?></div>
                         <div class="card-meta">
-                            <span>📅 <?= $start->format('d/m/Y à H:i') ?></span>
-                            <span>📍 <?= htmlspecialchars($a['location']) ?></span>
-                            <span>👤 <?= htmlspecialchars($auteur) ?></span>
+                            <span>📅 <?= $start_datetime->format('d/m/Y à H:i') ?></span>
+                            <span>📍 <?= htmlspecialchars($activity_item['location']) ?></span>
+                            <span>👤 <?= htmlspecialchars($organizer_display_name) ?></span>
                         </div>
                         <!-- Indicateur de places : vert si dispo, orange si < 3, rouge si complet -->
                         <div class="card-footer">
-                            <?php if ($places <= 0): ?>
+                            <?php if ($available_places <= 0): ?>
                                 <span class="places-full">Complet</span>
-                            <?php elseif ($places <= 2): ?>
-                                <span class="places-few"><?= $places ?> place(s)</span>
+                            <?php elseif ($available_places <= 2): ?>
+                                <span class="places-few"><?= $available_places ?> place(s)</span>
                             <?php else: ?>
-                                <span class="places-ok"><?= $places ?> places libres</span>
+                                <span class="places-ok"><?= $available_places ?> places libres</span>
                             <?php endif; ?>
                             <span class="btn btn-sm btn-orange">Voir →</span>
                         </div>

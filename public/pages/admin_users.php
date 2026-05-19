@@ -14,13 +14,17 @@
  *   - Owner  : ban/unban sur tout le monde + set_role + transfer_ownership + delete
  *
  * Les actions POST sont traitées par handlers/admin.php (page=admin_users).
- * L'ID de l'admin connecté est stocké dans $me pour éviter les auto-actions.
+ * L'ID de l'admin connecté est stocké dans $connected_user_id pour bloquer
+ * toute action sur sa propre ligne (un admin ne peut pas se bannir lui-même).
  */
 
-$me = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (pour bloquer les actions sur soi-même)
+// ID de l'utilisateur connecté : sert à détecter sa propre ligne dans le tableau
+// et à désactiver les boutons d'action sur elle (évite l'auto-suspension).
+$connected_user_id = (int)$_SESSION['user']['id'];
 ?>
 <!-- ── EN-TÊTE ADMIN ──────────────────────────────────────────────────────────
-     Bandeau navy commun à toutes les pages admin. -->
+     Bandeau navy commun à toutes les pages admin.
+     Affiche le titre de la section + badge de rôle + prénom/nom de l'admin connecté. -->
 <div style="background:var(--navy);padding:28px 0;">
     <div class="container" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
         <div>
@@ -39,7 +43,7 @@ $me = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (pour bloq
 
     <div class="container" style="padding-bottom:48px;">
 
-        <!-- Message de succès après une action (ban, unban, etc.) -->
+        <!-- Message de succès après une action (ban, unban, changement de rôle…) -->
         <?php if ($flash): ?>
         <div style="background:#D1FAE5;color:#065F46;border:1px solid #A7F3D0;border-radius:10px;padding:12px 18px;margin-bottom:24px;font-weight:600;">
             <?= htmlspecialchars($flash) ?>
@@ -47,8 +51,9 @@ $me = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (pour bloq
         <?php endif; ?>
 
         <!-- ── BANDEAU OWNER ──────────────────────────────────────────────────
-             Rappel des capacités spéciales de l'owner (visibles uniquement pour lui) :
-             nommer des admins et transférer la propriété. -->
+             Ce rappel informe l'owner de ses capacités exclusives (nommer admins,
+             transférer la propriété) qui ne sont pas accessibles aux admins normaux.
+             Affiché uniquement si le visiteur est owner (is_owner() vérifié côté PHP). -->
         <?php if (is_owner()): ?>
         <div style="background:#FEF3E2;border:1.5px solid rgba(232,129,26,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
             <span style="font-size:1.5rem;">👑</span>
@@ -67,7 +72,7 @@ $me = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (pour bloq
             <div style="padding:18px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
                 <h2 style="margin:0;font-size:1rem;color:var(--navy);">
                     Tous les utilisateurs
-                    <!-- Compteur total en badge gris -->
+                    <!-- Compteur total en badge gris discret -->
                     <span style="margin-left:8px;background:#F3F4F6;color:#6B7280;font-size:0.75rem;padding:2px 10px;border-radius:99px;font-weight:600;"><?= $admin_total_count ?></span>
                 </h2>
                 <?php if ($admin_total_pages > 1): ?>
@@ -75,7 +80,7 @@ $me = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (pour bloq
                 <?php endif; ?>
             </div>
 
-            <!-- overflow-x:auto pour scroller horizontalement sur mobile -->
+            <!-- overflow-x:auto permet un scroll horizontal sur mobile sans casser la mise en page -->
             <div style="overflow-x:auto;">
                 <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
                     <thead>
@@ -89,104 +94,122 @@ $me = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (pour bloq
                         </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($admin_users_list as $u):
-                        $uid          = (int)$u['idusers'];
-                        $is_me        = $uid === $me;           // l'utilisateur connecté lui-même
-                        $is_owner_row = $u['role'] === 'owner'; // la ligne est celle de l'owner
-                        $banned       = !empty($u['is_banned']);
-                        $joined       = (new DateTime($u['date_creation']))->format('d/m/Y');
-                        // can_act = false si c'est l'admin lui-même ou l'owner (protégés contre les actions)
-                        $can_act      = !$is_me && !$is_owner_row;
+                    <?php foreach ($admin_users_list as $user_row):
+                        // ID numérique de la ligne traitée, casté pour les comparaisons strictes
+                        $user_row_id = (int)$user_row['idusers'];
+
+                        // true si cette ligne correspond à l'admin actuellement connecté
+                        // → empêche toute action sur sa propre ligne (auto-ban impossible)
+                        $is_connected_user = $user_row_id === $connected_user_id;
+
+                        // true si cette ligne est l'owner : l'owner est intouchable même par un admin
+                        $is_owner_account = $user_row['role'] === 'owner';
+
+                        // true si le compte est suspendu (is_banned = 1 en BDD)
+                        $is_user_banned = !empty($user_row['is_banned']);
+
+                        // Date d'inscription formatée pour affichage en colonne
+                        $registration_date = (new DateTime($user_row['date_creation']))->format('d/m/Y');
+
+                        // can_perform_actions = false sur la propre ligne de l'admin ET sur la ligne owner
+                        // Principe : on ne peut pas agir sur soi-même ni sur un compte de niveau supérieur
+                        $can_perform_actions = !$is_connected_user && !$is_owner_account;
                     ?>
                     <tr style="border-bottom:1px solid var(--gray-50);">
-                        <!-- Colonne Utilisateur : avatar initiale + nom + email + pseudo -->
+                        <!-- Colonne Utilisateur : avatar initiale + nom complet + email + pseudo optionnel -->
                         <td style="padding:12px 16px;">
                             <div style="display:flex;align-items:center;gap:10px;">
+                                <!-- Avatar : initiale du prénom sur fond gradient navy -->
                                 <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--navy-light));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.9rem;flex-shrink:0;">
-                                    <?= strtoupper(mb_substr($u['prenom'],0,1)) ?>
+                                    <?= strtoupper(mb_substr($user_row['prenom'],0,1)) ?>
                                 </div>
                                 <div>
                                     <p style="margin:0;font-weight:600;color:var(--gray-900);">
-                                        <?= htmlspecialchars($u['prenom'].' '.$u['nom']) ?>
-                                        <!-- "(vous)" affiché discrètement sur la propre ligne de l'admin -->
-                                        <?php if ($is_me): ?><span style="font-size:0.72rem;color:var(--gray-400);font-weight:400;">(vous)</span><?php endif; ?>
+                                        <?= htmlspecialchars($user_row['prenom'].' '.$user_row['nom']) ?>
+                                        <!-- "(vous)" affiché discrètement sur la propre ligne de l'admin connecté -->
+                                        <?php if ($is_connected_user): ?><span style="font-size:0.72rem;color:var(--gray-400);font-weight:400;">(vous)</span><?php endif; ?>
                                     </p>
-                                    <p style="margin:0;color:var(--gray-500);font-size:0.78rem;"><?= htmlspecialchars($u['email']) ?></p>
-                                    <?php if ($u['pseudo']): ?>
-                                    <p style="margin:0;color:var(--gray-400);font-size:0.75rem;">@<?= htmlspecialchars($u['pseudo']) ?></p>
+                                    <p style="margin:0;color:var(--gray-500);font-size:0.78rem;"><?= htmlspecialchars($user_row['email']) ?></p>
+                                    <!-- Pseudo affiché uniquement s'il est défini (champ facultatif à l'inscription) -->
+                                    <?php if ($user_row['pseudo']): ?>
+                                    <p style="margin:0;color:var(--gray-400);font-size:0.75rem;">@<?= htmlspecialchars($user_row['pseudo']) ?></p>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </td>
 
-                        <!-- Colonne Rôle : badge coloré via role_badge() + état banni -->
-                        <td style="padding:12px 16px;"><?= role_badge($u['role'], $banned) ?></td>
+                        <!-- Colonne Rôle : badge coloré via role_badge() + état banni si applicable -->
+                        <!-- role_badge() gère lui-même le badge "Banni" rouge si $is_user_banned est true -->
+                        <td style="padding:12px 16px;"><?= role_badge($user_row['role'], $is_user_banned) ?></td>
 
-                        <!-- Compteurs issus du JOIN dans User::getAllForAdmin -->
-                        <td style="padding:12px 16px;text-align:center;color:var(--gray-700);font-weight:600;"><?= $u['nb_activities'] ?></td>
-                        <td style="padding:12px 16px;text-align:center;color:var(--gray-700);font-weight:600;"><?= $u['nb_registrations'] ?></td>
+                        <!-- Compteurs issus du LEFT JOIN effectué dans User::getAllForAdmin -->
+                        <td style="padding:12px 16px;text-align:center;color:var(--gray-700);font-weight:600;"><?= $user_row['nb_activities'] ?></td>
+                        <td style="padding:12px 16px;text-align:center;color:var(--gray-700);font-weight:600;"><?= $user_row['nb_registrations'] ?></td>
 
-                        <!-- Date d'inscription -->
-                        <td style="padding:12px 16px;color:var(--gray-500);font-size:0.82rem;"><?= $joined ?></td>
+                        <!-- Date d'inscription formatée depuis date_creation en BDD -->
+                        <td style="padding:12px 16px;color:var(--gray-500);font-size:0.82rem;"><?= $registration_date ?></td>
 
-                        <!-- Colonne Actions : boutons conditionnels selon rôle et état -->
+                        <!-- Colonne Actions : boutons conditionnels selon rôle du visiteur et état du compte -->
                         <td style="padding:12px 16px;">
                             <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
 
-                                <?php if ($can_act): ?>
+                                <?php if ($can_perform_actions): ?>
 
                                     <!-- Bouton Suspendre / Réactiver ─────────────────────────────────
-                                         - Owner : peut agir sur tous les utilisateurs
-                                         - Admin : uniquement sur les membres (role='utilisateur') -->
-                                    <?php if (is_owner() || $u['role'] === 'utilisateur'): ?>
+                                         Règle de visibilité :
+                                         - Owner  : peut agir sur n'importe quel compte non-owner
+                                         - Admin  : uniquement sur les membres (role='utilisateur')
+                                         L'action POST (ban / unban) est traitée par handlers/admin.php. -->
+                                    <?php if (is_owner() || $user_row['role'] === 'utilisateur'): ?>
                                     <form method="POST" action="/sharetime/public/?page=admin_users" style="display:inline;">
                                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                                        <input type="hidden" name="user_id" value="<?= $uid ?>">
-                                        <!-- Action dynamique : unban si déjà banni, ban sinon -->
-                                        <input type="hidden" name="action" value="<?= $banned ? 'unban' : 'ban' ?>">
-                                        <!-- Couleur verte si réactivation, rouge si suspension -->
+                                        <input type="hidden" name="user_id" value="<?= $user_row_id ?>">
+                                        <!-- L'action est dynamique : unban si déjà suspendu, ban sinon -->
+                                        <input type="hidden" name="action" value="<?= $is_user_banned ? 'unban' : 'ban' ?>">
+                                        <!-- Bordure et couleur du bouton changent selon l'action disponible -->
                                         <button type="submit"
-                                            style="padding:5px 12px;border-radius:6px;border:1.5px solid <?= $banned ? '#059669' : '#DC2626' ?>;background:white;color:<?= $banned ? '#059669' : '#DC2626' ?>;font-size:0.78rem;font-weight:600;cursor:pointer;"
-                                            onclick="return confirm('<?= $banned ? 'Réactiver ce compte ?' : 'Suspendre ce compte ?' ?>')">
-                                            <?= $banned ? '✓ Réactiver' : '⊘ Suspendre' ?>
+                                            style="padding:5px 12px;border-radius:6px;border:1.5px solid <?= $is_user_banned ? '#059669' : '#DC2626' ?>;background:white;color:<?= $is_user_banned ? '#059669' : '#DC2626' ?>;font-size:0.78rem;font-weight:600;cursor:pointer;"
+                                            onclick="return confirm('<?= $is_user_banned ? 'Réactiver ce compte ?' : 'Suspendre ce compte ?' ?>')">
+                                            <?= $is_user_banned ? '✓ Réactiver' : '⊘ Suspendre' ?>
                                         </button>
                                     </form>
                                     <?php endif; ?>
 
-                                    <!-- Actions exclusives à l'owner ──────────────────────────────── -->
+                                    <!-- Actions exclusives à l'owner (nommer, transférer, supprimer) ──── -->
                                     <?php if (is_owner()): ?>
 
-                                        <!-- Changer le rôle (select membre/admin) : masqué si banni pour cohérence -->
-                                        <?php if (!$banned): ?>
+                                        <!-- Changer le rôle membre ↔ admin (masqué si banni pour cohérence UI) -->
+                                        <?php if (!$is_user_banned): ?>
                                         <form method="POST" action="/sharetime/public/?page=admin_users" style="display:inline;display:flex;gap:4px;">
                                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                                            <input type="hidden" name="user_id" value="<?= $uid ?>">
+                                            <input type="hidden" name="user_id" value="<?= $user_row_id ?>">
                                             <input type="hidden" name="action" value="set_role">
+                                            <!-- Select pré-sélectionné sur le rôle actuel -->
                                             <select name="role" style="padding:5px 8px;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.78rem;color:var(--gray-700);">
-                                                <option value="utilisateur" <?= $u['role']==='utilisateur'?'selected':'' ?>>Membre</option>
-                                                <option value="admin"       <?= $u['role']==='admin'?'selected':'' ?>>Admin</option>
+                                                <option value="utilisateur" <?= $user_row['role']==='utilisateur'?'selected':'' ?>>Membre</option>
+                                                <option value="admin"       <?= $user_row['role']==='admin'?'selected':'' ?>>Admin</option>
                                             </select>
                                             <button type="submit" style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--gray-300);background:white;color:var(--gray-700);font-size:0.78rem;font-weight:600;cursor:pointer;">OK</button>
                                         </form>
                                         <?php endif; ?>
 
-                                        <!-- Transférer la propriété (irréversible) : double confirmation JS -->
+                                        <!-- Transférer la propriété : action irréversible → double confirmation JS -->
+                                        <!-- addslashes nécessaire pour échapper le nom dans la chaîne de confirm() -->
                                         <form method="POST" action="/sharetime/public/?page=admin_users" style="display:inline;">
                                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                                            <input type="hidden" name="user_id" value="<?= $uid ?>">
+                                            <input type="hidden" name="user_id" value="<?= $user_row_id ?>">
                                             <input type="hidden" name="action" value="transfer_ownership">
-                                            <!-- addslashes dans onclick pour échapper le nom dans la chaîne JS -->
                                             <button type="submit"
                                                 style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--orange);background:white;color:var(--orange);font-size:0.78rem;font-weight:600;cursor:pointer;"
-                                                onclick="return confirm('Transférer le rôle Super-Admin à <?= htmlspecialchars(addslashes($u['prenom'].' '.$u['nom'])) ?> ?\n\nVous deviendrez administrateur. Cette action est irréversible sans intervention du nouveau super-admin.')">
+                                                onclick="return confirm('Transférer le rôle Super-Admin à <?= htmlspecialchars(addslashes($user_row['prenom'].' '.$user_row['nom'])) ?> ?\n\nVous deviendrez administrateur. Cette action est irréversible sans intervention du nouveau super-admin.')">
                                                 👑 Super-Admin
                                             </button>
                                         </form>
 
-                                        <!-- Supprimer définitivement (supprime aussi activités, inscriptions, etc.) -->
+                                        <!-- Supprimer définitivement le compte (supprime aussi ses activités, inscriptions, messages…) -->
                                         <form method="POST" action="/sharetime/public/?page=admin_users" style="display:inline;">
                                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                                            <input type="hidden" name="user_id" value="<?= $uid ?>">
+                                            <input type="hidden" name="user_id" value="<?= $user_row_id ?>">
                                             <input type="hidden" name="action" value="delete">
                                             <button type="submit"
                                                 style="padding:5px 10px;border-radius:6px;border:1.5px solid #DC2626;background:#DC2626;color:white;font-size:0.78rem;font-weight:600;cursor:pointer;"
@@ -198,9 +221,10 @@ $me = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (pour bloq
                                     <?php endif; ?>
 
                                 <?php else: ?>
-                                    <!-- Aucune action disponible : l'admin lui-même ou l'owner (protégés) -->
+                                    <!-- Aucune action disponible : soit c'est la propre ligne de l'admin (protection
+                                         contre l'auto-ban), soit c'est la ligne de l'owner (protégée par conception). -->
                                     <span style="color:var(--gray-300);font-size:0.8rem;font-style:italic;">
-                                        <?= $is_me ? 'Vous' : 'Protégé' ?>
+                                        <?= $is_connected_user ? 'Vous' : 'Protégé' ?>
                                     </span>
                                 <?php endif; ?>
 
@@ -216,18 +240,20 @@ $me = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (pour bloq
         <!-- ── PAGINATION ─────────────────────────────────────────────────── -->
         <?php if ($admin_total_pages > 1): ?>
         <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:28px;flex-wrap:wrap;">
+            <!-- Lien "Précédent" masqué sur la première page -->
             <?php if ($admin_current_page > 1): ?>
                 <a href="/sharetime/public/?page=admin_users&p=<?= $admin_current_page - 1 ?>" class="btn btn-outline-navy btn-sm">← Précédent</a>
             <?php endif; ?>
-            <!-- Fenêtre glissante de 5 pages autour de la courante -->
-            <?php for ($i = max(1, $admin_current_page - 2); $i <= min($admin_total_pages, $admin_current_page + 2); $i++): ?>
-                <a href="/sharetime/public/?page=admin_users&p=<?= $i ?>"
+            <!-- Fenêtre glissante de 5 pages centrée sur la page courante (±2) -->
+            <?php for ($page_number = max(1, $admin_current_page - 2); $page_number <= min($admin_total_pages, $admin_current_page + 2); $page_number++): ?>
+                <a href="/sharetime/public/?page=admin_users&p=<?= $page_number ?>"
                    style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;font-size:0.9rem;font-weight:600;text-decoration:none;
-                          background:<?= $i === $admin_current_page ? 'var(--navy)' : 'var(--gray-100)' ?>;
-                          color:<?= $i === $admin_current_page ? 'white' : 'var(--gray-600)' ?>;">
-                    <?= $i ?>
+                          background:<?= $page_number === $admin_current_page ? 'var(--navy)' : 'var(--gray-100)' ?>;
+                          color:<?= $page_number === $admin_current_page ? 'white' : 'var(--gray-600)' ?>;">
+                    <?= $page_number ?>
                 </a>
             <?php endfor; ?>
+            <!-- Lien "Suivant" masqué sur la dernière page -->
             <?php if ($admin_current_page < $admin_total_pages): ?>
                 <a href="/sharetime/public/?page=admin_users&p=<?= $admin_current_page + 1 ?>" class="btn btn-outline-navy btn-sm">Suivant →</a>
             <?php endif; ?>
@@ -237,7 +263,7 @@ $me = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (pour bloq
     </div>
 </main>
 
-<!-- Table responsive sur mobile -->
+<!-- Table responsive sur mobile : réduit la taille de police et le padding des cellules -->
 <style>
 @media (max-width: 768px) {
     table { font-size: 0.8rem !important; }
