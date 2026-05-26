@@ -49,8 +49,8 @@ if (isset($_SESSION['user'])) {
                 // L'utilisateur a été suspendu depuis sa dernière connexion : déconnexion forcée immédiate
                 $_SESSION = [];       // efface toutes les données de session
                 session_destroy();   // supprime le fichier de session côté serveur
-                header('Location: /sharetime/public/?page=connexion');
-                exit;
+                header('Location: /sharetime/public/?page=connexion'); // redirige vers la page de connexion
+                exit; // arrête immédiatement l'exécution pour ne pas afficher de contenu
             }
             // Synchronise le rôle en session si un admin l'a modifié depuis la connexion
             // (ex. : un admin vient d'être rétrogradé en utilisateur)
@@ -68,12 +68,12 @@ $success = null;                      // message de succès à afficher dans les
 // Associe chaque identifiant de catégorie (clé en base) à [emoji, classe CSS, libellé lisible].
 // Utilisé dans les vues pour afficher les badges colorés et dans les handlers pour la whitelist.
 $CATEGORY_MAP = [
-    'sport'      => ['🏃', 'sport',   'Sport'],
-    'creativite' => ['🎨', 'atelier', 'Créativité'],
-    'nature'     => ['🌲', 'sortie',  'Nature'],
-    'social'     => ['🤝', 'club',    'Social'],
-    'culture'    => ['🖼️', 'art',     'Culture'],
-    'autre'      => ['⭐', 'sport',   'Autre'],
+    'sport'      => ['🏃', 'sport',   'Sport'],      // catégorie activités sportives
+    'creativite' => ['🎨', 'atelier', 'Créativité'], // catégorie ateliers créatifs
+    'nature'     => ['🌲', 'sortie',  'Nature'],     // catégorie sorties nature/plein air
+    'social'     => ['🤝', 'club',    'Social'],     // catégorie rencontres et clubs
+    'culture'    => ['🖼️', 'art',     'Culture'],   // catégorie événements culturels
+    'autre'      => ['⭐', 'sport',   'Autre'],      // catégorie par défaut non classée
 ];
 
 // ── FLASH MESSAGES ─────────────────────────────────────────────────────────────
@@ -102,11 +102,11 @@ $allowed_pages = [
     'notifs_lues',
 ];
 // Si $page n'est pas dans la whitelist, on redirige silencieusement vers l'accueil
-if (!in_array($page, $allowed_pages)) $page = 'home';
+if (!in_array($page, $allowed_pages)) $page = 'home'; // toute page inconnue retombe sur l'accueil (évite l'inclusion de fichiers arbitraires)
 
 // Instances des modèles partagées entre le routing GET et les handlers POST
-$activityModel = new Activity($pdo);
-$userModel     = new User($pdo);
+$activityModel = new Activity($pdo); // instance du modèle activités, partagée entre routing GET et handlers POST
+$userModel     = new User($pdo);     // instance du modèle utilisateurs, partagée entre routing GET et handlers POST
 
 // ── HANDLERS POST ──────────────────────────────────────────────────────────────
 // Inclus inconditionnellement : chaque fichier vérifie lui-même $page et REQUEST_METHOD.
@@ -153,14 +153,14 @@ $total_pages   = 1;  // nombre total de pages disponibles
 $total_count   = 0;  // nombre total d'activités correspondant aux filtres actifs
 
 // Variables du panel admin (pagination, listes, statistiques)
-$admin_stats           = [];
-$admin_users_list      = [];
-$admin_activities_list = [];
-$owner_users           = [];
+$admin_stats           = [];  // tableau de statistiques globales (membres, activités, admins, suspendus)
+$admin_users_list      = [];  // liste paginée des utilisateurs affichée dans admin_users
+$admin_activities_list = [];  // liste paginée des activités affichée dans admin_activities
+$owner_users           = [];  // liste complète des utilisateurs pour le panel owner (sans pagination)
 
-$admin_current_page = 1;
-$admin_total_pages  = 1;
-$admin_total_count  = 0;
+$admin_current_page = 1;  // page courante dans la pagination du panel admin
+$admin_total_pages  = 1;  // nombre total de pages disponibles dans le panel admin
+$admin_total_count  = 0;  // nombre total d'entrées correspondant aux filtres actifs dans le panel admin
 
 $follower_count  = 0;     // nombre d'abonnés de l'utilisateur dont on consulte le profil
 $following_count = 0;     // nombre d'abonnements de l'utilisateur dont on consulte le profil
@@ -169,8 +169,8 @@ $is_following    = false; // true si l'utilisateur connecté suit le profil affi
 $notifications     = [];  // liste des notifications de l'utilisateur connecté
 $admin_logs        = [];  // entrées du journal d'administration
 
-$log_action_filter = '';  // filtre "type d'action" dans les logs admin
-$log_admin_filter  = '';  // filtre "nom d'admin" dans les logs admin
+$log_action_filter = '';  // filtre "type d'action" dans les logs admin (whitelist : ban, delete, etc.)
+$log_admin_filter  = '';  // filtre "nom d'admin" dans les logs admin (recherche partielle sur pseudo/prénom/nom)
 
 // ── ROUTING GET : DONNÉES PAR PAGE ─────────────────────────────────────────────
 // Chaque branche charge uniquement les données nécessaires à la page demandée
@@ -314,8 +314,8 @@ if ($page === 'home') {
 
 } elseif ($page === 'admin') {
     // L'owner ne doit jamais voir les pages admin classiques : redirection vers son panel
-    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; }
-    require_admin();  // bloque les non-admins
+    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; } // l'owner ne doit pas voir la page admin classique
+    require_admin();  // bloque les non-admins (redirige vers l'accueil avec un message d'erreur)
 
     // Une seule requête avec plusieurs sous-sélections pour éviter 5 allers-retours séparés
     $raw_stats = $pdo->query("SELECT
@@ -344,7 +344,7 @@ if ($page === 'home') {
     ")->fetchAll();
 
 } elseif ($page === 'admin_users') {
-    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=users'); exit; }
+    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=users'); exit; } // l'owner consulte ses utilisateurs dans son propre panel
     require_admin();
 
     $admin_per_page     = 25;                                          // nombre d'utilisateurs par page dans le panel
@@ -354,17 +354,17 @@ if ($page === 'home') {
     $admin_users_list   = $userModel->getAllForAdmin($admin_current_page, $admin_per_page);
 
 } elseif ($page === 'admin_activities') {
-    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=activities'); exit; }
+    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=activities'); exit; } // l'owner consulte les activités dans son propre panel
     require_admin();
 
-    $admin_per_page        = 25;
-    $admin_total_count     = $activityModel->countAllForAdmin();
-    $admin_total_pages     = max(1, (int)ceil($admin_total_count / $admin_per_page));
-    $admin_current_page    = max(1, min($admin_total_pages, intval($_GET['p'] ?? 1)));
-    $admin_activities_list = $activityModel->getAllForAdmin($admin_current_page, $admin_per_page);
+    $admin_per_page        = 25;                                                                          // nombre d'activités par page dans le panel
+    $admin_total_count     = $activityModel->countAllForAdmin();                                          // total pour calculer le nombre de pages
+    $admin_total_pages     = max(1, (int)ceil($admin_total_count / $admin_per_page));                    // au moins 1 page même si aucune activité
+    $admin_current_page    = max(1, min($admin_total_pages, intval($_GET['p'] ?? 1)));                   // page clampée entre 1 et le max
+    $admin_activities_list = $activityModel->getAllForAdmin($admin_current_page, $admin_per_page);        // charge uniquement la page courante
 
 } elseif ($page === 'admin_logs') {
-    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; }
+    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; } // l'owner n'a pas de page logs dédiée : renvoi vers son dashboard
     require_admin();
 
     // Whitelist des types d'actions affichables dans les logs
@@ -415,7 +415,7 @@ if ($page === 'home') {
     $admin_logs = $logs_stmt->fetchAll();
 
 } elseif ($page === 'notifications') {
-    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; } // page réservée aux utilisateurs connectés
 
     // Les 50 dernières notifications, avec le titre de l'activité associée si elle existe encore
     $notifs_stmt = $pdo->prepare("
@@ -436,7 +436,7 @@ if ($page === 'home') {
         ->execute(['u' => $_SESSION['user']['id']]);
 
 } elseif ($page === 'messages') {
-    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; }
+    if (!isset($_SESSION['user'])) { header('Location: /sharetime/public/?page=connexion'); exit; } // la messagerie est réservée aux utilisateurs connectés
 
     $current_user_id = (int)$_SESSION['user']['id'];  // ID de l'utilisateur connecté (expéditeur ou destinataire)
     $with_id         = intval($_GET['with'] ?? 0);    // ID de l'interlocuteur sélectionné (0 si aucune conversation ouverte)
@@ -498,14 +498,14 @@ if ($page === 'home') {
     }
 
 } elseif ($page === 'admin_contact') {
-    require_admin();
+    require_admin(); // seuls les admins et l'owner peuvent consulter les messages de contact
     // Charge tous les messages de contact triés du plus récent au plus ancien
     $contact_messages = $pdo->query("SELECT * FROM contact_messages ORDER BY sent_at DESC")->fetchAll();
     // Compte séparément les non lus pour afficher le badge dans la navbar admin
-    $contact_unread   = (int)$pdo->query("SELECT COUNT(*) FROM contact_messages WHERE is_read = 0")->fetchColumn();
+    $contact_unread   = (int)$pdo->query("SELECT COUNT(*) FROM contact_messages WHERE is_read = 0")->fetchColumn(); // (int) évite null si la table est vide
 
 } elseif ($page === 'owner') {
-    require_owner();  // Arrête immédiatement si l'utilisateur n'est pas owner
+    require_owner();  // arrête immédiatement si l'utilisateur n'est pas owner (défini dans helpers.php)
 
     // Whitelist des onglets du panel owner
     $valid_owner_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact', 'contenu', 'signalements'];
@@ -514,8 +514,8 @@ if ($page === 'home') {
                         : 'dashboard';  // onglet par défaut si la valeur est absente ou invalide
 
     // Charge tous les utilisateurs et activités sans pagination (l'owner a une vision globale)
-    $owner_users           = $userModel->getAllForAdmin();
-    $admin_activities_list = $activityModel->getAllForAdmin();
+    $owner_users           = $userModel->getAllForAdmin();        // tous les utilisateurs sans limite de pagination
+    $admin_activities_list = $activityModel->getAllForAdmin();    // toutes les activités sans limite de pagination
 
     // Mêmes statistiques que la page admin, recalculées ici pour le panel owner
     $raw_stats = $pdo->query("SELECT
@@ -534,17 +534,17 @@ if ($page === 'home') {
     ];
 
     // Blocs "Derniers inscrits" et "Dernières activités" du tableau de bord owner
-    $admin_recent_users = $pdo->query("SELECT * FROM users ORDER BY date_creation DESC LIMIT 5")->fetchAll();
+    $admin_recent_users = $pdo->query("SELECT * FROM users ORDER BY date_creation DESC LIMIT 5")->fetchAll(); // 5 derniers comptes créés
     $admin_recent_activities = $pdo->query("
         SELECT a.*, u.prenom, u.nom FROM activities a
         JOIN users u ON u.idusers = a.creator_id ORDER BY a.created_at DESC LIMIT 5
-    ")->fetchAll();
+    ")->fetchAll(); // 5 dernières activités avec le nom de l'organisateur
 
     // Charge les messages de contact uniquement quand l'onglet 'contact' est actif
     // (évite une requête inutile sur les autres onglets)
     if ($owner_tab === 'contact') {
-        $contact_messages = $pdo->query("SELECT * FROM contact_messages ORDER BY sent_at DESC")->fetchAll();
-        $contact_unread   = (int)$pdo->query("SELECT COUNT(*) FROM contact_messages WHERE is_read = 0")->fetchColumn();
+        $contact_messages = $pdo->query("SELECT * FROM contact_messages ORDER BY sent_at DESC")->fetchAll(); // tous les messages de contact, du plus récent au plus ancien
+        $contact_unread   = (int)$pdo->query("SELECT COUNT(*) FROM contact_messages WHERE is_read = 0")->fetchColumn(); // compteur de messages non lus pour le badge
     }
 }
 
@@ -568,12 +568,13 @@ if (isset($_SESSION['user'])) {
         $msg_count     = (int)$navbar_counts['msg_count'];    // affiché en badge bleu sur l'enveloppe
     } catch (\Throwable $e) {
         // Silencieux : un badge manquant ne doit pas casser la page en cours de rendu
+        // (ex. : table notifications ou messages absente lors d'une migration incomplète)
     }
 }
 
 // ── RENDU ──────────────────────────────────────────────────────────────────────
 // Inclut le header commun : navbar, styles CSS, affichage du toast flash
-require '../app/views/header.php';
+require '../app/views/header.php'; // ouvre <html>, <head>, <body> et affiche la navbar
 
 // Liste des pages qui ont un fichier PHP correspondant dans public/pages/
 $php_pages = [
@@ -582,16 +583,16 @@ $php_pages = [
     'admin', 'admin_users', 'admin_activities', 'admin_logs', 'owner',
     'mot_de_passe_oublie', 'reinitialiser_mdp',
     'modifier_activite', 'notifications', 'verifier_email', 'messages', 'carte', 'admin_contact',
-];
+]; // pages ayant un template HTML : les pages d'action (logout, s_inscrire…) n'en ont pas
 
 if (in_array($page, $php_pages)) {
     // Inclut le fichier de la page dans la portée courante (variables disponibles directement)
-    require "pages/{$page}.php";
+    require "pages/{$page}.php"; // chemin relatif au répertoire public/
 } else {
     // Fallback : pages d'action pure (s_inscrire, logout…) qui redirigent toujours
     // Ne devraient jamais arriver ici, mais on affiche l'accueil par sécurité
-    require 'pages/home.php';
+    require 'pages/home.php'; // affiche l'accueil par défaut si aucun template ne correspond
 }
 
 // Inclut le footer commun : fermeture du body, scripts JS éventuels
-require '../app/views/footer.php';
+require '../app/views/footer.php'; // ferme </body> et </html>, affiche les scripts JS globaux

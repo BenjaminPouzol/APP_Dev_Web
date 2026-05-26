@@ -23,9 +23,10 @@
  *   - created_at  : horodatage
  */
 ?>
+<!-- Conteneur principal de la page logs avec padding vertical -->
 <main class="container" style="padding:40px 0;">
 
-    <!-- Barre de navigation admin -->
+    <!-- Barre de navigation admin avec l'onglet 'admin_logs' actif -->
     <?php admin_nav('admin_logs'); ?>
 
     <!-- ── EN-TÊTE ────────────────────────────────────────────────────────── -->
@@ -38,7 +39,9 @@
     </div>
 
     <!-- ── FORMULAIRE DE FILTRES ──────────────────────────────────────────── -->
+    <!-- Méthode GET : les filtres apparaissent dans l'URL et sont conservés à la navigation -->
     <form method="get" action="/sharetime/public/" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <!-- Paramètre de page transmis en hidden pour que le routing identifie admin_logs -->
         <input type="hidden" name="page" value="admin_logs">
         <!-- Filtre texte : recherche dans pseudo et prénom de l'admin -->
         <input type="text" name="admin" value="<?= htmlspecialchars($log_admin_filter) ?>"
@@ -47,14 +50,19 @@
         <!-- Filtre select : liste des types d'actions connus dans la table admin_logs -->
         <select name="action"
                 style="padding:9px 14px; border:1.5px solid var(--gray-300); border-radius:8px; font-size:0.88rem; font-family:inherit; background:white;">
+            <!-- Option par défaut : aucun filtre d'action appliqué -->
             <option value="">Toutes les actions</option>
+            <!-- Boucle sur les slugs d'actions connus pour générer les options du select -->
             <?php foreach (['ban','unban','delete_user','delete_activity','set_role','set_status','transfer_ownership'] as $action_slug): ?>
+                <!-- 'selected' pré-sélectionne l'option si le filtre actif correspond -->
                 <option value="<?= $action_slug ?>" <?= $log_action_filter === $action_slug ? 'selected' : '' ?>><?= $action_slug ?></option>
-            <?php endforeach; ?>
+            <?php endforeach; // Fin du foreach sur les slugs d'actions ?>
         </select>
+        <!-- Bouton de soumission du formulaire de filtres -->
         <button type="submit" class="btn btn-navy btn-sm">Filtrer</button>
         <!-- Bouton reset : visible seulement si au moins un filtre est actif -->
         <?php if ($log_action_filter || $log_admin_filter): ?>
+            <!-- Lien vers la page sans paramètres pour effacer tous les filtres -->
             <a href="/sharetime/public/?page=admin_logs" class="btn btn-outline-navy btn-sm">✕ Réinitialiser</a>
         <?php endif; ?>
     </form>
@@ -67,9 +75,12 @@
         </div>
     <?php else: ?>
         <!-- ── TABLEAU DES LOGS ────────────────────────────────────────────── -->
+        <!-- Conteneur blanc avec bordure arrondie et overflow:hidden pour les coins du tableau -->
         <div style="background:white; border:1.5px solid var(--gray-200); border-radius:var(--radius-lg); overflow:hidden;">
+            <!-- Tableau pleine largeur avec collapse pour supprimer les doubles bordures -->
             <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
                 <thead>
+                    <!-- Ligne d'en-tête sur fond gris clair avec les 5 colonnes du journal -->
                     <tr style="background:var(--gray-50); border-bottom:1.5px solid var(--gray-200);">
                         <th style="padding:12px 16px; text-align:left; font-weight:600; color:var(--gray-600); white-space:nowrap;">Date</th>
                         <th style="padding:12px 16px; text-align:left; font-weight:600; color:var(--gray-600);">Admin</th>
@@ -101,23 +112,26 @@
                     ?>
                     <!-- Hover gris clair via JS inline pour une meilleure lisibilité des lignes -->
                     <tr style="border-bottom:1px solid var(--gray-100);" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background='white'">
-                        <!-- Horodatage de l'action -->
+                        <!-- Horodatage de l'action formaté en JJ/MM/AAAA HH:MM -->
                         <td style="padding:12px 16px; color:var(--gray-500); white-space:nowrap;"><?= $log_formatted_date ?></td>
-                        <!-- Pseudo de l'admin avec fallback sur prénom si pas de pseudo défini -->
+                        <!-- Pseudo de l'admin avec fallback sur prénom si pas de pseudo défini, tiret si ni l'un ni l'autre -->
                         <td style="padding:12px 16px; font-weight:600; color:var(--navy);">
                             <?= htmlspecialchars($log_entry['admin_pseudo'] ?? $log_entry['admin_prenom'] ?? '—') ?>
                         </td>
                         <!-- Badge action coloré selon la sévérité de l'opération -->
                         <td style="padding:12px 16px;">
                             <span style="background:<?= $action_badge_bg ?>; color:<?= $action_badge_color ?>; padding:3px 10px; border-radius:99px; font-size:0.78rem; font-weight:700; white-space:nowrap;">
+                                <!-- Libellé de l'action sécurisé contre les XSS -->
                                 <?= htmlspecialchars($log_entry['action']) ?>
                             </span>
                         </td>
-                        <!-- Cible : type (user/activity) en badge gris + ID numérique -->
+                        <!-- Cible : type (user/activity) en badge gris + ID numérique de la ressource -->
                         <td style="padding:12px 16px; color:var(--gray-600);">
+                            <!-- Badge gris affichant le type de la cible (user ou activity) -->
                             <span style="font-size:0.78rem; background:var(--gray-100); padding:2px 8px; border-radius:4px; margin-right:6px; font-weight:600; color:var(--gray-500);">
                                 <?= $log_entry['target_type'] ?>
                             </span>
+                            <!-- ID numérique de la ressource ciblée précédé d'un # -->
                             #<?= $log_entry['target_id'] ?>
                         </td>
                         <!-- Détails textuels tronqués avec ellipsis si trop longs pour la colonne -->
@@ -125,7 +139,7 @@
                             <?= htmlspecialchars($log_entry['details']) ?>
                         </td>
                     </tr>
-                    <?php endforeach; ?>
+                    <?php endforeach; // Fin du foreach sur les entrées de log de la page courante ?>
                 </tbody>
             </table>
         </div>
@@ -141,20 +155,24 @@
             ]));
         ?>
         <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:32px; flex-wrap:wrap;">
+            <!-- Lien "Précédent" masqué sur la première page pour ne pas dépasser la limite basse -->
             <?php if ($admin_current_page > 1): ?>
                 <a href="/sharetime/public/?<?= $log_pagination_querystring ?>&p=<?= $admin_current_page - 1 ?>" class="btn btn-outline-navy btn-sm">← Précédent</a>
             <?php endif; ?>
             <!-- Fenêtre glissante de 5 pages (±2 autour de la courante) -->
             <?php for ($page_number = max(1, $admin_current_page - 2); $page_number <= min($admin_total_pages, $admin_current_page + 2); $page_number++): ?>
+                <!-- Lien de page : fond navy si page active, fond gris clair sinon -->
                 <a href="/sharetime/public/?<?= $log_pagination_querystring ?>&p=<?= $page_number ?>"
                    style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;font-size:0.9rem;font-weight:600;text-decoration:none;
                           background:<?= $page_number === $admin_current_page ? 'var(--navy)' : 'var(--gray-100)' ?>;
                           color:<?= $page_number === $admin_current_page ? 'white' : 'var(--gray-600)' ?>;"><?= $page_number ?></a>
-            <?php endfor; ?>
+            <?php endfor; // Fin du for de la fenêtre glissante de pagination ?>
+            <!-- Lien "Suivant" masqué sur la dernière page pour ne pas dépasser la limite haute -->
             <?php if ($admin_current_page < $admin_total_pages): ?>
                 <a href="/sharetime/public/?<?= $log_pagination_querystring ?>&p=<?= $admin_current_page + 1 ?>" class="btn btn-outline-navy btn-sm">Suivant →</a>
             <?php endif; ?>
         </div>
+        <!-- Indicateur textuel de position dans la pagination (ex : Page 2 / 5) -->
         <p style="text-align:center; color:var(--gray-400); font-size:0.82rem; margin-top:12px;">Page <?= $admin_current_page ?> / <?= $admin_total_pages ?></p>
         <?php endif; ?>
     <?php endif; ?>

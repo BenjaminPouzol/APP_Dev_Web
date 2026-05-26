@@ -5,10 +5,13 @@
    ============================================================ */
 
 /* ── Import polices Google Fonts ── */
+/* Charge deux familles de polices depuis Google Fonts avec plusieurs graisses */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
 
 /* ── Variables CSS ── */
+/* Définit les tokens de design réutilisables dans toute la feuille de style via var() */
 :root {
+    /* Couleurs principales de la charte graphique */
     --orange:       #E8811A;
     --orange-light: #F9A54A;
     --orange-pale:  #FEF3E2;
@@ -16,6 +19,7 @@
     --navy-light:   #2D5494;
     --navy-pale:    #EBF0F8;
     --white:        #FFFFFF;
+    /* Palette de gris pour les textes et fonds neutres */
     --gray-50:      #F9FAFB;
     --gray-100:     #F3F4F6;
     --gray-200:     #E5E7EB;
@@ -25,9 +29,11 @@
     --gray-600:     #4B5563;
     --gray-700:     #374151;
     --gray-900:     #111827;
+    /* Ombres portées de différentes intensités */
     --shadow-sm:    0 1px 3px rgba(0,0,0,0.08);
     --shadow-md:    0 4px 16px rgba(0,0,0,0.10);
     --shadow-lg:    0 8px 32px rgba(30,58,110,0.12);
+    /* Rayons de bordure pour arrondir les coins des éléments */
     --radius-sm:    6px;
     --radius-md:    10px;
     --radius-lg:    14px;
@@ -35,30 +41,42 @@
 }
 
 /* ── Reset & base ── */
+/* Supprime les marges et espacements par défaut du navigateur sur tous les éléments,
+   et utilise box-sizing: border-box pour que padding et bordure soient inclus dans la taille */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Active le défilement fluide animé lors des liens d'ancrage (#section) */
 html { scroll-behavior: smooth; }
 
+/* Styles de base du corps de la page */
 body {
     font-family: 'Inter', sans-serif;
     font-size: 16px;
     color: var(--gray-900);
     background: var(--gray-50);
+    /* Hauteur de ligne à 1.6 pour améliorer la lisibilité des paragraphes */
     line-height: 1.6;
 }
 
+/* Supprime le soulignement des liens et hérite la couleur du texte parent */
 a { text-decoration: none; color: inherit; }
+/* Empêche les images de déborder de leur conteneur et les traite comme des blocs */
 img { max-width: 100%; display: block; }
+/* Supprime les puces des listes */
 ul { list-style: none; }
 
+/* Applique la police Poppins et resserre l'interligne pour tous les titres */
 h1, h2, h3, h4 {
     font-family: 'Poppins', sans-serif;
+    /* Interligne réduit pour que les titres sur plusieurs lignes restent compacts */
     line-height: 1.2;
 }
 
 /* ── Conteneur centré ── */
+/* Limite la largeur du contenu à 1100px et le centre horizontalement avec margin auto */
 .container {
     max-width: 1100px;
+    /* margin auto à gauche et droite centre le bloc dans la page */
     margin: 0 auto;
     padding: 0 24px;
 }
@@ -66,54 +84,67 @@ h1, h2, h3, h4 {
 /* ============================================================
    NAVBAR
    ============================================================ */
+/* Barre de navigation principale, fixée en haut de l'écran lors du défilement */
 .navbar {
     background: var(--navy);
     height: 64px;
+    /* sticky maintient la navbar visible en haut même en faisant défiler la page */
     position: sticky;
     top: 0;
+    /* z-index élevé pour que la navbar passe par-dessus tous les autres éléments */
     z-index: 100;
     box-shadow: 0 2px 12px rgba(0,0,0,0.15);
 }
 
+/* Le conteneur interne de la navbar est une ligne flex pour aligner ses enfants horizontalement */
 .navbar .container {
     height: 100%;
     display: flex;
+    /* align-items center aligne verticalement tous les éléments au milieu de la hauteur */
     align-items: center;
     gap: 0;
 }
 
-/* Logo */
+/* Logo de la navbar : lien cliquable contenant image + texte */
 .navbar-logo {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-right: 36px;
     text-decoration: none;
+    /* flex-shrink: 0 empêche le logo de rétrécir quand l'espace manque */
     flex-shrink: 0;
 }
 
+/* Image du logo : taille fixe avec préservation des proportions */
 .navbar-logo img {
     width: 36px;
     height: 36px;
+    /* object-fit: contain garde l'image entière visible sans la déformer */
     object-fit: contain;
 }
 
+/* Texte "ShareTime" à côté du logo */
 .navbar-logo-text {
     font-family: 'Poppins', sans-serif;
     font-size: 1.3rem;
     font-weight: 800;
 }
 
+/* Coloration partielle du nom : "Share" en orange, "Time" en blanc */
 .navbar-logo-text .share { color: var(--orange); }
 .navbar-logo-text .time  { color: var(--white); }
 
 /* Liens nav */
+/* Zone des liens de navigation qui occupe tout l'espace disponible (flex: 1) */
 .navbar-links {
     display: flex;
+    /* flex: 1 fait que cette zone prend tout l'espace horizontal restant */
     flex: 1;
     height: 64px;
 }
 
+/* Style de chaque lien de navigation */
 .navbar-links a {
     color: rgba(255,255,255,0.65);
     font-size: 0.9rem;
@@ -122,21 +153,26 @@ h1, h2, h3, h4 {
     height: 64px;
     display: flex;
     align-items: center;
+    /* Bordure inférieure transparente par défaut, colorée à l'état actif */
     border-bottom: 3px solid transparent;
+    /* transition anime doucement les changements de couleur et de fond */
     transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 
+/* Survol d'un lien nav : texte blanc et léger fond semi-transparent */
 .navbar-links a:hover {
     color: white;
     background: rgba(255,255,255,0.06);
 }
 
+/* Lien actif (page courante) : texte blanc et soulignement orange */
 .navbar-links a.active {
     color: white;
     border-bottom-color: var(--orange);
 }
 
 /* Boutons navbar */
+/* Groupe de boutons alignés à droite de la navbar */
 .navbar-actions {
     display: flex;
     gap: 10px;
@@ -146,7 +182,9 @@ h1, h2, h3, h4 {
 /* ============================================================
    BOUTONS
    ============================================================ */
+/* Style de base partagé par tous les boutons du site */
 .btn {
+    /* inline-flex permet d'aligner icône et texte horizontalement dans le bouton */
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -157,25 +195,30 @@ h1, h2, h3, h4 {
     font-family: 'Inter', sans-serif;
     border: none;
     cursor: pointer;
+    /* transition anime le fond, le déplacement et l'ombre lors des interactions */
     transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
     text-decoration: none;
     line-height: 1;
 }
 
+/* Effet d'enfoncement au clic : déplace légèrement le bouton vers le bas */
 .btn:active { transform: translateY(1px); }
 
+/* Bouton orange (action principale) */
 .btn-orange {
     background: var(--orange);
     color: white;
 }
 .btn-orange:hover { background: var(--orange-light); }
 
+/* Bouton bleu marine */
 .btn-navy {
     background: var(--navy);
     color: white;
 }
 .btn-navy:hover { background: var(--navy-light); }
 
+/* Bouton contour blanc (utilisé sur fond sombre) */
 .btn-outline {
     background: transparent;
     border: 1.5px solid rgba(255,255,255,0.35);
@@ -183,6 +226,7 @@ h1, h2, h3, h4 {
 }
 .btn-outline:hover { border-color: white; }
 
+/* Bouton contour gris (utilisé sur fond clair) */
 .btn-outline-navy {
     background: transparent;
     border: 1.5px solid var(--gray-300);
@@ -190,35 +234,45 @@ h1, h2, h3, h4 {
 }
 .btn-outline-navy:hover { border-color: var(--navy); color: var(--navy); }
 
+/* Bouton blanc (utilisé sur fond coloré) */
 .btn-white {
     background: white;
     color: var(--navy);
 }
 .btn-white:hover { background: var(--gray-100); }
 
+/* Variantes de taille : petit et grand */
 .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
 .btn-lg { padding: 13px 28px; font-size: 1rem; }
 
 /* ============================================================
    HERO
    ============================================================ */
+/* Bannière principale en haut de la page d'accueil */
 .hero {
+    /* Dégradé diagonal du navy sombre vers une teinte plus claire */
     background: linear-gradient(135deg, var(--navy) 0%, #2D5494 60%, #1a3a6e 100%);
     padding: 44px 0;
     text-align: center;
+    /* position: relative permet de positionner les pseudo-éléments décoratifs en absolu */
     position: relative;
+    /* overflow: hidden masque les parties des cercles décoratifs qui dépassent */
     overflow: hidden;
 }
 
+/* Cercle décoratif en haut à droite du hero (créé sans HTML via CSS) */
 .hero::before {
+    /* content vide obligatoire pour que le pseudo-élément s'affiche */
     content: '';
     position: absolute;
     top: -60px; right: -60px;
     width: 350px; height: 350px;
     border-radius: 50%;
+    /* Tache orange très transparente pour un effet décoratif subtil */
     background: rgba(232,129,26,0.08);
 }
 
+/* Cercle décoratif en bas à gauche du hero */
 .hero::after {
     content: '';
     position: absolute;
@@ -228,24 +282,29 @@ h1, h2, h3, h4 {
     background: rgba(232,129,26,0.06);
 }
 
+/* z-index: 1 place le contenu au-dessus des cercles décoratifs positionnés en absolu */
 .hero-content { position: relative; z-index: 1; }
 
+/* Badge "Plateforme communautaire" au-dessus du titre */
 .hero-badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     background: rgba(232,129,26,0.15);
     border: 1px solid rgba(232,129,26,0.3);
+    /* border-radius très élevé pour obtenir une forme de pilule arrondie */
     border-radius: 99px;
     padding: 6px 18px;
     margin-bottom: 14px;
     color: var(--orange-light);
     font-size: 0.78rem;
     font-weight: 600;
+    /* letter-spacing aère les caractères pour un effet d'étiquette */
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
 
+/* Titre principal du hero */
 .hero h1 {
     font-size: 2.8rem;
     font-weight: 800;
@@ -254,37 +313,48 @@ h1, h2, h3, h4 {
     margin-bottom: 18px;
 }
 
+/* Met en orange le mot mis en valeur dans le titre */
 .hero h1 span { color: var(--orange); }
 
+/* Sous-titre descriptif sous le titre principal */
 .hero-subtitle {
     color: rgba(255,255,255,0.6);
     font-size: 1.05rem;
+    /* max-width limite la largeur pour améliorer la lisibilité des textes longs */
     max-width: 560px;
+    /* margin auto centre horizontalement le bloc de texte */
     margin: 0 auto 24px;
     line-height: 1.7;
 }
 
 /* ── Barre de recherche hero ── */
+/* Conteneur de la barre de recherche : champ texte + filtre + bouton sur une ligne */
 .search-bar {
     display: flex;
     max-width: 640px;
+    /* margin auto centre la barre horizontalement */
     margin: 0 auto 28px;
     background: white;
     border-radius: var(--radius-lg);
+    /* overflow: hidden masque les coins du champ et du bouton qui dépasseraient */
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(0,0,0,0.18);
 }
 
+/* Icône loupe à gauche du champ de saisie */
 .search-bar-icon {
     display: flex;
     align-items: center;
     padding: 0 16px;
     color: var(--gray-400);
     font-size: 1.1rem;
+    /* flex-shrink: 0 empêche l'icône de rétrécir si la barre manque de place */
     flex-shrink: 0;
 }
 
+/* Champ texte de saisie qui s'étire pour occuper tout l'espace disponible */
 .search-bar input {
+    /* flex: 1 fait prendre tout l'espace horizontal restant au champ */
     flex: 1;
     border: none;
     outline: none;
@@ -294,10 +364,13 @@ h1, h2, h3, h4 {
     color: var(--gray-700);
 }
 
+/* Texte d'indication affiché quand le champ est vide */
 .search-bar input::placeholder { color: var(--gray-400); }
 
+/* Menu déroulant de filtre par catégorie */
 .search-bar select {
     border: none;
+    /* Séparateur visuel entre le champ texte et le select */
     border-left: 1.5px solid var(--gray-100);
     padding: 0 14px;
     color: var(--gray-500);
@@ -309,36 +382,44 @@ h1, h2, h3, h4 {
     min-width: 140px;
 }
 
+/* Bouton de recherche intégré dans la barre : sans radius pour s'y insérer parfaitement */
 .search-bar .btn {
+    /* border-radius: 0 annule l'arrondi pour que le bouton s'adapte au conteneur */
     border-radius: 0;
     padding: 0 28px;
     font-size: 0.95rem;
 }
 
 /* ── Chips catégories ── */
+/* Groupe de filtres rapides par catégorie sous la barre de recherche */
 .hero-chips {
     display: flex;
     gap: 10px;
     justify-content: center;
+    /* flex-wrap: wrap permet aux chips de passer à la ligne si l'écran est petit */
     flex-wrap: wrap;
 }
 
+/* Style d'un chip de catégorie (ex: Sport, Art, Sortie...) */
 .chip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     border: 1.5px solid rgba(255,255,255,0.25);
+    /* Valeur très élevée pour un bord totalement arrondi (forme pilule) */
     border-radius: 99px;
     padding: 7px 18px;
     font-size: 0.85rem;
     font-weight: 500;
     color: rgba(255,255,255,0.7);
     cursor: pointer;
+    /* transition: all anime toutes les propriétés modifiables en même temps */
     transition: all 0.15s;
     background: transparent;
     text-decoration: none;
 }
 
+/* Au survol ou quand le chip est actif : fond orange et texte blanc */
 .chip:hover, .chip.active {
     background: var(--orange);
     border-color: var(--orange);
@@ -348,27 +429,33 @@ h1, h2, h3, h4 {
 /* ============================================================
    BANDE STATISTIQUES
    ============================================================ */
+/* Bande orange affichant les chiffres clés de la plateforme */
 .stats-band {
     background: var(--orange);
     padding: 18px 0;
 }
 
+/* Les statistiques sont disposées en ligne avec un espacement régulier */
 .stats-band .container {
     display: flex;
     justify-content: center;
     gap: 64px;
 }
 
+/* Chaque statistique est centrée */
 .stat-item { text-align: center; color: white; }
 
+/* Chiffre principal affiché en grand et en gras */
 .stat-item .stat-number {
     font-family: 'Poppins', sans-serif;
     font-size: 1.7rem;
     font-weight: 800;
+    /* display: block force le chiffre à occuper sa propre ligne */
     display: block;
     line-height: 1.1;
 }
 
+/* Libellé descriptif sous le chiffre, légèrement transparent */
 .stat-item .stat-label {
     font-size: 0.8rem;
     opacity: 0.85;
@@ -377,26 +464,32 @@ h1, h2, h3, h4 {
 /* ============================================================
    SECTION ACTIVITÉS
    ============================================================ */
+/* Conteneur générique de section avec espacement vertical */
 .section {
     padding: 48px 0;
 }
 
+/* En-tête de section : titre à gauche, lien "voir tout" à droite */
 .section-header {
     display: flex;
+    /* align-items: flex-end aligne le titre et le lien sur leur ligne de base basse */
     align-items: flex-end;
     justify-content: space-between;
     margin-bottom: 28px;
 }
 
+/* Petit libellé catégoriel au-dessus du titre de section */
 .section-eyebrow {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--orange);
     text-transform: uppercase;
+    /* letter-spacing espacé pour un effet de label stylisé */
     letter-spacing: 1px;
     margin-bottom: 4px;
 }
 
+/* Titre principal d'une section */
 .section-title {
     font-size: 1.5rem;
     font-weight: 700;
@@ -404,45 +497,59 @@ h1, h2, h3, h4 {
 }
 
 /* ── Cards activités ── */
+/* Grille de 3 colonnes égales pour afficher les cartes d'activités */
 .cards-grid {
     display: grid;
+    /* repeat(3, 1fr) crée 3 colonnes de largeur identique */
     grid-template-columns: repeat(3, 1fr);
     gap: 22px;
 }
 
+/* Carte individuelle d'une activité */
 .activity-card {
     background: white;
     border-radius: var(--radius-lg);
     border: 1.5px solid var(--gray-200);
+    /* overflow: hidden masque les coins arrondis pour l'image en haut */
     overflow: hidden;
+    /* transition anime l'ombre et le déplacement au survol */
     transition: box-shadow 0.2s, transform 0.2s;
     text-decoration: none;
     color: inherit;
     display: flex;
+    /* flex-direction: column empile image, corps et pied de carte verticalement */
     flex-direction: column;
 }
 
+/* Au survol : ombre plus marquée et léger déplacement vers le haut */
 .activity-card:hover {
     box-shadow: var(--shadow-lg);
+    /* translateY(-3px) remonte la carte de 3px pour un effet de lévitation */
     transform: translateY(-3px);
 }
 
+/* Zone d'image/icône en haut de la carte */
 .card-image {
     height: 140px;
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Icône emoji affiché en grand */
     font-size: 3rem;
+    /* position: relative pour positionner les badges par-dessus l'image */
     position: relative;
 }
 
+/* Fonds dégradés colorés selon la catégorie de l'activité */
 .card-image.sport   { background: linear-gradient(135deg, #FEF3E2, #FDE8C8); }
 .card-image.atelier { background: linear-gradient(135deg, #EBF0F8, #D6E4F7); }
 .card-image.sortie  { background: linear-gradient(135deg, #D1FAE5, #A7F3D0); }
 .card-image.club    { background: linear-gradient(135deg, #EDE9FE, #DDD6FE); }
 .card-image.art     { background: linear-gradient(135deg, #FCE7F3, #FBCFE8); }
 
+/* Badge de catégorie positionné en absolu en haut à gauche de l'image */
 .card-badge {
+    /* position: absolute permet de superposer le badge sur l'image */
     position: absolute;
     top: 10px; left: 10px;
     background: white;
@@ -454,6 +561,7 @@ h1, h2, h3, h4 {
     box-shadow: var(--shadow-sm);
 }
 
+/* Badge de visibilité (public/privé) positionné en haut à droite de l'image */
 .card-badge-vis {
     position: absolute;
     top: 10px; right: 10px;
@@ -464,13 +572,16 @@ h1, h2, h3, h4 {
     color: rgba(255,255,255,0.8);
 }
 
+/* Corps de la carte contenant titre, métadonnées et pied */
 .card-body {
     padding: 18px;
+    /* flex: 1 fait que le corps s'étire pour remplir la hauteur restante */
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
+/* Titre de l'activité dans la carte */
 .card-title {
     font-weight: 700;
     font-size: 0.97rem;
@@ -478,6 +589,7 @@ h1, h2, h3, h4 {
     margin-bottom: 10px;
 }
 
+/* Métadonnées (date, lieu, organisateur) empilées verticalement */
 .card-meta {
     font-size: 0.8rem;
     color: var(--gray-500);
@@ -485,31 +597,38 @@ h1, h2, h3, h4 {
     flex-direction: column;
     gap: 4px;
     margin-bottom: 16px;
+    /* flex: 1 pousse le pied de carte vers le bas */
     flex: 1;
 }
 
+/* Pied de carte : places disponibles à gauche, bouton à droite */
 .card-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding-top: 14px;
     border-top: 1px solid var(--gray-100);
+    /* margin-top: auto pousse le pied de carte en bas de la carte flex */
     margin-top: auto;
 }
 
-.places-ok   { color: #059669; font-size: 0.8rem; font-weight: 600; }
-.places-few  { color: var(--orange); font-size: 0.8rem; font-weight: 600; }
-.places-full { color: #DC2626; font-size: 0.8rem; font-weight: 600; }
+/* Indicateurs de disponibilité des places avec code couleur */
+.places-ok   { color: #059669; font-size: 0.8rem; font-weight: 600; } /* Vert : places disponibles */
+.places-few  { color: var(--orange); font-size: 0.8rem; font-weight: 600; } /* Orange : peu de places */
+.places-full { color: #DC2626; font-size: 0.8rem; font-weight: 600; } /* Rouge : complet */
 
 /* ============================================================
    CTA BAND
    ============================================================ */
+/* Bandeau d'appel à l'action (Call To Action) pour inciter à s'inscrire */
 .cta-band {
+    /* Dégradé diagonal entre les deux teintes d'orange */
     background: linear-gradient(135deg, var(--orange), var(--orange-light));
     padding: 52px 0;
     text-align: center;
 }
 
+/* Titre du bandeau CTA */
 .cta-band h2 {
     font-size: 1.8rem;
     font-weight: 800;
@@ -517,15 +636,18 @@ h1, h2, h3, h4 {
     margin-bottom: 12px;
 }
 
+/* Texte descriptif du bandeau CTA, centré et de largeur limitée */
 .cta-band p {
     color: rgba(255,255,255,0.82);
     font-size: 0.97rem;
     margin-bottom: 28px;
     max-width: 520px;
+    /* margin auto centre horizontalement le paragraphe */
     margin-left: auto;
     margin-right: auto;
 }
 
+/* Groupe de boutons d'action centrés horizontalement */
 .cta-actions {
     display: flex;
     gap: 14px;
@@ -535,18 +657,22 @@ h1, h2, h3, h4 {
 /* ============================================================
    FOOTER
    ============================================================ */
+/* Pied de page sombre */
 .footer {
     background: var(--navy);
     padding: 40px 0 24px;
 }
 
+/* Grille du footer : colonne brand large + 3 colonnes de liens */
 .footer-grid {
     display: grid;
+    /* 2fr pour la colonne brand, 1fr pour chacune des 3 colonnes de liens */
     grid-template-columns: 2fr 1fr 1fr 1fr;
     gap: 36px;
     margin-bottom: 32px;
 }
 
+/* Logo ShareTime dans le footer */
 .footer-brand .footer-logo {
     font-family: 'Poppins', sans-serif;
     font-size: 1.3rem;
@@ -557,16 +683,20 @@ h1, h2, h3, h4 {
     gap: 8px;
 }
 
+/* Même découpage de couleur que dans la navbar */
 .footer-brand .footer-logo .share { color: var(--orange); }
 .footer-brand .footer-logo .time  { color: white; }
 
+/* Texte de description de la marque dans le footer */
 .footer-brand p {
     font-size: 0.83rem;
+    /* Blanc très transparent pour un texte discret sur fond sombre */
     color: rgba(255,255,255,0.4);
     line-height: 1.6;
     max-width: 260px;
 }
 
+/* Titre d'une colonne de liens dans le footer */
 .footer-col h4 {
     font-size: 0.78rem;
     font-weight: 600;
@@ -576,17 +706,22 @@ h1, h2, h3, h4 {
     margin-bottom: 14px;
 }
 
+/* Liste de liens dans une colonne du footer, empilés verticalement */
 .footer-col ul { display: flex; flex-direction: column; gap: 8px; }
 
+/* Liens du footer : semi-transparents pour un aspect discret */
 .footer-col ul li a {
     font-size: 0.82rem;
     color: rgba(255,255,255,0.4);
     transition: color 0.15s;
 }
 
+/* Au survol, le lien passe en orange pour indiquer l'interactivité */
 .footer-col ul li a:hover { color: var(--orange); }
 
+/* Barre inférieure du footer : séparateur + copyright */
 .footer-bottom {
+    /* Séparateur horizontal semi-transparent */
     border-top: 1px solid rgba(255,255,255,0.08);
     padding-top: 18px;
     font-size: 0.78rem;
@@ -597,10 +732,13 @@ h1, h2, h3, h4 {
 /* ============================================================
    UTILITAIRES
    ============================================================ */
+/* Classes utilitaires réutilisables pour l'alignement et l'espacement */
 .text-center { text-align: center; }
+/* Marges supérieures en pas de 8px */
 .mt-8  { margin-top: 8px; }
 .mt-16 { margin-top: 16px; }
 .mt-24 { margin-top: 24px; }
+/* Marges inférieures en pas de 8px */
 .mb-8  { margin-bottom: 8px; }
 .mb-16 { margin-bottom: 16px; }
 .mb-24 { margin-bottom: 24px; }
@@ -610,14 +748,20 @@ h1, h2, h3, h4 {
    ============================================================ */
 
 /* ── Tablette large (≤ 1024px) ── */
+/* Ajustements pour les écrans de tablette jusqu'à 1024px de large */
 @media (max-width: 1024px) {
+    /* Passe la grille de cartes de 3 à 2 colonnes */
     .cards-grid { grid-template-columns: repeat(2, 1fr); }
+    /* Le footer passe en 2 colonnes pour s'adapter à la largeur réduite */
     .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+    /* Réduit légèrement la taille du titre hero */
     .hero h1 { font-size: 2.2rem; }
 }
 
 /* ── Tablette / mobile large (≤ 768px) ── */
+/* Ajustements pour les smartphones et petites tablettes jusqu'à 768px */
 @media (max-width: 768px) {
+    /* Réduit le padding horizontal du conteneur pour gagner de l'espace */
     .container { padding: 0 16px; }
 
     /* Hero */
@@ -626,9 +770,11 @@ h1, h2, h3, h4 {
     .hero-subtitle { font-size: 0.92rem; }
 
     /* Navbar : drawer mobile (le bouton burger est géré dans header.php) */
+    /* Cache les liens de navigation horizontaux sur mobile */
     .navbar-links { display: none; }
 
     /* Barre de recherche : empilement vertical */
+    /* Sur mobile, les éléments de la barre s'empilent verticalement */
     .search-bar {
         flex-direction: column;
         border-radius: var(--radius-md);
@@ -636,12 +782,15 @@ h1, h2, h3, h4 {
     .search-bar-icon { padding: 12px 16px 0; }
     .search-bar input { padding: 12px 16px; }
     .search-bar select {
+        /* Supprime la bordure gauche (inutile en empilement vertical) */
         border-left: none;
         border-top: 1.5px solid var(--gray-100);
+        /* min-width: unset annule la largeur minimale pour que le select s'adapte */
         min-width: unset;
         width: 100%;
         padding: 12px 16px;
     }
+    /* Le bouton arrondit uniquement les coins inférieurs pour finir la barre */
     .search-bar .btn {
         border-radius: 0 0 var(--radius-md) var(--radius-md);
         padding: 14px;
@@ -649,35 +798,46 @@ h1, h2, h3, h4 {
     }
 
     /* Cards : 1 colonne */
+    /* Une seule colonne de cartes sur mobile */
     .cards-grid { grid-template-columns: 1fr; }
 
     /* Section */
     .section { padding: 32px 0; }
+    /* L'en-tête de section s'empile verticalement (titre puis lien) */
     .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
 
     /* Stats */
+    /* Les statistiques se resserrent et peuvent passer à la ligne */
     .stats-band .container { gap: 20px; flex-wrap: wrap; justify-content: center; }
 
     /* CTA */
     .cta-band { padding: 36px 0; }
+    /* Les boutons CTA s'empilent verticalement et sont centrés */
     .cta-actions { flex-direction: column; align-items: center; gap: 10px; }
+    /* Chaque bouton CTA prend toute la largeur disponible jusqu'à 280px */
     .cta-actions .btn { width: 100%; max-width: 280px; justify-content: center; }
 
     /* Footer */
+    /* Le footer passe en 2 colonnes sur tablette */
     .footer-grid { grid-template-columns: 1fr 1fr; gap: 20px; }
 }
 
 /* ── Mobile petit (≤ 480px) ── */
+/* Ajustements pour les très petits smartphones jusqu'à 480px */
 @media (max-width: 480px) {
     .hero h1 { font-size: 1.5rem; }
     .hero-subtitle { font-size: 0.88rem; }
+    /* Réduit l'espacement entre les chips sur petit écran */
     .hero-chips { gap: 7px; }
     .chip { padding: 5px 13px; font-size: 0.8rem; }
 
+    /* Réduit la taille des chiffres statistiques */
     .stat-item .stat-number { font-size: 1.4rem; }
     .stats-band .container { gap: 16px; }
 
     /* Footer : 1 colonne sur très petit écran */
+    /* Une seule colonne pour le footer sur les très petits écrans */
     .footer-grid { grid-template-columns: 1fr; }
+    /* La description de la marque peut occuper toute la largeur */
     .footer-brand p { max-width: 100%; }
 }
