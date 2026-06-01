@@ -11,7 +11,7 @@
  *
  * Actions possibles selon le rôle :
  *   - Admin  : ban/unban uniquement sur les membres (role='utilisateur')
- *   - Owner  : ban/unban sur tout le monde + set_role + transfer_ownership + delete
+ *   - Superadmin : ban/unban sur tout le monde + set_role + transfer_ownership + delete
  *
  * Les actions POST sont traitées par handlers/admin.php (page=admin_users).
  * L'ID de l'admin connecté est stocké dans $connected_user_id pour bloquer
@@ -60,7 +60,7 @@ $connected_user_id = (int)$_SESSION['user']['id'];
              Ce rappel informe l'owner de ses capacités exclusives (nommer admins,
              transférer la propriété) qui ne sont pas accessibles aux admins normaux.
              Affiché uniquement si le visiteur est owner (is_owner() vérifié côté PHP). -->
-        <?php if (is_owner()): // is_owner() retourne true uniquement si role === 'owner' ?>
+        <?php if (is_owner()): // is_owner() retourne true uniquement si role === 'superadmin' ?>
         <div style="background:#FEF3E2;border:1.5px solid rgba(232,129,26,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
             <!-- Icône couronne signalant visuellement le statut propriétaire -->
             <span style="font-size:1.5rem;">👑</span>
@@ -113,7 +113,7 @@ $connected_user_id = (int)$_SESSION['user']['id'];
                         // → empêche toute action sur sa propre ligne (auto-ban impossible)
                         $is_connected_user = $user_row_id === $connected_user_id;
 
-                        // true si cette ligne est l'owner : l'owner est intouchable même par un admin
+                        // true si cette ligne est le superadmin : le superadmin est intouchable même par un admin
                         $is_owner_account = $user_row['role'] === 'superadmin';
 
                         // true si le compte est suspendu (is_banned = 1 en BDD)
@@ -122,7 +122,7 @@ $connected_user_id = (int)$_SESSION['user']['id'];
                         // Date d'inscription formatée en jour/mois/année pour affichage en colonne
                         $registration_date = (new DateTime($user_row['date_creation']))->format('d/m/Y');
 
-                        // can_perform_actions = false sur la propre ligne de l'admin ET sur la ligne owner
+                        // can_perform_actions = false sur la propre ligne de l'admin ET sur la ligne superadmin
                         // Principe : on ne peut pas agir sur soi-même ni sur un compte de niveau supérieur
                         $can_perform_actions = !$is_connected_user && !$is_owner_account;
                     ?>

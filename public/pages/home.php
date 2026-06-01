@@ -90,7 +90,7 @@ $nb_cities     = $home_stats['nb_cities'];     // Nombre de villes distinctes o�
     <!-- grid-template-columns dynamique : 2 colonnes si owner (deux cartes), 1 si admin -->
     <div style="display:grid; grid-template-columns:<?= is_owner() ? '1fr 1fr' : '1fr' ?>; gap:16px;"> <!-- Grille à 2 colonnes pour le propriétaire, 1 colonne pour un simple admin -->
 
-        <?php if (is_owner()): // Affiche la carte Super-Admin uniquement pour le propriétaire de la plateforme ?>
+        <?php if (is_owner()): // Affiche la carte Super-Admin uniquement pour le superadmin ?>
         <!-- Carte Propriétaire (orange) — visible uniquement pour l'owner -->
         <a href="/sharetime/public/?page=owner" style="text-decoration:none;"> <!-- Lien vers le panneau Super-Admin -->
             <div style="background:linear-gradient(135deg,var(--orange) 0%,#c96a10 100%);

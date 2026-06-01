@@ -12,7 +12,7 @@
  *
  * Le log est en lecture seule : aucune action POST sur cette page.
  * Les logs sont insérés par log_admin_action() dans helpers.php après chaque
- * action admin/owner destructive ou de modération.
+ * action admin/superadmin destructive ou de modération.
  *
  * Chaque entrée contient :
  *   - action      : type d'action (ban, unban, delete_user, delete_activity, set_role, set_status, transfer_ownership)
@@ -105,7 +105,7 @@
                             'delete_activity'    => ['#FEE2E2', '#DC2626'],   // rouge = suppression
                             'set_role'           => ['#EBF0F8', '#1E3A6E'],   // bleu  = changement de rôle
                             'set_status'         => ['#FEF3E2', '#92400E'],   // orange= changement de statut
-                            'transfer_ownership' => ['#FEF3E2', '#E8811A'],   // orange vif = transfert de propriété
+                            'transfer_ownership' => ['#FEF3E2', '#E8811A'],   // orange vif = transfert des prérogatives
                         ];
                         // Déstructuration des deux couleurs (fond + texte) du badge action
                         [$action_badge_bg, $action_badge_color] = $action_severity_colors[$log_entry['action']] ?? ['#F3F4F6', '#6B7280'];

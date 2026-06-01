@@ -1,6 +1,6 @@
 <?php
 /**
- * public/pages/owner.php — Panel propriétaire (7 onglets)
+ * public/pages/owner.php — Panel Super-Admin (7 onglets)
  *
  * Variables disponibles (préparées par index.php routing) :
  *   $owner_tab              : onglet actif transmis en GET (?tab=…)
@@ -13,14 +13,14 @@
  *   $contact_unread         : compteur de messages non lus (onglet contact)
  *   $flash                  : message de succès après action
  *
- * Accessible uniquement par l'owner (require_owner() dans index.php).
+ * Accessible uniquement par le superadmin (require_owner() dans index.php).
  * Les actions POST sont traitées par handlers/admin.php (page=owner).
  *
  * Différences avec le panel admin classique :
- *   - Onglet "Administrateurs" : nommer/révoquer des admins + transférer la propriété
- *   - Onglets "Contenu du site" et "Signalements" réservés à l'owner
+ *   - Onglet "Administrateurs" : nommer/révoquer des admins + transférer les prérogatives
+ *   - Onglets "Contenu du site" et "Signalements" réservés au superadmin
  *   - Navigation par onglets (tabs) au lieu de pages séparées
- *   - Aucune pagination : toutes les données chargées d'un coup pour le panel owner
+ *   - Aucune pagination : toutes les données chargées d'un coup pour le panel superadmin
  */
 
 // Validation de l'onglet actif : whitelist pour éviter les valeurs GET arbitraires
@@ -28,7 +28,7 @@ $valid_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact', 'contenu
 // Si l'onglet reçu en GET n'est pas dans la liste autorisée, on utilise 'dashboard' par défaut
 $active_tab = in_array($owner_tab ?? '', $valid_tabs) ? $owner_tab : 'dashboard';
 
-// ID de l'owner connecté : utilisé pour protéger sa propre ligne contre les auto-actions
+// ID du superadmin connecté : utilisé pour protéger sa propre ligne contre les auto-actions
 $owner_user_id = (int)$_SESSION['user']['id']; // cast en int pour les comparaisons strictes
 
 // Définition des onglets : slug → [emoji, libellé] pour la barre de navigation
@@ -36,7 +36,7 @@ $tab_definitions = [
     'dashboard'    => ['📊', 'Tableau de bord'],  // vue générale avec les chiffres clés
     'users'        => ['👥', 'Utilisateurs'],       // gestion de tous les comptes membres
     'activities'   => ['🎯', 'Activités'],          // gestion de toutes les activités
-    'admins'       => ['👑', 'Administrateurs'],    // nommer/révoquer des admins, transférer la propriété
+    'admins'       => ['👑', 'Administrateurs'],    // nommer/révoquer des admins, transférer les prérogatives
     'contact'      => ['✉️', 'Messages contact'],   // boite de réception du formulaire de contact
     'contenu'      => ['📝', 'Contenu du site'],    // édition FAQ, CGU, mentions légales
     'signalements' => ['🚩', 'Signalements'],       // modération des signalements d'utilisateurs
@@ -263,16 +263,16 @@ if ($active_tab === 'contenu') { // charge uniquement quand l'onglet contenu est
                     // ID de la ligne courante, casté en int pour les comparaisons strictes
                     $owner_user_row_id = (int)$owner_user_row['idusers'];
 
-                    // true si cette ligne correspond à l'owner connecté (auto-protection)
+                    // true si cette ligne correspond au superadmin connecté (auto-protection)
                     $is_connected_owner = $owner_user_row_id === $owner_user_id;
 
-                    // true si le rôle de cette ligne est 'owner' (il n'y en a qu'un = $owner_user_id)
+                    // true si le rôle de cette ligne est 'superadmin' (il n'y en a qu'un = $owner_user_id)
                     $is_owner_account = $owner_user_row['role'] === 'superadmin';
 
                     // true si le compte est actuellement suspendu (champ is_banned = 1)
                     $is_user_banned = !empty($owner_user_row['is_banned']);
 
-                    // can_perform_actions = false sur la propre ligne + sur la ligne owner (protection)
+                    // can_perform_actions = false sur la propre ligne + sur la ligne superadmin (protection)
                     $can_perform_actions = !$is_connected_owner && !$is_owner_account;
                 ?>
                 <tr style="border-bottom:1px solid var(--gray-50);">
@@ -633,7 +633,7 @@ if ($active_tab === 'contenu') { // charge uniquement quand l'onglet contenu est
 
     <!-- ── Section 3 : Transférer la propriété ──────────────────────────────── -->
     <?php
-    // Tous les utilisateurs non-owner et non-bannis sont éligibles au transfert
+    // Tous les utilisateurs non-superadmin et non-bannis sont éligibles au transfert
     $transfer_eligible_list = array_values(array_filter($owner_users, fn($u) =>
         $u['role'] !== 'superadmin' && empty($u['is_banned'])
     ));

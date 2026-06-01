@@ -51,23 +51,23 @@ function csrf_check(): void { // Déclare la fonction de vérification du token 
 
 
 // ── RÔLES ─────────────────────────────────────────────────────────────────────
-// Hiérarchie : utilisateur < admin < owner
-// Un admin peut tout faire sauf toucher aux autres admins et à l'owner.
-// L'owner est unique et a accès à toutes les fonctions, y compris transférer la propriété.
+// Hiérarchie : utilisateur < admin < superadmin
+// Un admin peut tout faire sauf toucher aux autres admins et au superadmin.
+// Le superadmin est unique et a accès à toutes les fonctions, y compris transférer ses prérogatives.
 
-/** Retourne true si l'utilisateur connecté est admin OU owner. */
+/** Retourne true si l'utilisateur connecté est admin OU superadmin. */
 function is_admin(): bool { // Déclare la fonction qui teste si l'utilisateur courant possède des droits d'administration
-    // L'owner hérite de tous les droits admin : on vérifie les deux rôles.
+    // Le superadmin hérite de tous les droits admin : on vérifie les deux rôles.
     return isset($_SESSION['user']) && in_array($_SESSION['user']['role'], ['admin', 'superadmin']); // Retourne vrai si une session utilisateur existe et que son rôle est 'admin' ou 'superadmin'
 }
 
-/** Retourne true si l'utilisateur connecté est exactement owner (pas seulement admin). */
-function is_owner(): bool { // Déclare la fonction qui teste si l'utilisateur courant est le super-administrateur owner
+/** Retourne true si l'utilisateur connecté est exactement superadmin (pas seulement admin). */
+function is_owner(): bool { // Déclare la fonction qui teste si l'utilisateur courant est le super-administrateur
     return isset($_SESSION['user']) && $_SESSION['user']['role'] === 'superadmin'; // Retourne vrai uniquement si le rôle en session vaut exactement 'superadmin'
 }
 
 /**
- * Redirige vers l'accueil si l'utilisateur n'est pas admin/owner.
+ * Redirige vers l'accueil si l'utilisateur n'est pas admin/superadmin.
  * À appeler au début des blocs de routing réservés aux admins.
  */
 function require_admin(): void { // Déclare la fonction de garde qui bloque l'accès aux pages réservées aux admins
@@ -75,12 +75,12 @@ function require_admin(): void { // Déclare la fonction de garde qui bloque l'a
 }
 
 /**
- * Redirige vers la page admin si l'utilisateur n'est pas owner.
- * À appeler au début des blocs de routing réservés au seul owner.
+ * Redirige vers la page admin si l'utilisateur n'est pas superadmin.
+ * À appeler au début des blocs de routing réservés au seul superadmin.
  */
-function require_owner(): void { // Déclare la fonction de garde qui bloque l'accès aux pages réservées au seul owner
+function require_owner(): void { // Déclare la fonction de garde qui bloque l'accès aux pages réservées au seul superadmin
     // Redirige vers admin (pas home) pour que les admins voient un message clair
-    if (!is_owner()) { header('Location: /sharetime/public/?page=admin'); exit; } // Redirige vers le tableau de bord admin et stoppe le script si l'utilisateur n'est pas owner
+    if (!is_owner()) { header('Location: /sharetime/public/?page=admin'); exit; } // Redirige vers le tableau de bord admin et stoppe le script si l'utilisateur n'est pas superadmin
 }
 
 
@@ -150,7 +150,7 @@ function upload_image(string $field, string $dest_dir): ?string { // Déclare la
  * Retourne le HTML d'un badge coloré représentant le rôle (ou la suspension) d'un utilisateur.
  * Utilisé dans les listes admin et sur les pages de profil.
  *
- * @param string $role   Valeur de users.role ('utilisateur', 'admin', 'owner')
+ * @param string $role   Valeur de users.role ('utilisateur', 'admin', 'superadmin')
  * @param bool   $banned True si l'utilisateur est suspendu (is_banned = 1)
  * @return string        Balise <span> stylisée inline
  */
@@ -201,7 +201,7 @@ function admin_nav(string $current): void { // Déclare la fonction qui affiche 
 
 /**
  * Enregistre une action de modération dans la table admin_logs.
- * Doit être appelée dans chaque handler admin/owner après toute action importante
+ * Doit être appelée dans chaque handler admin/superadmin après toute action importante
  * (ban, suppression, changement de rôle…) pour assurer la traçabilité.
  *
  * @param PDO    $pdo         Connexion à la base de données

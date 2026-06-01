@@ -9,7 +9,7 @@
  *   $admin_current_page    : page courante
  *   $flash                 : message de succès/info après action
  *
- * Actions possibles (admin ET owner) :
+ * Actions possibles (admin ET superadmin) :
  *   - set_status : changer le statut (active / en_cours / annulee / terminee)
  *   - delete     : supprimer définitivement (supprime aussi inscriptions, commentaires, etc.)
  *

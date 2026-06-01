@@ -7,23 +7,23 @@
  *
  * Séparation des responsabilités :
  *   - handler "owner"            : toutes les actions (ban, rôle, suppression, transfert, activités, contenu)
- *   - handler "admin_users"      : uniquement ban/unban des membres (pas des admins ni de l'owner)
+ *   - handler "admin_users"      : uniquement ban/unban des membres (pas des admins ni du superadmin)
  *   - handler "admin_activities" : modération des activités par les admins
- *   - handler "contact"          : marquer lu / supprimer des messages de contact (admins + owner)
+ *   - handler "contact"          : marquer lu / supprimer des messages de contact (admins + superadmin)
  *
  * Toute action destructive ou de modération est tracée via log_admin_action().
  */
 
-// ── OWNER : TOUTES LES ACTIONS ─────────────────────────────────────────────────
-// Ce handler reçoit TOUS les formulaires POST soumis depuis le panel propriétaire.
-// L'owner peut agir sur les utilisateurs (ban, rôle, suppression, transfert)
+// ── SUPERADMIN : TOUTES LES ACTIONS ────────────────────────────────────────────
+// Ce handler reçoit TOUS les formulaires POST soumis depuis le panel super-admin.
+// Le superadmin peut agir sur les utilisateurs (ban, rôle, suppression, transfert)
 // et sur les activités (statut, suppression) et sur le contenu éditorial (FAQ, CGU, Mentions).
-if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') { // déclenche uniquement sur la page owner en POST
+if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') { // déclenche uniquement sur la page du panel superadmin en POST
 
-    require_owner();  // Arrête l'exécution immédiatement si l'utilisateur n'est pas owner
+    require_owner();  // Arrête l'exécution immédiatement si l'utilisateur n'est pas superadmin
     csrf_check();     // Vérifie le token anti-CSRF pour rejeter les requêtes forgées depuis un autre site
 
-    // ── Lecture des paramètres communs à toutes les actions du panel owner ──
+    // ── Lecture des paramètres communs à toutes les actions du panel superadmin ──
     $action           = $_POST['action'] ?? '';     // identifiant de l'action : 'ban', 'unban', 'set_role', 'delete', 'transfer_ownership'…
     $target_type      = $_POST['type']   ?? 'user'; // type de l'entité ciblée : 'user', 'activity', 'report' ou 'content'
 
@@ -33,15 +33,15 @@ if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') { // déclenche 
                         ? $_POST['tab']
                         : 'dashboard';              // onglet de retour après l'action (fallback 'dashboard')
 
-    $current_owner_id = (int)$_SESSION['user']['id'];  // ID de l'owner connecté, pour éviter les auto-actions
+    $current_owner_id = (int)$_SESSION['user']['id'];  // ID du superadmin connecté, pour éviter les auto-actions
 
     // ── Branche "user" : actions sur un compte utilisateur ────────────────────
     if ($target_type === 'user') { // traite les actions ciblant un utilisateur
 
         $target_user_id = intval($_POST['user_id'] ?? 0);  // ID de l'utilisateur visé par l'action
 
-        // Refuse toute action sur soi-même : l'owner ne peut pas se dégrader, se bannir ou se supprimer
-        if ($target_user_id > 0 && $target_user_id !== $current_owner_id) { // vérifie que la cible est valide et différente de l'owner
+        // Refuse toute action sur soi-même : le superadmin ne peut pas se dégrader, se bannir ou se supprimer
+        if ($target_user_id > 0 && $target_user_id !== $current_owner_id) { // vérifie que la cible est valide et différente du superadmin
 
             $userModel   = new User($pdo);                     // instance du modèle User pour les opérations en base
             $target_user = $userModel->getById($target_user_id);  // données complètes de la cible (pour les logs et les contrôles)
@@ -60,34 +60,34 @@ if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') { // déclenche 
                     'Réactivation de ' . ($target_user['pseudo'] ?? $target_user['prenom'] ?? '')); // trace la réactivation
 
             } elseif ($action === 'set_role') { // action de changement de rôle
-                // Changement de rôle : whitelist stricte — 'owner' est absent car le transfert
-                // de propriété a sa propre action dédiée (transfer_ownership).
+                // Changement de rôle : whitelist stricte — 'superadmin' est absent car le transfert
+                // des prérogatives a sa propre action dédiée (transfer_ownership).
                 $new_role = in_array($_POST['role'] ?? '', ['utilisateur', 'admin'])
                             ? $_POST['role']
                             : null;  // null si la valeur reçue n'est pas dans la whitelist
 
                 if ($new_role) { // continue uniquement si le rôle est valide
-                    // User::setRole vérifie en plus en base que la cible n'est pas owner (double protection)
+                    // User::setRole vérifie en plus en base que la cible n'est pas superadmin (double protection)
                     $userModel->setRole($target_user_id, $new_role); // met à jour le rôle en base
                     log_admin_action($pdo, 'set_role', 'user', $target_user_id,
                         'Rôle → ' . $new_role . ' pour ' . ($target_user['pseudo'] ?? $target_user['prenom'] ?? '')); // trace le changement de rôle
                 }
 
-            } elseif ($action === 'transfer_ownership') { // action de transfert de propriété de la plateforme
-                // Transfert de propriété : transaction atomique dans User::transferOwnership
-                // → l'ancien owner devient admin EN MÊME TEMPS que le nouveau devient owner.
+            } elseif ($action === 'transfer_ownership') { // action de transfert des prérogatives superadmin
+                // Transfert des prérogatives : transaction atomique dans User::transferOwnership
+                // → l'ancien superadmin devient admin EN MÊME TEMPS que le nouveau devient superadmin.
                 if ($userModel->transferOwnership($target_user_id, $current_owner_id)) { // retourne true si le transfert a réussi
                     log_admin_action($pdo, 'transfer_ownership', 'user', $target_user_id,
-                        'Transfert propriété à ' . ($target_user['pseudo'] ?? $target_user['prenom'] ?? '')); // trace le transfert
+                        'Transfert prérogatives à ' . ($target_user['pseudo'] ?? $target_user['prenom'] ?? '')); // trace le transfert
 
                     // Rétrograde immédiatement le rôle en session :
-                    // l'ex-owner est maintenant admin, ce qui doit être reflété dans la navbar
-                    $_SESSION['user']['role'] = 'admin'; // met à jour le rôle de l'ex-owner en session sans attendre une nouvelle connexion
+                    // l'ex-superadmin est maintenant admin, ce qui doit être reflété dans la navbar
+                    $_SESSION['user']['role'] = 'admin'; // met à jour le rôle de l'ex-superadmin en session sans attendre une nouvelle connexion
                     $_SESSION['flash'] = "Prérogatives Super-Admin transférées avec succès."; // message de confirmation
                     header('Location: /sharetime/public/?page=owner&tab=admins'); // redirige vers l'onglet admins
                     exit; // stoppe l'exécution après la redirection
                 }
-                // Échec du transfert (cible déjà owner, inexistante, ou IDs identiques)
+                // Échec du transfert (cible déjà superadmin, inexistante, ou IDs identiques)
                 $_SESSION['flash'] = "Transfert impossible."; // message d'erreur si le transfert a échoué
                 header('Location: /sharetime/public/?page=owner&tab=admins'); // redirige tout de même
                 exit; // stoppe l'exécution
@@ -142,7 +142,7 @@ if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') { // déclenche 
         }
 
         // Redirige vers l'onglet signalements, peu importe le résultat
-        $_SESSION['flash'] = "Signalement mis à jour."; // message de confirmation pour l'owner
+        $_SESSION['flash'] = "Signalement mis à jour."; // message de confirmation pour le superadmin
         header('Location: /sharetime/public/?page=owner&tab=signalements'); // retourne à l'onglet signalements
         exit; // stoppe l'exécution après la redirection
 
@@ -224,8 +224,8 @@ if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') { // déclenche 
 }
 
 // ── ADMIN : GESTION UTILISATEURS ───────────────────────────────────────────────
-// Version restreinte du handler owner : les admins ne peuvent que ban/unban les membres.
-// Ils ne peuvent PAS agir sur les autres admins ni sur l'owner.
+// Version restreinte du handler superadmin : les admins ne peuvent que ban/unban les membres.
+// Ils ne peuvent PAS agir sur les autres admins ni sur le superadmin.
 if ($page === 'admin_users' && $_SERVER['REQUEST_METHOD'] === 'POST') { // déclenche uniquement sur la page admin_users en POST
     require_admin();  // Refuse l'accès si l'utilisateur n'est pas au moins admin
     csrf_check(); // vérifie le token CSRF
@@ -241,12 +241,12 @@ if ($page === 'admin_users' && $_SERVER['REQUEST_METHOD'] === 'POST') { // décl
         $target_user = $userModel->getById($target_user_id);  // données de la cible pour contrôler son rôle
 
         if ($action === 'ban') { // action de suspension
-            // Un admin ne peut pas suspendre un autre admin : seul l'owner a ce droit
+            // Un admin ne peut pas suspendre un autre admin : seul le superadmin a ce droit
             if ($target_user && $target_user['role'] === 'admin') { // vérifie que la cible n'est pas admin
                 $_SESSION['flash'] = "Vous n'avez pas le droit de suspendre un administrateur."; // message d'erreur
                 header('Location: /sharetime/public/?page=admin_users'); exit; // redirige sans appliquer l'action
             }
-            // Suspension : User::setBanned vérifie aussi AND role != 'owner' en base (double protection)
+            // Suspension : User::setBanned vérifie aussi AND role != 'superadmin' en base (double protection)
             $userModel->setBanned($target_user_id, true); // met is_banned = 1 en base
             log_admin_action($pdo, 'ban', 'user', $target_user_id,
                 'Suspension de ' . ($target_user['pseudo'] ?? $target_user['prenom'] ?? '')); // trace la suspension
@@ -297,11 +297,11 @@ if ($page === 'admin_activities' && $_SERVER['REQUEST_METHOD'] === 'POST') { // 
 }
 
 // ── MESSAGES CONTACT : MARQUER LU / SUPPRIMER ─────────────────────────────────
-// Ce bloc est partagé entre la page admin_contact (admins) et le panel owner (onglet contact).
+// Ce bloc est partagé entre la page admin_contact (admins) et le panel superadmin (onglet contact).
 // Il est déclenché par la présence de $_POST['contact_action'], distinct des autres actions POST.
 if (in_array($page, ['admin_contact', 'owner']) && $_SERVER['REQUEST_METHOD'] === 'POST'
     && isset($_POST['contact_action'])) { // déclenche uniquement si contact_action est présent dans le POST
-    require_admin();  // Accessible aux admins ET à l'owner (is_admin() couvre les deux rôles)
+    require_admin();  // Accessible aux admins ET au superadmin (is_admin() couvre les deux rôles)
     csrf_check(); // vérifie le token CSRF
 
     $contact_msg_id  = intval($_POST['msg_id'] ?? 0);       // ID du message de contact concerné

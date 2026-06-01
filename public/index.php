@@ -156,7 +156,7 @@ $total_count   = 0;  // nombre total d'activités correspondant aux filtres acti
 $admin_stats           = [];  // tableau de statistiques globales (membres, activités, admins, suspendus)
 $admin_users_list      = [];  // liste paginée des utilisateurs affichée dans admin_users
 $admin_activities_list = [];  // liste paginée des activités affichée dans admin_activities
-$owner_users           = [];  // liste complète des utilisateurs pour le panel owner (sans pagination)
+$owner_users           = [];  // liste complète des utilisateurs pour le panel superadmin (sans pagination)
 
 $admin_current_page = 1;  // page courante dans la pagination du panel admin
 $admin_total_pages  = 1;  // nombre total de pages disponibles dans le panel admin
@@ -313,8 +313,8 @@ if ($page === 'home') {
     header('Location: /sharetime/public/?page=connexion'); exit;
 
 } elseif ($page === 'admin') {
-    // L'owner ne doit jamais voir les pages admin classiques : redirection vers son panel
-    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; } // l'owner ne doit pas voir la page admin classique
+    // Le superadmin ne doit jamais voir les pages admin classiques : redirection vers son panel
+    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; } // le superadmin ne doit pas voir la page admin classique
     require_admin();  // bloque les non-admins (redirige vers l'accueil avec un message d'erreur)
 
     // Une seule requête avec plusieurs sous-sélections pour éviter 5 allers-retours séparés
@@ -344,7 +344,7 @@ if ($page === 'home') {
     ")->fetchAll();
 
 } elseif ($page === 'admin_users') {
-    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=users'); exit; } // l'owner consulte ses utilisateurs dans son propre panel
+    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=users'); exit; } // le superadmin consulte ses utilisateurs dans son propre panel
     require_admin();
 
     $admin_per_page     = 25;                                          // nombre d'utilisateurs par page dans le panel
@@ -354,7 +354,7 @@ if ($page === 'home') {
     $admin_users_list   = $userModel->getAllForAdmin($admin_current_page, $admin_per_page);
 
 } elseif ($page === 'admin_activities') {
-    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=activities'); exit; } // l'owner consulte les activités dans son propre panel
+    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=activities'); exit; } // le superadmin consulte les activités dans son propre panel
     require_admin();
 
     $admin_per_page        = 25;                                                                          // nombre d'activités par page dans le panel
@@ -364,7 +364,7 @@ if ($page === 'home') {
     $admin_activities_list = $activityModel->getAllForAdmin($admin_current_page, $admin_per_page);        // charge uniquement la page courante
 
 } elseif ($page === 'admin_logs') {
-    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; } // l'owner n'a pas de page logs dédiée : renvoi vers son dashboard
+    if (is_owner()) { header('Location: /sharetime/public/?page=owner&tab=dashboard'); exit; } // le superadmin n'a pas de page logs dédiée : renvoi vers son dashboard
     require_admin();
 
     // Whitelist des types d'actions affichables dans les logs
@@ -505,7 +505,7 @@ if ($page === 'home') {
     $contact_unread   = (int)$pdo->query("SELECT COUNT(*) FROM contact_messages WHERE is_read = 0")->fetchColumn(); // (int) évite null si la table est vide
 
 } elseif ($page === 'owner') {
-    require_owner();  // arrête immédiatement si l'utilisateur n'est pas owner (défini dans helpers.php)
+    require_owner();  // arrête immédiatement si l'utilisateur n'est pas superadmin (défini dans helpers.php)
 
     // Whitelist des onglets du panel owner
     $valid_owner_tabs = ['dashboard', 'users', 'activities', 'admins', 'contact', 'contenu', 'signalements'];
@@ -513,11 +513,11 @@ if ($page === 'home') {
                         ? ($_GET['tab'] ?? 'dashboard')
                         : 'dashboard';  // onglet par défaut si la valeur est absente ou invalide
 
-    // Charge tous les utilisateurs et activités sans pagination (l'owner a une vision globale)
+    // Charge tous les utilisateurs et activités sans pagination (le superadmin a une vision globale)
     $owner_users           = $userModel->getAllForAdmin();        // tous les utilisateurs sans limite de pagination
     $admin_activities_list = $activityModel->getAllForAdmin();    // toutes les activités sans limite de pagination
 
-    // Mêmes statistiques que la page admin, recalculées ici pour le panel owner
+    // Mêmes statistiques que la page admin, recalculées ici pour le panel superadmin
     $raw_stats = $pdo->query("SELECT
         (SELECT SUM(role != 'superadmin') FROM users) AS membres,
         (SELECT COUNT(*) FROM activities) AS activites,

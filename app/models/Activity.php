@@ -519,7 +519,7 @@ class Activity {
 
     /**
      * Retourne toutes les activités pour le panel admin avec leurs statistiques.
-     * Si $page et $per_page valent 0, retourne tout sans pagination (panel owner).
+     * Si $page et $per_page valent 0, retourne tout sans pagination (panel superadmin).
      */
     public function getAllForAdmin($page = 0, $per_page = 0) { // liste complète des activités avec statistiques agrégées pour les admins
         // Trois LEFT JOINs sur tables dérivées au lieu de sous-requêtes corrélées :

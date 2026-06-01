@@ -59,9 +59,9 @@ class User {
 
     /**
      * Retourne la liste des utilisateurs pour le panel admin, avec leurs statistiques.
-     * Si $page et $per_page valent 0, retourne tous les utilisateurs sans pagination (panel owner).
+     * Si $page et $per_page valent 0, retourne tous les utilisateurs sans pagination (panel superadmin).
      *
-     * L'ORDER BY FIELD garantit un affichage cohérent : owner en tête, puis admins, puis membres.
+     * L'ORDER BY FIELD garantit un affichage cohérent : superadmin en tête, puis admins, puis membres.
      */
     public function getAllForAdmin($page = 0, $per_page = 0) { // $page et $per_page à 0 = pas de pagination
         $sql = "
@@ -178,8 +178,8 @@ class User {
 
     /**
      * Change le rôle d'un utilisateur ('utilisateur' ou 'admin').
-     * La clause AND role != 'owner' empêche de dégrader un owner via cette méthode.
-     * Le transfert de propriété passe par transferOwnership() qui est une transaction.
+     * La clause AND role != 'superadmin' empêche de dégrader un superadmin via cette méthode.
+     * Le transfert des prérogatives passe par transferOwnership() qui est une transaction.
      */
     public function setRole($id, $role) { // modifie le rôle d'un utilisateur (promotion ou rétrogradation)
         if (!in_array($role, ['utilisateur', 'admin'])) return false;  // whitelist : seuls ces deux rôles sont changeables ici
@@ -191,23 +191,23 @@ class User {
     }
 
     /**
-     * Transfère la propriété de l'application à un autre utilisateur.
-     * Opération atomique (transaction) : l'ancien owner devient admin en même temps
-     * que le nouveau devient owner. En cas d'échec, les deux restent inchangés.
+     * Transfère les prérogatives superadmin à un autre utilisateur.
+     * Opération atomique (transaction) : l'ancien superadmin devient admin en même temps
+     * que le nouveau devient superadmin. En cas d'échec, les deux restent inchangés.
      *
-     * @return bool  false si la cible est déjà owner, n'existe pas, ou si $new == $current
+     * @return bool  false si la cible est déjà superadmin, n'existe pas, ou si $new == $current
      */
     public function transferOwnership(int $new_owner_id, int $current_owner_id): bool { // transfert de propriété irréversible, sécurisé par une transaction
         if ($new_owner_id === $current_owner_id) return false; // refuse le transfert vers soi-même
-        $target = $this->getById($new_owner_id); // vérifie que le futur propriétaire existe bien en base
+        $target = $this->getById($new_owner_id); // vérifie que le futur superadmin existe bien en base
         if (!$target || $target['role'] === 'superadmin') return false;  // ne peut pas transférer à un superadmin (impossible en pratique)
 
         $this->pdo->beginTransaction(); // démarre une transaction : les deux UPDATE sont atomiques
         try {
-            // L'ancien propriétaire perd son rôle owner et devient admin
+            // L'ancien superadmin perd son rôle et devient admin
             $this->pdo->prepare("UPDATE users SET role = 'admin' WHERE idusers = :id")
-                       ->execute(['id' => $current_owner_id]); // rétrograde l'ancien propriétaire en admin
-            // Le nouveau propriétaire est promu owner et débanni au cas où il était suspendu
+                       ->execute(['id' => $current_owner_id]); // rétrograde l'ancien superadmin en admin
+            // Le nouveau superadmin est promu et débanni au cas où il était suspendu
             $this->pdo->prepare("UPDATE users SET role = 'superadmin', is_banned = 0 WHERE idusers = :id")
                        ->execute(['id' => $new_owner_id]); // promeut le nouveau superadmin et lève l'éventuelle suspension
             $this->pdo->commit(); // valide les deux modifications simultanément
@@ -218,14 +218,14 @@ class User {
         }
     }
 
-    /** Vérifie si un owner existe déjà en base (utile à l'initialisation de l'application). */
-    public function hasOwner(): bool { // retourne true dès qu'un utilisateur avec role='owner' est trouvé
+    /** Vérifie si un superadmin existe déjà en base (utile à l'initialisation de l'application). */
+    public function hasOwner(): bool { // retourne true dès qu'un utilisateur avec role='superadmin' est trouvé
         return (bool) $this->pdo->query("SELECT COUNT(*) FROM users WHERE role = 'superadmin'")->fetchColumn(); // cast en bool : 0 → false, ≥1 → true
     }
 
     /**
      * Active ou désactive la suspension d'un compte.
-     * La clause AND role != 'owner' empêche de suspendre le propriétaire.
+     * La clause AND role != 'superadmin' empêche de suspendre le superadmin.
      *
      * @param int  $id      ID de l'utilisateur
      * @param bool $banned  true = suspendre, false = réactiver
@@ -280,12 +280,12 @@ class User {
             // 4. Supprimer le compte utilisateur
             //    followers, messages, notifications, email_verifications, admin_logs
             //    sont supprimés automatiquement par les contraintes ON DELETE CASCADE.
-            //    La clause AND role != 'owner' protège contre la suppression accidentelle du propriétaire.
-            $stmt = $this->pdo->prepare("DELETE FROM users WHERE idusers = :id AND role != 'superadmin'"); // protection finale : le super-admin ne peut pas être supprimé par cette méthode
+            //    La clause AND role != 'superadmin' protège contre la suppression accidentelle du superadmin.
+            $stmt = $this->pdo->prepare("DELETE FROM users WHERE idusers = :id AND role != 'superadmin'"); // protection finale : le superadmin ne peut pas être supprimé par cette méthode
             $stmt->execute(['id' => $id]); // exécute la suppression du compte utilisateur
 
             $this->pdo->commit(); // valide toutes les suppressions en une seule fois
-            return $stmt->rowCount() > 0;  // false si aucune ligne supprimée (ex. tentative sur owner)
+            return $stmt->rowCount() > 0;  // false si aucune ligne supprimée (ex. tentative sur superadmin)
         } catch (\Throwable $e) {
             $this->pdo->rollBack();  // annule tout si une étape échoue
             throw $e; // propage l'exception pour que le code appelant puisse la gérer

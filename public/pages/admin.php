@@ -7,8 +7,8 @@
  *   $admin_recent_users     : 5 derniers utilisateurs inscrits
  *   $admin_recent_activities: 5 dernières activités créées
  *
- * Accessible par les admins ET l'owner.
- * L'owner est automatiquement redirigé vers ?page=owner s'il tente d'accéder
+ * Accessible par les admins ET le superadmin.
+ * Le superadmin est automatiquement redirigé vers ?page=owner s'il tente d'accéder
  * à ?page=admin (redirection dans index.php routing).
  */
 ?>
