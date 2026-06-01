@@ -766,8 +766,9 @@ if ($active_tab === 'contenu') { // charge uniquement quand l'onglet contenu est
                     </div>
                     <div style="display:flex;gap:6px;flex-shrink:0;">
                         <!-- Bouton Éditer : appelle openEditFaq() en JS pour pré-remplir le formulaire -->
+                        <!-- json_encode + htmlspecialchars sécurise les guillemets et caractères spéciaux -->
                         <button type="button"
-                            onclick="openEditFaq(<?= $faq_item['idfaq'] ?>, <?= htmlspecialchars(json_encode($faq_item['question'])) ?>, <?= htmlspecialchars(json_encode($faq_item['reponse'])) ?>)" <!-- json_encode + htmlspecialchars sécurise les guillemets et caractères spéciaux -->
+                            onclick="openEditFaq(<?= $faq_item['idfaq'] ?>, <?= htmlspecialchars(json_encode($faq_item['question'])) ?>, <?= htmlspecialchars(json_encode($faq_item['reponse'])) ?>)"
                             style="padding:5px 12px;border-radius:6px;border:1.5px solid var(--navy);background:white;color:var(--navy);font-size:0.78rem;font-weight:600;cursor:pointer;">
                             ✏️ Éditer
                         </button>

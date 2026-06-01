@@ -89,10 +89,11 @@
         <!-- Une chip par catégorie (sauf 'autre', peu pertinente comme filtre) -->
         <?php foreach ($CATEGORY_MAP as $category_slug => [$category_emoji, , $category_label]): if ($category_slug === 'autre') continue; // Ignore la catégorie générique 'autre' ?>
         <!-- Chip active = fond navy/blanc, inactive = fond gris clair -->
-        <a href="/sharetime/public/?<?= $base_querystring ?>&category=<?= $category_slug ?>" <!-- Lien qui ajoute le filtre catégorie à la querystring existante -->
+        <!-- Lien qui ajoute le filtre catégorie à la querystring existante -->
+        <a href="/sharetime/public/?<?= $base_querystring ?>&category=<?= $category_slug ?>"
            style="padding:6px 16px; border-radius:99px; font-size:0.85rem; font-weight:600; text-decoration:none;
                   background:<?= $category_filter === $category_slug ? 'var(--navy)' : 'var(--gray-100)' ?>;
-                  color:<?= $category_filter === $category_slug ? 'white' : 'var(--gray-600)' ?>;"> <!-- Fond navy si cette catégorie est la catégorie active, gris sinon -->
+                  color:<?= $category_filter === $category_slug ? 'white' : 'var(--gray-600)' ?>;"> <!-- Fond navy si catégorie active, gris sinon -->
             <?= $category_emoji ?> <?= $category_label ?> <!-- Affiche l'emoji suivi du nom de la catégorie -->
         </a>
         <?php endforeach; ?>
@@ -116,10 +117,11 @@
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;">
         <?php foreach ($status_filter_options as $status_slug => $status_chip_label): // Parcourt chaque option de statut pour créer une chip ?>
         <!-- Chip orange si sélectionnée, grise sinon ; clé vide = pas de paramètre statut dans l'URL -->
-        <a href="/sharetime/public/?<?= $base_querystring_no_status ?><?= $status_slug ? '&statut='.$status_slug : '' ?>" <!-- N'ajoute pas de paramètre statut si la clé est vide (= afficher tous les statuts) -->
+        <!-- Clé vide = pas de paramètre statut (= afficher tous les statuts) ; clé non vide = filtre sur ce statut -->
+        <a href="/sharetime/public/?<?= $base_querystring_no_status ?><?= $status_slug ? '&statut='.$status_slug : '' ?>"
            style="padding:5px 14px; border-radius:99px; font-size:0.82rem; font-weight:600; text-decoration:none;
                   background:<?= $status_filter === $status_slug ? 'var(--orange)' : 'var(--gray-100)' ?>;
-                  color:<?= $status_filter === $status_slug ? 'white' : 'var(--gray-600)' ?>;"> <!-- Fond orange si ce statut est actif, gris sinon -->
+                  color:<?= $status_filter === $status_slug ? 'white' : 'var(--gray-600)' ?>;"> <!-- Fond orange si statut actif, gris sinon -->
             <?= $status_chip_label ?> <!-- Libellé de la chip de statut avec emoji -->
         </a>
         <?php endforeach; ?>

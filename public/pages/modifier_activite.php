@@ -45,8 +45,9 @@
                  sinon valeur actuelle en BDD. -->
             <div>
                 <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">Titre *</label> <!-- Label en gras, affiché en bloc au-dessus du champ -->
+                <!-- Préremplit avec $_POST si erreur précédente, sinon valeur BDD -->
                 <input type="text" name="title" required placeholder="Ex : Randonnée en forêt"
-                       value="<?= htmlspecialchars($_POST['title'] ?? $activity['title']) ?>" <!-- Préremplit avec $_POST si erreur précédente, sinon valeur BDD -->
+                       value="<?= htmlspecialchars($_POST['title'] ?? $activity['title']) ?>"
                        style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
             </div>
 
@@ -61,14 +62,16 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;"> <!-- Grille CSS à deux colonnes égales avec écart de 16px -->
                 <div>
                     <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">Lieu *</label> <!-- Label du champ "lieu précis" (ex : nom du parc, de la salle) -->
+                    <!-- Priorité $_POST puis valeur BDD pour le champ lieu -->
                     <input type="text" name="location" required
-                           value="<?= htmlspecialchars($_POST['location'] ?? $activity['location']) ?>" <!-- Priorité $_POST puis valeur BDD pour le champ lieu -->
+                           value="<?= htmlspecialchars($_POST['location'] ?? $activity['location']) ?>"
                            style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
                 </div>
                 <div>
                     <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">Ville *</label> <!-- Label du champ ville (utilisé aussi pour le géocodage Nominatim) -->
+                    <!-- Priorité $_POST puis valeur BDD pour le champ ville -->
                     <input type="text" name="city" required
-                           value="<?= htmlspecialchars($_POST['city'] ?? $activity['city']) ?>" <!-- Priorité $_POST puis valeur BDD pour le champ ville -->
+                           value="<?= htmlspecialchars($_POST['city'] ?? $activity['city']) ?>"
                            style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
                 </div>
             </div>
@@ -198,7 +201,8 @@
                         // strtotime + date() convertit "2025-06-15 14:00:00" en "2025-06-15T14:00"
                         $start_datetime_value = $_POST['start_time'] ?? date('Y-m-d\TH:i', strtotime($activity['start_time'])); // Reformate la date MySQL en format HTML datetime-local, ou récupère la valeur POST
                     ?>
-                    <input type="datetime-local" name="start_time" required value="<?= htmlspecialchars($start_datetime_value) ?>" <!-- Champ date-heure de début prérempli avec la valeur formatée -->
+                    <!-- Champ date-heure de début prérempli avec la valeur formatée -->
+                    <input type="datetime-local" name="start_time" required value="<?= htmlspecialchars($start_datetime_value) ?>"
                            style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
                 </div>
                 <div>
@@ -206,7 +210,8 @@
                     <?php
                         $end_datetime_value = $_POST['end_time'] ?? date('Y-m-d\TH:i', strtotime($activity['end_time'])); // Même reformatage pour la date de fin : POST en priorité, sinon conversion BDD
                     ?>
-                    <input type="datetime-local" name="end_time" required value="<?= htmlspecialchars($end_datetime_value) ?>" <!-- Champ date-heure de fin prérempli avec la valeur formatée -->
+                    <!-- Champ date-heure de fin prérempli avec la valeur formatée -->
+                    <input type="datetime-local" name="end_time" required value="<?= htmlspecialchars($end_datetime_value) ?>"
                            style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
                 </div>
             </div>
@@ -223,8 +228,10 @@
                         <?php endif; ?>
                     </label>
                     <!-- min = max(2, nb_inscrits) : impossible de descendre en-dessous des inscrits actuels -->
-                    <input type="number" name="max_participants" required min="<?= max(2, (int)$activity['nb_inscrits']) ?>" <!-- L'attribut min est le plus grand entre 2 et le nombre d'inscrits actuels -->
-                           value="<?= htmlspecialchars($_POST['max_participants'] ?? $activity['max_participants']) ?>" <!-- Priorité $_POST pour conserver la saisie, sinon valeur BDD -->
+                    <!-- L'attribut min est le plus grand entre 2 et le nombre d'inscrits actuels -->
+                    <!-- Priorité $_POST pour conserver la saisie, sinon valeur BDD -->
+                    <input type="number" name="max_participants" required min="<?= max(2, (int)$activity['nb_inscrits']) ?>"
+                           value="<?= htmlspecialchars($_POST['max_participants'] ?? $activity['max_participants']) ?>"
                            style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
                 </div>
                 <div>
@@ -287,7 +294,8 @@
                 <?php if (!empty($activity['photo'])): ?> <!-- Vérifie si une photo est déjà enregistrée pour cette activité -->
                 <!-- Aperçu de la photo actuelle avec instruction pour la remplacer -->
                 <div style="margin-bottom:10px; display:flex; align-items:center; gap:12px;">
-                    <img src="/sharetime/public/uploads/activites/<?= htmlspecialchars($activity['photo']) ?>" <!-- Affiche la miniature de la photo actuelle depuis le dossier uploads -->
+                    <!-- Affiche la miniature de la photo actuelle depuis le dossier uploads -->
+                    <img src="/sharetime/public/uploads/activites/<?= htmlspecialchars($activity['photo']) ?>"
                          style="width:80px; height:56px; object-fit:cover; border-radius:8px; border:2px solid var(--gray-200);"> <!-- Miniature recadrée en 80×56px avec coins arrondis -->
                     <span style="font-size:0.82rem; color:var(--gray-500);">Photo actuelle — importer une nouvelle pour la remplacer</span> <!-- Message explicatif : la nouvelle photo remplacera l'ancienne -->
                 </div>
@@ -295,7 +303,8 @@
                 <p style="font-size:0.82rem; color:var(--gray-400); margin:0 0 10px;">Aucune photo pour l'instant. Vous pouvez en ajouter une ci-dessous.</p> <!-- Message affiché quand aucune photo n'est encore associée à l'activité -->
                 <?php endif; ?>
                 <!-- accept= filtre les types côté navigateur, doublé d'un contrôle magic bytes côté serveur -->
-                <input type="file" name="photo" accept="image/jpeg,image/png,image/gif,image/webp" <!-- Filtre les formats acceptés côté client (le serveur re-vérifie côté handler) -->
+                <!-- Filtre les formats acceptés côté client (le serveur re-vérifie côté handler) -->
+                <input type="file" name="photo" accept="image/jpeg,image/png,image/gif,image/webp"
                        style="font-family:inherit; font-size:0.9rem; color:var(--gray-700);">
             </div>
 

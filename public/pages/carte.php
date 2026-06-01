@@ -148,10 +148,11 @@ $category_marker_colors = [
                     $start_datetime  = new DateTime($map_activity_item['start_time']);
                 ?>
                 <!-- data-lat/lng/id transmis au JS pour centrer la carte au clic -->
-                <a class="carte-card" href="/sharetime/public/?page=detail&id=<?= (int)$map_activity_item['idactivities'] ?>" <!-- Lien vers le détail, intercepté par le JS pour centrer la carte au lieu de naviguer -->
-                   data-lat="<?= (float)$map_activity_item['latitude'] ?>" <!-- Latitude transmise en attribut data pour le JS -->
-                   data-lng="<?= (float)$map_activity_item['longitude'] ?>" <!-- Longitude transmise en attribut data pour le JS -->
-                   data-id="<?= (int)$map_activity_item['idactivities'] ?>"> <!-- Identifiant de l'activité pour retrouver le marker Leaflet correspondant -->
+                <!-- Lien vers le détail intercepté par le JS (data-lat/lng/id transmis au script pour centrer la carte) -->
+                <a class="carte-card" href="/sharetime/public/?page=detail&id=<?= (int)$map_activity_item['idactivities'] ?>"
+                   data-lat="<?= (float)$map_activity_item['latitude'] ?>"
+                   data-lng="<?= (float)$map_activity_item['longitude'] ?>"
+                   data-id="<?= (int)$map_activity_item['idactivities'] ?>">
                     <!-- Libellé de catégorie coloré selon la catégorie -->
                     <p class="carte-card-cat" style="color:<?= $marker_color ?>"> <!-- Couleur du texte de catégorie correspond à la couleur du marqueur sur la carte -->
                         <?= $category_info[0] ?> <?= htmlspecialchars($category_info[2]) ?> <!-- Affiche l'emoji suivi du libellé de la catégorie -->

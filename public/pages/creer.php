@@ -38,8 +38,9 @@
             <div>
                 <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">Titre *</label>
                 <!-- value depuis $_POST pour conserver la saisie si erreur de validation -->
+                <!-- Pré-remplit le titre depuis $_POST (vide par défaut) en sécurisant la valeur -->
                 <input type="text" name="title" required placeholder="Ex : Randonnée en forêt"
-                       value="<?= htmlspecialchars($_POST['title'] ?? '') ?>" <!-- Pré-remplit le titre depuis $_POST (vide par défaut) en sécurisant la valeur -->
+                       value="<?= htmlspecialchars($_POST['title'] ?? '') ?>"
                        style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
             </div>
 
@@ -55,14 +56,16 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;"> <!-- Grille CSS à 2 colonnes égales pour aligner les champs Lieu et Ville -->
                 <div>
                     <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">Lieu *</label>
+                    <!-- Pré-remplit le lieu depuis $_POST en sécurisant la valeur -->
                     <input type="text" name="location" required placeholder="Ex : Forêt de Fontainebleau"
-                           value="<?= htmlspecialchars($_POST['location'] ?? '') ?>" <!-- Pré-remplit le lieu depuis $_POST en sécurisant la valeur -->
+                           value="<?= htmlspecialchars($_POST['location'] ?? '') ?>"
                            style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
                 </div>
                 <div>
                     <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">Ville *</label>
+                    <!-- Pré-remplit la ville depuis $_POST en sécurisant la valeur -->
                     <input type="text" name="city" required placeholder="Ex : Paris"
-                           value="<?= htmlspecialchars($_POST['city'] ?? '') ?>" <!-- Pré-remplit la ville depuis $_POST en sécurisant la valeur -->
+                           value="<?= htmlspecialchars($_POST['city'] ?? '') ?>"
                            style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
                 </div>
             </div>
@@ -75,7 +78,8 @@
                     <span style="font-weight:400; color:var(--gray-400); font-size:0.82rem;">(optionnel — permet d'afficher l'activité sur la carte)</span>
                 </label>
                 <div style="display:flex; gap:8px; margin-bottom:8px;">
-                    <button type="button" id="geocode-btn" <!-- Bouton de géocodage : déclenche la recherche de coordonnées via l'API geocode.php -->
+                    <!-- Bouton de géocodage : déclenche la recherche de coordonnées via l'API geocode.php -->
+                    <button type="button" id="geocode-btn"
                             style="padding:8px 16px; background:var(--navy); color:white; border:none; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">
                         📍 Géolocaliser l'adresse
                     </button>
@@ -151,14 +155,18 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;"> <!-- Grille CSS à 2 colonnes pour aligner les champs de date côte à côte -->
                 <div>
                     <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">Date et heure de début *</label>
-                    <input type="datetime-local" name="start_time" required <!-- Champ de sélection de date et heure (format HTML5 natif) -->
-                           value="<?= htmlspecialchars($_POST['start_time'] ?? '') ?>" <!-- Pré-remplit la date de début depuis $_POST en cas d'erreur de validation -->
+                    <!-- Champ de sélection de date et heure (format HTML5 natif) -->
+                    <!-- Pré-remplit la date de début depuis $_POST en cas d'erreur de validation -->
+                    <input type="datetime-local" name="start_time" required
+                           value="<?= htmlspecialchars($_POST['start_time'] ?? '') ?>"
                            style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
                 </div>
                 <div>
                     <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">Date et heure de fin *</label>
-                    <input type="datetime-local" name="end_time" required <!-- Champ de sélection de date et heure de fin (validé côté serveur pour être > start_time) -->
-                           value="<?= htmlspecialchars($_POST['end_time'] ?? '') ?>" <!-- Pré-remplit la date de fin depuis $_POST en cas d'erreur de validation -->
+                    <!-- Champ de sélection de date et heure de fin (validé côté serveur pour être > start_time) -->
+                    <!-- Pré-remplit la date de fin depuis $_POST en cas d'erreur de validation -->
+                    <input type="datetime-local" name="end_time" required
+                           value="<?= htmlspecialchars($_POST['end_time'] ?? '') ?>"
                            style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
                 </div>
             </div>
@@ -168,8 +176,10 @@
                 <div>
                     <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:8px;">Participants max *</label>
                     <!-- min="2" : une activité nécessite au moins 2 personnes (organisateur + 1) -->
-                    <input type="number" name="max_participants" required min="2" placeholder="Ex : 10" <!-- min="2" empêche la création d'une activité solo côté navigateur -->
-                           value="<?= htmlspecialchars($_POST['max_participants'] ?? '') ?>" <!-- Pré-remplit le nombre de participants depuis $_POST en cas d'erreur -->
+                    <!-- min="2" empêche la création d'une activité solo côté navigateur -->
+                    <!-- Pré-remplit le nombre de participants depuis $_POST en cas d'erreur -->
+                    <input type="number" name="max_participants" required min="2" placeholder="Ex : 10"
+                           value="<?= htmlspecialchars($_POST['max_participants'] ?? '') ?>"
                            style="width:100%; padding:12px 16px; border:1.5px solid var(--gray-300); border-radius:10px; font-size:0.95rem; font-family:inherit; box-sizing:border-box;">
                 </div>
                 <div>
@@ -202,8 +212,10 @@
                  file d'attente si l'activité est complète (géré par Activity::registerWaitlist). -->
             <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:14px 16px;
                           border:1.5px solid var(--gray-200); border-radius:10px; background:var(--gray-50);">
-                <input type="checkbox" name="liste_attente_active" value="1" <!-- La valeur "1" est envoyée si la case est cochée, rien sinon -->
-                       <?= !empty($_POST['liste_attente_active']) ? 'checked' : '' ?> <!-- Restitue l'état coché si la case l'était avant l'erreur de validation -->
+                <!-- La valeur "1" est envoyée si la case est cochée, rien sinon -->
+                <!-- Restitue l'état coché si la case l'était avant l'erreur de validation -->
+                <input type="checkbox" name="liste_attente_active" value="1"
+                       <?= !empty($_POST['liste_attente_active']) ? 'checked' : '' ?>
                        style="width:18px; height:18px; accent-color:var(--orange); cursor:pointer;">
                 <span style="color:var(--gray-700); font-weight:500;">
                     Activer la liste d'attente
@@ -222,7 +234,8 @@
                     <span style="font-size:0.78rem; font-weight:400; color:var(--gray-400);">(optionnelle · JPG, PNG, WebP · max 2 Mo)</span>
                 </label>
                 <!-- accept= filtre côté navigateur seulement, la validation réelle est serveur -->
-                <input type="file" name="photo" accept="image/jpeg,image/png,image/gif,image/webp" <!-- Filtre les types de fichiers dans le sélecteur navigateur (non contraignant côté client) -->
+                <!-- Filtre les types de fichiers dans le sélecteur navigateur (non contraignant côté client) -->
+                <input type="file" name="photo" accept="image/jpeg,image/png,image/gif,image/webp"
                        style="font-family:inherit; font-size:0.9rem; color:var(--gray-700);">
             </div>
 

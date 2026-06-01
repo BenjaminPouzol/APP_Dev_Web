@@ -63,7 +63,8 @@ if (!$profile): ?> <!-- Vérifie si $profile est null ou false (utilisateur intr
             <div style="display:flex; align-items:center; gap:20px;"> <!-- Disposition flex horizontale avec 20px d'écart entre l'avatar et les infos -->
                 <!-- Avatar : photo uploadée si disponible, sinon initiale sur fond gradient navy -->
                 <?php if (!empty($profile['photo_profil'])): ?> <!-- Vérifie si l'utilisateur a uploadé une photo de profil -->
-                <img src="/sharetime/public/uploads/profils/<?= htmlspecialchars($profile['photo_profil']) ?>" <!-- Charge la photo de profil depuis le dossier uploads/profils -->
+                <!-- Charge la photo de profil depuis le dossier uploads/profils -->
+                <img src="/sharetime/public/uploads/profils/<?= htmlspecialchars($profile['photo_profil']) ?>"
                      style="width:72px; height:72px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid var(--gray-200);"> <!-- Avatar circulaire de 72px, recadré pour remplir sans déformer -->
                 <?php else: ?>
                 <!-- Initiale du prénom centrée dans un cercle gradient navy (fallback si pas de photo) -->
@@ -126,10 +127,12 @@ if (!$profile): ?> <!-- Vérifie si $profile est null ou false (utilisateur intr
                             </button>
                         </form>
                         <!-- Lien vers la messagerie avec cet utilisateur pré-sélectionné -->
-                        <a href="/sharetime/public/?page=messages&with=<?= $profile['idusers'] ?>" <!-- Lien vers la page messages avec l'ID du destinataire pré-renseigné dans l'URL -->
+                        <!-- Lien vers la page messages avec l'ID du destinataire pré-renseigné dans l'URL -->
+                        <a href="/sharetime/public/?page=messages&with=<?= $profile['idusers'] ?>"
                            class="btn btn-sm btn-outline-navy">✉️ Message</a>
                         <!-- Bouton d'ouverture de la modal de signalement (JS inline) -->
-                        <button type="button" onclick="document.getElementById('modal-report').style.display='flex'" <!-- Rend la modal de signalement visible en JS au clic sur ce bouton -->
+                        <!-- Rend la modal de signalement visible en JS au clic sur ce bouton -->
+                        <button type="button" onclick="document.getElementById('modal-report').style.display='flex'"
                             style="padding:6px 14px;border-radius:8px;border:1.5px solid #FECACA;background:white;color:#DC2626;font-size:0.82rem;font-weight:600;cursor:pointer;">
                             🚩 Signaler <!-- Texte du bouton avec drapeau rouge pour indiquer l'action de signalement -->
                         </button>
@@ -186,13 +189,14 @@ if (!$profile): ?> <!-- Vérifie si $profile est null ou false (utilisateur intr
                     $status_badge_color     = $status_badge_color_map[$user_activity_item['status']] ?? 'var(--gray-500)'; // Sélectionne la couleur de texte du badge ou utilise le gris par défaut
                 ?>
                 <!-- Ligne d'activité : cliquable vers la page de détail, hover avec bordure navy -->
-                <a href="/sharetime/public/?page=detail&id=<?= $user_activity_item['idactivities'] ?>" <!-- Lien cliquable vers la page de détail de l'activité -->
+                <!-- Lien cliquable vers la page de détail de l'activité, avec effet hover JS -->
+                <a href="/sharetime/public/?page=detail&id=<?= $user_activity_item['idactivities'] ?>"
                    style="background:white; border:1.5px solid var(--gray-200); border-radius:10px;
                           padding:16px; display:flex; justify-content:space-between; align-items:center;
                           gap:12px; text-decoration:none; color:inherit;
-                          transition:box-shadow 0.2s, border-color 0.2s;" <!-- Transition CSS douce pour les effets de survol -->
-                   onmouseover="this.style.boxShadow='var(--shadow-md)';this.style.borderColor='var(--navy)'" <!-- Au survol : ajoute une ombre portée et change la bordure en navy -->
-                   onmouseout="this.style.boxShadow='none';this.style.borderColor='var(--gray-200)'"> <!-- Quand la souris quitte : remet les styles par défaut -->
+                          transition:box-shadow 0.2s, border-color 0.2s;"
+                   onmouseover="this.style.boxShadow='var(--shadow-md)';this.style.borderColor='var(--navy)'"
+                   onmouseout="this.style.boxShadow='none';this.style.borderColor='var(--gray-200)'"> <!-- survol JS : ombre + bordure navy au hover, styles initiaux au mouseout -->
                     <div>
                         <p style="font-weight:600; color:var(--gray-900); margin-bottom:4px;">
                             <?= htmlspecialchars($user_activity_item['title']) ?> <!-- Affiche le titre de l'activité en échappant les caractères HTML -->
@@ -245,12 +249,13 @@ if (!$profile): ?> <!-- Vérifie si $profile est null ou false (utilisateur intr
                     $registration_status_label = $registration_status === 'en_attente' ? 'En attente' : 'Inscrit(e)'; // Libellé lisible du statut : "En attente" ou "Inscrit(e)"
                 ?>
                 <!-- Lien vers la page de détail de l'activité, même style hover que les activités organisées -->
-                <a href="/sharetime/public/?page=detail&id=<?= $user_participation_item['idactivities'] ?>" <!-- Lien vers la page de détail de l'activité concernée par la participation -->
+                <!-- Lien vers la page de détail de l'activité concernée par la participation -->
+                <a href="/sharetime/public/?page=detail&id=<?= $user_participation_item['idactivities'] ?>"
                    style="background:white; border:1.5px solid var(--gray-200); border-radius:10px;
                           padding:16px; display:flex; justify-content:space-between; align-items:center;
-                          gap:12px; text-decoration:none; color:inherit; transition:box-shadow 0.2s, border-color 0.2s;" <!-- Même style de transition que les activités organisées pour la cohérence visuelle -->
-                   onmouseover="this.style.boxShadow='var(--shadow-md)';this.style.borderColor='var(--navy)'" <!-- Effet hover : ombre et bordure navy au survol -->
-                   onmouseout="this.style.boxShadow='none';this.style.borderColor='var(--gray-200)'"> <!-- Remet les styles initiaux quand la souris quitte la carte -->
+                          gap:12px; text-decoration:none; color:inherit; transition:box-shadow 0.2s, border-color 0.2s;"
+                   onmouseover="this.style.boxShadow='var(--shadow-md)';this.style.borderColor='var(--navy)'"
+                   onmouseout="this.style.boxShadow='none';this.style.borderColor='var(--gray-200)'"> <!-- survol JS : ombre + bordure navy au hover, styles initiaux au mouseout -->
                     <div>
                         <p style="font-weight:600; color:var(--gray-900); margin-bottom:4px;">
                             <?= htmlspecialchars($user_participation_item['title']) ?> <!-- Affiche le titre de l'activité en sécurisant les caractères HTML -->
@@ -279,21 +284,24 @@ if (!$profile): ?> <!-- Vérifie si $profile est null ou false (utilisateur intr
      Accessible uniquement pour un utilisateur connecté consultant le profil d'un tiers.
      Le clic sur le fond de la modal (event.target === backdrop) ferme la modal.
      Le motif "Autre" révèle un textarea supplémentaire via onchange JS. -->
+<!-- Overlay plein écran semi-transparent, caché par défaut, visible via flex quand ouvert -->
 <div id="modal-report"
-     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px;" <!-- Overlay plein écran semi-transparent, caché par défaut, visible via flex quand ouvert -->
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px;"
      onclick="if(event.target===this)this.style.display='none'"> <!-- Ferme la modal si l'utilisateur clique en dehors du panneau central (sur l'overlay) -->
     <div style="background:white;border-radius:16px;padding:32px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);"> <!-- Panneau blanc centré avec ombre portée pour le contenu de la modal -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <h2 style="color:var(--navy);margin:0;font-size:1.15rem;">🚩 Signaler cet utilisateur</h2> <!-- Titre de la modal avec drapeau rouge -->
             <!-- Bouton × de fermeture -->
-            <button onclick="document.getElementById('modal-report').style.display='none'" <!-- Cache la modal en repassant display à 'none' -->
+            <!-- Cache la modal en repassant display à 'none' -->
+            <button onclick="document.getElementById('modal-report').style.display='none'"
                 style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--gray-400);line-height:1;">×</button> <!-- Croix "×" stylisée pour fermer la modal -->
         </div>
         <p style="color:var(--gray-500);font-size:0.88rem;margin-bottom:20px;line-height:1.6;">
             Vous signalez le profil de <strong><?= htmlspecialchars($profile['prenom'] . ' ' . $profile['nom']) ?></strong>. <!-- Identifie explicitement la personne signalée avec son nom complet -->
             Votre signalement sera examiné par l'équipe. <!-- Rassure l'utilisateur que le signalement sera traité -->
         </p>
-        <form method="POST" action="/sharetime/public/?page=signaler" <!-- Formulaire POST vers le handler de signalement -->
+        <!-- Formulaire POST vers le handler de signalement -->
+        <form method="POST" action="/sharetime/public/?page=signaler"
               style="display:flex;flex-direction:column;gap:14px;">
             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"> <!-- Jeton CSRF pour protéger le formulaire de signalement -->
             <!-- ID de l'utilisateur signalé passé en hidden (validé côté serveur) -->
@@ -303,7 +311,8 @@ if (!$profile): ?> <!-- Vérifie si $profile est null ou false (utilisateur intr
             <div>
                 <label style="display:block;font-weight:600;color:var(--gray-700);margin-bottom:8px;font-size:0.9rem;">Motif du signalement *</label> <!-- Label obligatoire pour le sélecteur de motif -->
                 <!-- onchange : affiche le textarea libre uniquement si l'option "Autre" est choisie -->
-                <select name="motif" required <!-- Sélecteur obligatoire pour choisir le motif du signalement -->
+                <!-- Sélecteur obligatoire pour choisir le motif du signalement -->
+                <select name="motif" required
                     style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-300);border-radius:10px;font-size:0.9rem;font-family:inherit;background:white;box-sizing:border-box;"
                     onchange="document.getElementById('motif-autre').style.display=this.value==='Autre'?'block':'none'"> <!-- Révèle le textarea libre en JS si l'option "Autre" est sélectionnée -->
                     <option value="">— Choisissez un motif —</option> <!-- Option vide par défaut pour forcer un choix actif -->
@@ -314,15 +323,18 @@ if (!$profile): ?> <!-- Vérifie si $profile est null ou false (utilisateur intr
                     <option>Autre</option> <!-- Motif libre qui révèle un textarea pour préciser -->
                 </select>
                 <!-- Textarea libre pour "Autre" : caché par défaut, révélé par JS -->
-                <textarea id="motif-autre" name="motif_detail" rows="3" placeholder="Précisez..." <!-- Champ de texte libre pour décrire un motif non listé, caché par défaut -->
+                <!-- Champ de texte libre pour décrire un motif non listé, caché par défaut -->
+                <textarea id="motif-autre" name="motif_detail" rows="3" placeholder="Précisez..."
                     style="display:none;width:100%;margin-top:8px;padding:10px 14px;border:1.5px solid var(--gray-300);border-radius:10px;font-size:0.9rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;"> <!-- Boutons alignés à droite avec 10px d'écart entre eux -->
-                <button type="button" onclick="document.getElementById('modal-report').style.display='none'" <!-- Bouton Annuler : ferme la modal sans soumettre le formulaire -->
+                <!-- Bouton Annuler : ferme la modal sans soumettre le formulaire -->
+                <button type="button" onclick="document.getElementById('modal-report').style.display='none'"
                     style="padding:10px 20px;border:1.5px solid var(--gray-300);border-radius:10px;background:white;font-size:0.9rem;cursor:pointer;">
                     Annuler <!-- Texte du bouton de fermeture sans action -->
                 </button>
-                <button type="submit" <!-- Bouton de soumission du formulaire de signalement -->
+                <!-- Bouton de soumission du formulaire de signalement -->
+                <button type="submit"
                     style="padding:10px 20px;background:#DC2626;color:white;border:none;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;">
                     Envoyer le signalement <!-- Texte du bouton d'envoi en rouge pour souligner l'action irréversible -->
                 </button>

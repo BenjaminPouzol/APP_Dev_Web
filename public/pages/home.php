@@ -97,8 +97,8 @@ $nb_cities     = $home_stats['nb_cities'];     // Nombre de villes distinctes o�
                         border-radius:16px; padding:24px 28px;
                         display:flex; align-items:center; justify-content:space-between; gap:16px;
                         box-shadow:0 4px 18px rgba(232,129,26,0.3); transition:transform 0.15s, box-shadow 0.15s;"
-                 onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(232,129,26,0.4)'" <!-- Monte légèrement la carte au survol de la souris -->
-                 onmouseout="this.style.transform='';this.style.boxShadow='0 4px 18px rgba(232,129,26,0.3)'"> <!-- Remet la carte à sa position initiale quand la souris quitte -->
+                 onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(232,129,26,0.4)'"
+                 onmouseout="this.style.transform='';this.style.boxShadow='0 4px 18px rgba(232,129,26,0.3)'"> <!-- survol JS : soulève la carte au hover et rétablit l'état au mouseout -->
                 <div>
                     <p style="color:rgba(255,255,255,0.75);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Accès rapide</p>
                     <p style="color:white;font-size:1.15rem;font-weight:800;margin:0;">👑 Espace Super-Admin</p>
@@ -115,8 +115,8 @@ $nb_cities     = $home_stats['nb_cities'];     // Nombre de villes distinctes o�
                         border-radius:16px; padding:24px 28px;
                         display:flex; align-items:center; justify-content:space-between; gap:16px;
                         box-shadow:0 4px 18px rgba(30,58,110,0.25); transition:transform 0.15s, box-shadow 0.15s;"
-                 onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(30,58,110,0.35)'" <!-- Animation de survol : soulève la carte visuellement -->
-                 onmouseout="this.style.transform='';this.style.boxShadow='0 4px 18px rgba(30,58,110,0.25)'"> <!-- Rétablit l'état normal après le survol -->
+                 onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(30,58,110,0.35)'"
+                 onmouseout="this.style.transform='';this.style.boxShadow='0 4px 18px rgba(30,58,110,0.25)'"> <!-- survol JS : soulève la carte au hover et rétablit l'état au mouseout -->
                 <div>
                     <p style="color:rgba(255,255,255,0.65);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Accès rapide</p>
                     <p style="color:white;font-size:1.15rem;font-weight:800;margin:0;">⚙️ Panel d'administration</p>

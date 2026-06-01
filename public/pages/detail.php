@@ -62,12 +62,14 @@ if (!$activity): ?>
          1. Photo uploadée → fond d'image cover + badge de visibilité en absolu
          2. Pas de photo   → fond coloré par catégorie (classe CSS de CATEGORY_MAP) + emoji -->
     <?php if (!empty($activity['photo'])): // Vérifie si une photo a été uploadée pour cette activité ?>
+    <!-- Affiche la photo uploadée en fond d'image -->
     <div style="border-radius:var(--radius-lg); height:220px; margin-bottom:24px; position:relative; overflow:hidden;
-                background-image:url('/sharetime/public/uploads/activites/<?= htmlspecialchars($activity['photo']) ?>'); <!-- Affiche la photo uploadée en fond d'image -->
+                background-image:url('/sharetime/public/uploads/activites/<?= htmlspecialchars($activity['photo']) ?>');
                 background-size:cover; background-position:center;">
     <?php else: ?>
     <!-- card-image : classe CSS qui applique le fond coloré selon la catégorie -->
-    <div class="card-image <?= $category_info[1] ?>" <!-- Applique la classe CSS colorée de la catégorie comme fond -->
+    <!-- Applique la classe CSS colorée de la catégorie comme fond -->
+    <div class="card-image <?= $category_info[1] ?>"
          style="border-radius:var(--radius-lg); height:200px; margin-bottom:24px; font-size:4rem; position:relative;">
         <?= $category_info[0] ?> <!-- Affiche l'emoji de la catégorie au centre du fond coloré -->
     <?php endif; ?>
@@ -101,7 +103,8 @@ if (!$activity): ?>
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
             <h1 style="color:var(--navy); margin:0;"><?= htmlspecialchars($activity['title']) ?></h1> <!-- Affiche le titre de l'activité en protégeant contre les injections XSS -->
             <!-- Chip catégorie cliquable : redirige vers la liste filtrée par catégorie -->
-            <a href="/sharetime/public/?page=activites&category=<?= htmlspecialchars($activity['category']) ?>" <!-- Lien vers la liste filtrée par cette catégorie -->
+            <!-- Lien vers la liste filtrée par cette catégorie -->
+            <a href="/sharetime/public/?page=activites&category=<?= htmlspecialchars($activity['category']) ?>"
                style="background:var(--gray-100); color:var(--gray-600); padding:4px 12px; border-radius:99px;
                       font-size:0.78rem; font-weight:600; text-decoration:none; white-space:nowrap; flex-shrink:0;">
                 <?= $category_info[0] ?> <?= $category_info[2] ?> <!-- Affiche l'emoji et le libellé de la catégorie -->
@@ -113,7 +116,8 @@ if (!$activity): ?>
             <p style="color:var(--gray-500); font-size:0.9rem; margin:0;">
                 Organisée par
                 <!-- Lien vers le profil de l'organisateur -->
-                <a href="/sharetime/public/?page=profil&id=<?= $activity['creator_id'] ?>" <!-- Lien vers la page profil du créateur avec son ID en paramètre -->
+                <!-- Lien vers la page profil du créateur avec son ID en paramètre -->
+                <a href="/sharetime/public/?page=profil&id=<?= $activity['creator_id'] ?>"
                    style="color:var(--orange); font-weight:600; text-decoration:none;">
                     <?= htmlspecialchars($activity['prenom'] . ' ' . $activity['nom']) ?> <!-- Affiche le prénom et le nom du créateur en sécurisé -->
                 </a>
@@ -126,7 +130,8 @@ if (!$activity): ?>
             </p>
             <!-- Bouton signalement visible uniquement pour les non-organisateurs connectés -->
             <?php if (isset($_SESSION['user']) && !$is_organizer): // Affiche le bouton "Signaler" seulement si l'utilisateur est connecté et n'est pas l'organisateur ?>
-            <button type="button" onclick="document.getElementById('modal-report-detail').style.display='flex'" <!-- Ouvre la modal de signalement au clic -->
+            <!-- Ouvre la modal de signalement au clic -->
+            <button type="button" onclick="document.getElementById('modal-report-detail').style.display='flex'"
                 style="padding:5px 12px;border-radius:8px;border:1.5px solid #FECACA;background:white;color:#DC2626;font-size:0.78rem;font-weight:600;cursor:pointer;flex-shrink:0;">
                 🚩 Signaler l'organisateur
             </button>
@@ -206,7 +211,8 @@ if (!$activity): ?>
                     <p style="color:var(--navy); font-weight:600; margin:0;">Vous êtes l'organisateur de cette activité.</p>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                         <!-- Lien vers le formulaire d'édition de l'activité -->
-                        <a href="/sharetime/public/?page=modifier_activite&id=<?= $activity['idactivities'] ?>" <!-- Lien vers la page d'édition avec l'ID de l'activité en paramètre -->
+                        <!-- Lien vers la page d'édition avec l'ID de l'activité en paramètre -->
+                        <a href="/sharetime/public/?page=modifier_activite&id=<?= $activity['idactivities'] ?>"
                            class="btn btn-outline-navy btn-sm">✏️ Modifier</a>
                         <!-- Annulation définitive : confirmation JS requise avant soumission -->
                         <form method="post" action="/sharetime/public/?page=annuler_activite" style="margin:0;"> <!-- Envoie la requête POST vers le handler d'annulation -->
@@ -411,7 +417,8 @@ if (!$activity): ?>
                 <input type="hidden" name="activity_id" value="<?= $activity['idactivities'] ?>"> <!-- Lie le commentaire à cette activité -->
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <!-- maxlength côté client doublé de la validation mb_strlen côté serveur -->
-                    <textarea name="content" rows="3" maxlength="1000" required <!-- Limite à 1000 caractères côté navigateur, vérifiée aussi côté serveur -->
+                    <!-- Limite à 1000 caractères côté navigateur, vérifiée aussi côté serveur -->
+                    <textarea name="content" rows="3" maxlength="1000" required
                               placeholder="Votre commentaire…"
                               style="border:1.5px solid var(--gray-200); border-radius:8px; padding:10px 14px;
                                      font-family:inherit; font-size:0.9rem; color:var(--gray-700);
@@ -443,14 +450,16 @@ if (!$activity): ?>
     <div style="background:white;border-radius:16px;padding:32px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <h2 style="color:var(--navy);margin:0;font-size:1.15rem;">🚩 Signaler l'organisateur</h2>
-            <button onclick="document.getElementById('modal-report-detail').style.display='none'" <!-- Bouton × pour fermer la modal sans soumettre -->
+            <!-- Bouton × pour fermer la modal sans soumettre -->
+            <button onclick="document.getElementById('modal-report-detail').style.display='none'"
                 style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--gray-400);line-height:1;">×</button>
         </div>
         <p style="color:var(--gray-500);font-size:0.88rem;margin-bottom:20px;line-height:1.6;">
             Vous signalez <strong><?= htmlspecialchars($activity['prenom'] . ' ' . $activity['nom']) ?></strong>, <!-- Rappelle le nom de l'organisateur signalé -->
             organisateur de cette activité.
         </p>
-        <form id="detail-report-form" method="POST" action="/sharetime/public/?page=signaler" <!-- Envoie le signalement vers le handler dédié -->
+        <!-- Envoie le signalement vers le handler dédié -->
+        <form id="detail-report-form" method="POST" action="/sharetime/public/?page=signaler"
               style="display:flex;flex-direction:column;gap:14px;">
             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"> <!-- Jeton CSRF pour sécuriser le signalement -->
             <!-- signale_id : ID du créateur (pas de l'activité) — c'est l'utilisateur qui est signalé -->
@@ -459,9 +468,11 @@ if (!$activity): ?>
             <input type="hidden" name="redirect" value="/sharetime/public/?page=detail&id=<?= (int)$activity['idactivities'] ?>"> <!-- URL de redirection après traitement du signalement -->
             <div>
                 <label style="display:block;font-weight:600;color:var(--gray-700);margin-bottom:8px;font-size:0.9rem;">Motif du signalement *</label>
-                <select name="motif" required <!-- Champ obligatoire : l'utilisateur doit choisir un motif -->
+                <!-- Champ obligatoire : l'utilisateur doit choisir un motif -->
+                <select name="motif" required
                     style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-300);border-radius:10px;font-size:0.9rem;font-family:inherit;background:white;box-sizing:border-box;"
-                    onchange="document.getElementById('motif-autre-detail').style.display=this.value==='Autre'?'block':'none'"> <!-- Affiche le champ texte libre uniquement si "Autre" est sélectionné -->
+                    onchange="document.getElementById('motif-autre-detail').style.display=this.value==='Autre'?'block':'none'">
+                    <!-- Affiche le champ texte libre uniquement si "Autre" est sélectionné -->
                     <option value="">— Choisissez un motif —</option>
                     <option>Comportement abusif ou harcelant</option>
                     <option>Faux profil / usurpation d'identité</option>
@@ -470,15 +481,18 @@ if (!$activity): ?>
                     <option>Spam ou arnaque</option>
                     <option>Autre</option>
                 </select>
-                <textarea id="motif-autre-detail" name="motif_detail" rows="3" placeholder="Précisez..." <!-- Zone de texte libre, visible uniquement si "Autre" est sélectionné -->
+                <!-- Zone de texte libre, visible uniquement si "Autre" est sélectionné -->
+                <textarea id="motif-autre-detail" name="motif_detail" rows="3" placeholder="Précisez..."
                     style="display:none;width:100%;margin-top:8px;padding:10px 14px;border:1.5px solid var(--gray-300);border-radius:10px;font-size:0.9rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
-                <button type="button" onclick="document.getElementById('modal-report-detail').style.display='none'" <!-- Bouton Annuler : ferme la modal sans envoyer -->
+                <!-- Bouton Annuler : ferme la modal sans envoyer -->
+                <button type="button" onclick="document.getElementById('modal-report-detail').style.display='none'"
                     style="padding:10px 20px;border:1.5px solid var(--gray-300);border-radius:10px;background:white;font-size:0.9rem;cursor:pointer;">
                     Annuler
                 </button>
-                <button type="submit" <!-- Bouton d'envoi définitif du signalement -->
+                <!-- Bouton d'envoi définitif du signalement -->
+                <button type="submit"
                     style="padding:10px 20px;background:#DC2626;color:white;border:none;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;">
                     Envoyer
                 </button>

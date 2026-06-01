@@ -61,7 +61,8 @@
         ?>
         <!-- Card notification : fond légèrement orangé + bordure orange si non lue,
              fond blanc + gris si déjà lue — différenciation visuelle pour les non-lues. -->
-        <div style="background:<?= $is_already_read ? 'white' : '#FFF8F0' ?>; border:1.5px solid <?= $is_already_read ? 'var(--gray-200)' : 'rgba(232,129,26,0.3)' ?>; <!-- couleurs conditionnelles selon l'état de lecture -->
+        <!-- couleurs conditionnelles selon l'état de lecture -->
+        <div style="background:<?= $is_already_read ? 'white' : '#FFF8F0' ?>; border:1.5px solid <?= $is_already_read ? 'var(--gray-200)' : 'rgba(232,129,26,0.3)' ?>;
                     border-radius:12px; padding:16px 20px; display:flex; gap:14px; align-items:flex-start;">
             <!-- Emoji de type de notification -->
             <span style="font-size:1.4rem; flex-shrink:0; line-height:1.2;"><?= $notif_icon ?></span> <!-- icône figée, ne rétrécit pas avec flex -->
@@ -79,7 +80,8 @@
                     <span style="font-size:0.78rem; color:var(--gray-400);"><?= $notif_formatted_date ?></span> <!-- horodatage formaté de la notification -->
                     <?php if ($notif_item['activity_id']): // n'affiche le lien que si la notification est liée à une activité ?>
                     <!-- Lien contextuel vers l'activité concernée par la notification -->
-                    <a href="/sharetime/public/?page=detail&id=<?= (int)$notif_item['activity_id'] ?>" <!-- cast en entier pour éviter toute injection dans l'URL -->
+                    <!-- ID casté en entier pour éviter toute injection dans l'URL -->
+                    <a href="/sharetime/public/?page=detail&id=<?= (int)$notif_item['activity_id'] ?>"
                        style="font-size:0.8rem; color:var(--orange); font-weight:600; text-decoration:none;">
                         Voir l'activité →
                     </a>
