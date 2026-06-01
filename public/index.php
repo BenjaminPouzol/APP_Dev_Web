@@ -319,7 +319,7 @@ if ($page === 'home') {
 
     // Une seule requête avec plusieurs sous-sélections pour éviter 5 allers-retours séparés
     $raw_stats = $pdo->query("SELECT
-        (SELECT SUM(role != 'owner') FROM users) AS membres,
+        (SELECT SUM(role != 'superadmin') FROM users) AS membres,
         (SELECT COUNT(*) FROM activities) AS activites,
         (SELECT COUNT(*) FROM registrations WHERE status = 'inscrit') AS inscriptions,
         (SELECT SUM(role = 'admin') FROM users) AS admins,
@@ -519,7 +519,7 @@ if ($page === 'home') {
 
     // Mêmes statistiques que la page admin, recalculées ici pour le panel owner
     $raw_stats = $pdo->query("SELECT
-        (SELECT SUM(role != 'owner') FROM users) AS membres,
+        (SELECT SUM(role != 'superadmin') FROM users) AS membres,
         (SELECT COUNT(*) FROM activities) AS activites,
         (SELECT COUNT(*) FROM registrations WHERE status = 'inscrit') AS inscriptions,
         (SELECT SUM(role = 'admin') FROM users) AS admins,

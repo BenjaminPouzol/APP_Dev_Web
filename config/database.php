@@ -44,14 +44,18 @@ try {
         $pdo->exec("ALTER TABLE users ADD COLUMN date_naissance DATE DEFAULT NULL AFTER is_banned"); // Ajoute la date de naissance (type DATE, facultative) après is_banned
     }
 
-    // -- Table users : ajout du rôle 'owner' à l'ENUM existant si absent.
-    // information_schema.COLUMNS contient la définition des colonnes de toutes les tables.
+    // -- Table users : migration du rôle 'owner' → 'superadmin'.
+    // Récupère la définition complète du type ENUM de la colonne role.
     $roleType = $pdo->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS
                               WHERE TABLE_SCHEMA = DATABASE()
-                              AND TABLE_NAME = 'users' AND COLUMN_NAME = 'role'")->fetchColumn(); // Récupère la définition complète du type ENUM de la colonne role
-    if (strpos($roleType, 'owner') === false) { // Vérifie si la valeur 'owner' est absente de l'ENUM actuel
-        // Modifie le type ENUM pour y inclure 'owner' sans toucher aux données existantes
-        $pdo->exec("ALTER TABLE users MODIFY COLUMN role ENUM('utilisateur','admin','owner') NOT NULL DEFAULT 'utilisateur'"); // Étend l'ENUM pour ajouter le rôle 'owner'
+                              AND TABLE_NAME = 'users' AND COLUMN_NAME = 'role'")->fetchColumn();
+    if (strpos($roleType, 'superadmin') === false) {
+        // Étape 1 : ajoute 'superadmin' à l'ENUM en conservant 'owner' provisoirement
+        $pdo->exec("ALTER TABLE users MODIFY COLUMN role ENUM('utilisateur','admin','owner','superadmin') NOT NULL DEFAULT 'utilisateur'");
+        // Étape 2 : migre les lignes existantes 'owner' → 'superadmin'
+        $pdo->exec("UPDATE users SET role = 'superadmin' WHERE role = 'owner'");
+        // Étape 3 : retire 'owner' de l'ENUM maintenant qu'aucune ligne ne l'utilise plus
+        $pdo->exec("ALTER TABLE users MODIFY COLUMN role ENUM('utilisateur','admin','superadmin') NOT NULL DEFAULT 'utilisateur'");
     }
 
     // -- Table activities : catégorie (sport, culture, nature, etc.)

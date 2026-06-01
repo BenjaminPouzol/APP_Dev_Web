@@ -267,7 +267,7 @@ if ($active_tab === 'contenu') { // charge uniquement quand l'onglet contenu est
                     $is_connected_owner = $owner_user_row_id === $owner_user_id;
 
                     // true si le rôle de cette ligne est 'owner' (il n'y en a qu'un = $owner_user_id)
-                    $is_owner_account = $owner_user_row['role'] === 'owner';
+                    $is_owner_account = $owner_user_row['role'] === 'superadmin';
 
                     // true si le compte est actuellement suspendu (champ is_banned = 1)
                     $is_user_banned = !empty($owner_user_row['is_banned']);
@@ -488,7 +488,7 @@ if ($active_tab === 'contenu') { // charge uniquement quand l'onglet contenu est
     <div style="background:#FEF3E2;border:1.5px solid rgba(232,129,26,0.3);border-radius:12px;padding:16px 20px;margin-bottom:28px;display:flex;align-items:center;gap:14px;">
         <span style="font-size:1.5rem;">👑</span>
         <p style="margin:0;font-size:0.88rem;color:var(--gray-700);">
-            <strong>Seul le super-admin</strong> peut nommer ou révoquer des administrateurs et transférer la propriété du site.
+            <strong>Seul le super-admin</strong> peut nommer ou révoquer des administrateurs et transférer ses prérogatives.
             Le transfert est <strong>irréversible</strong> sans intervention du nouveau super-admin.
         </p>
     </div>
@@ -555,7 +555,7 @@ if ($active_tab === 'contenu') { // charge uniquement quand l'onglet contenu est
                             <input type="hidden" name="action" value="transfer_ownership"> <!-- action spéciale owner uniquement -->
                             <button type="submit"
                                 style="padding:5px 12px;border-radius:6px;border:1.5px solid var(--orange);background:white;color:var(--orange);font-size:0.78rem;font-weight:600;cursor:pointer;"
-                                onclick="return confirm('Transférer le rôle Super-Admin à <?= htmlspecialchars(addslashes($admin_user_row['prenom'].' '.$admin_user_row['nom'])) ?> ?\n\nVous deviendrez administrateur. Action irréversible.')"> <!-- \n crée un saut de ligne dans la popup JS -->
+                                onclick="return confirm('Transférer les prérogatives Super-Admin à <?= htmlspecialchars(addslashes($admin_user_row['prenom'].' '.$admin_user_row['nom'])) ?> ?\n\nVous deviendrez administrateur. Action irréversible.')"> <!-- \n crée un saut de ligne dans la popup JS -->
                                 👑 Transférer
                             </button>
                         </form>
@@ -630,6 +630,114 @@ if ($active_tab === 'contenu') { // charge uniquement quand l'onglet contenu est
         </table>
         <?php endif; // fin condition liste membres vide/non vide ?>
     </div> <!-- fin de la card "Nommer un administrateur" -->
+
+    <!-- ── Section 3 : Transférer la propriété ──────────────────────────────── -->
+    <?php
+    // Tous les utilisateurs non-owner et non-bannis sont éligibles au transfert
+    $transfer_eligible_list = array_values(array_filter($owner_users, fn($u) =>
+        $u['role'] !== 'superadmin' && empty($u['is_banned'])
+    ));
+    ?>
+    <div style="background:white;border:2px solid #DC2626;border-radius:14px;overflow:hidden;margin-top:24px;">
+        <div style="padding:18px 20px;border-bottom:1px solid #FEE2E2;background:#FFF5F5;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:1.4rem;">⚠️</span>
+            <div>
+                <h2 style="margin:0 0 2px;font-size:1rem;color:#DC2626;">Transférer les prérogatives Super-Admin</h2>
+                <p style="margin:0;font-size:0.82rem;color:#991B1B;">Action irréversible — vous perdrez immédiatement vos prérogatives Super-Admin.</p>
+            </div>
+        </div>
+        <div style="padding:20px;">
+            <?php if (empty($transfer_eligible_list)): ?>
+            <p style="color:var(--gray-500);margin:0;">Aucun utilisateur disponible pour le transfert.</p>
+            <?php else: ?>
+            <form method="POST" action="/sharetime/public/?page=owner" id="transfer-ownership-form">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="type" value="user">
+                <input type="hidden" name="tab" value="admins">
+                <input type="hidden" name="action" value="transfer_ownership">
+                <input type="hidden" name="user_id" id="transfer-user-id" value="">
+                <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:200px;">
+                        <label style="display:block;font-weight:600;color:var(--gray-700);margin-bottom:6px;font-size:0.88rem;">Choisir le nouveau Super-Admin</label>
+                        <select id="transfer-select" style="width:100%;padding:10px 14px;border:1.5px solid #FECACA;border-radius:8px;font-size:0.9rem;font-family:inherit;color:var(--gray-700);">
+                            <option value="">-- Sélectionner un utilisateur --</option>
+                            <?php foreach ($transfer_eligible_list as $t_user): ?>
+                            <option value="<?= (int)$t_user['idusers'] ?>"
+                                data-name="<?= htmlspecialchars($t_user['prenom'].' '.$t_user['nom']) ?>"
+                                data-role="<?= htmlspecialchars($t_user['role']) ?>">
+                                <?= htmlspecialchars($t_user['prenom'].' '.$t_user['nom']) ?>
+                                (<?= $t_user['role'] === 'admin' ? 'Admin' : 'Membre' ?>)
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <button type="button" onclick="openTransferModal()"
+                        style="padding:10px 20px;border-radius:8px;border:2px solid #DC2626;background:#DC2626;color:white;font-size:0.9rem;font-weight:700;cursor:pointer;white-space:nowrap;">
+                        👑 Transférer
+                    </button>
+                </div>
+            </form>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation du transfert de propriété -->
+    <div id="transfer-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:white;border-radius:16px;padding:32px;max-width:460px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:3rem;margin-bottom:12px;">⚠️</div>
+                <h2 style="color:#DC2626;margin:0 0 8px;font-size:1.3rem;">Confirmer le transfert</h2>
+                <p style="color:var(--gray-600);margin:0;font-size:0.95rem;">Vous êtes sur le point de transférer vos prérogatives <strong>Super-Admin</strong> à :</p>
+            </div>
+            <div style="background:#FFF5F5;border:1.5px solid #FECACA;border-radius:10px;padding:14px 18px;margin-bottom:20px;text-align:center;">
+                <strong id="transfer-target-name" style="font-size:1.1rem;color:var(--gray-900);"></strong>
+            </div>
+            <div style="background:#FEF3E2;border-left:4px solid var(--orange);border-radius:6px;padding:12px 16px;margin-bottom:24px;">
+                <p style="margin:0;font-size:0.88rem;color:#92400E;line-height:1.5;">
+                    <strong>Conséquences immédiates :</strong><br>
+                    • Vous perdrez vos prérogatives Super-Admin<br>
+                    • Vous serez rétrogradé au rang d'Administrateur<br>
+                    • Cette action est <strong>irréversible</strong> sans l'accord du nouveau Super-Admin
+                </p>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button type="button" onclick="closeTransferModal()"
+                    style="flex:1;padding:12px;border-radius:8px;border:1.5px solid var(--gray-300);background:white;color:var(--gray-700);font-size:0.9rem;font-weight:600;cursor:pointer;">
+                    Annuler
+                </button>
+                <button type="button" onclick="confirmTransfer()"
+                    style="flex:1;padding:12px;border-radius:8px;border:none;background:#DC2626;color:white;font-size:0.9rem;font-weight:700;cursor:pointer;">
+                    Oui, transférer maintenant
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function openTransferModal() {
+        var select = document.getElementById('transfer-select');
+        var selectedOption = select.options[select.selectedIndex];
+        if (!select.value) {
+            alert('Veuillez sélectionner un utilisateur avant de transférer.');
+            return;
+        }
+        document.getElementById('transfer-target-name').textContent = selectedOption.dataset.name;
+        document.getElementById('transfer-user-id').value = select.value;
+        var modal = document.getElementById('transfer-modal');
+        modal.style.display = 'flex';
+    }
+    function closeTransferModal() {
+        document.getElementById('transfer-modal').style.display = 'none';
+        document.getElementById('transfer-user-id').value = '';
+    }
+    function confirmTransfer() {
+        document.getElementById('transfer-ownership-form').submit();
+    }
+    // Fermer le modal en cliquant sur l'arrière-plan
+    document.getElementById('transfer-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeTransferModal();
+    });
+    </script>
 
 <?php /* ══════════════════════════════════════════════════════════════
    ONGLET CONTACT : messages reçus via le formulaire de contact.

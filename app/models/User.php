@@ -81,7 +81,7 @@ class User {
                 FROM registrations WHERE status = 'inscrit'
                 GROUP BY user_id
             ) r_count ON r_count.user_id = u.idusers
-            ORDER BY FIELD(u.role,'owner','admin','utilisateur'), u.date_creation DESC
+            ORDER BY FIELD(u.role,'superadmin','admin','utilisateur'), u.date_creation DESC
         "; // COALESCE remplace NULL par 0 quand l'utilisateur n'a aucune activité ou inscription
         if ($per_page > 0 && $page > 0) { // si la pagination est activée, on ajoute LIMIT et OFFSET
             $sql .= " LIMIT " . (int)$per_page . " OFFSET " . (int)(($page - 1) * $per_page); // calcule l'offset : page 1 → offset 0, page 2 → offset $per_page, etc.
@@ -185,8 +185,8 @@ class User {
         if (!in_array($role, ['utilisateur', 'admin'])) return false;  // whitelist : seuls ces deux rôles sont changeables ici
         $stmt = $this->pdo->prepare("
             UPDATE users SET role = :role
-            WHERE idusers = :id AND role != 'owner'
-        "); // AND role != 'owner' protège le propriétaire contre un changement accidentel de rôle
+            WHERE idusers = :id AND role != 'superadmin'
+        "); // AND role != 'superadmin' protège le super-admin contre un changement accidentel de rôle
         return $stmt->execute(['role' => $role, 'id' => (int)$id]); // retourne true si la mise à jour a affecté au moins une ligne
     }
 
@@ -200,7 +200,7 @@ class User {
     public function transferOwnership(int $new_owner_id, int $current_owner_id): bool { // transfert de propriété irréversible, sécurisé par une transaction
         if ($new_owner_id === $current_owner_id) return false; // refuse le transfert vers soi-même
         $target = $this->getById($new_owner_id); // vérifie que le futur propriétaire existe bien en base
-        if (!$target || $target['role'] === 'owner') return false;  // ne peut pas transférer à un owner (impossible en pratique)
+        if (!$target || $target['role'] === 'superadmin') return false;  // ne peut pas transférer à un superadmin (impossible en pratique)
 
         $this->pdo->beginTransaction(); // démarre une transaction : les deux UPDATE sont atomiques
         try {
@@ -208,8 +208,8 @@ class User {
             $this->pdo->prepare("UPDATE users SET role = 'admin' WHERE idusers = :id")
                        ->execute(['id' => $current_owner_id]); // rétrograde l'ancien propriétaire en admin
             // Le nouveau propriétaire est promu owner et débanni au cas où il était suspendu
-            $this->pdo->prepare("UPDATE users SET role = 'owner', is_banned = 0 WHERE idusers = :id")
-                       ->execute(['id' => $new_owner_id]); // promeut le nouvel owner et lève l'éventuelle suspension
+            $this->pdo->prepare("UPDATE users SET role = 'superadmin', is_banned = 0 WHERE idusers = :id")
+                       ->execute(['id' => $new_owner_id]); // promeut le nouveau superadmin et lève l'éventuelle suspension
             $this->pdo->commit(); // valide les deux modifications simultanément
             return true; // transfert réussi
         } catch (\Throwable $e) {
@@ -220,7 +220,7 @@ class User {
 
     /** Vérifie si un owner existe déjà en base (utile à l'initialisation de l'application). */
     public function hasOwner(): bool { // retourne true dès qu'un utilisateur avec role='owner' est trouvé
-        return (bool) $this->pdo->query("SELECT COUNT(*) FROM users WHERE role = 'owner'")->fetchColumn(); // cast en bool : 0 → false (pas d'owner), ≥1 → true
+        return (bool) $this->pdo->query("SELECT COUNT(*) FROM users WHERE role = 'superadmin'")->fetchColumn(); // cast en bool : 0 → false, ≥1 → true
     }
 
     /**
@@ -233,8 +233,8 @@ class User {
     public function setBanned($id, $banned) { // met à jour le drapeau is_banned pour activer ou lever une suspension
         $stmt = $this->pdo->prepare("
             UPDATE users SET is_banned = :banned
-            WHERE idusers = :id AND role != 'owner'
-        "); // AND role != 'owner' : impossible de bannir le propriétaire de l'application
+            WHERE idusers = :id AND role != 'superadmin'
+        "); // AND role != 'superadmin' : impossible de bannir le super-admin
         return $stmt->execute(['banned' => $banned ? 1 : 0, 'id' => (int)$id]); // stocke 1 pour banni, 0 pour actif
     }
 
@@ -281,7 +281,7 @@ class User {
             //    followers, messages, notifications, email_verifications, admin_logs
             //    sont supprimés automatiquement par les contraintes ON DELETE CASCADE.
             //    La clause AND role != 'owner' protège contre la suppression accidentelle du propriétaire.
-            $stmt = $this->pdo->prepare("DELETE FROM users WHERE idusers = :id AND role != 'owner'"); // protection finale : l'owner ne peut pas être supprimé par cette méthode
+            $stmt = $this->pdo->prepare("DELETE FROM users WHERE idusers = :id AND role != 'superadmin'"); // protection finale : le super-admin ne peut pas être supprimé par cette méthode
             $stmt->execute(['id' => $id]); // exécute la suppression du compte utilisateur
 
             $this->pdo->commit(); // valide toutes les suppressions en une seule fois

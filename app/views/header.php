@@ -136,9 +136,9 @@
                 <li class="mobile-only" style="border-top: 1px solid rgba(255,255,255,0.08); margin-top:8px;"> <!-- séparateur visuel dans le menu mobile -->
                     <a href="/sharetime/public/?page=creer" style="color:var(--orange); font-weight:700;">+ Créer une activité</a> <!-- raccourci création, mis en avant en orange -->
                 </li>
-                <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin', 'owner'])): ?> <!-- si l'utilisateur a un rôle privilégié -->
+                <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin', 'superadmin'])): ?> <!-- si l'utilisateur a un rôle privilégié -->
                 <li class="mobile-only">
-                    <?php if ($_SESSION['user']['role'] === 'owner'): ?> <!-- cas du super-administrateur -->
+                    <?php if ($_SESSION['user']['role'] === 'superadmin'): ?> <!-- cas du super-administrateur -->
                         <a href="/sharetime/public/?page=owner" style="color:var(--orange); font-weight:600;">👑 Super-Admin</a>
                     <?php else: ?> <!-- cas de l'administrateur classique -->
                         <a href="/sharetime/public/?page=admin" style="color:var(--orange); font-weight:600;">⚙️ Administration</a>
@@ -180,7 +180,7 @@
         <div class="navbar-actions"> <!-- conteneur des actions droite de la navbar, visible uniquement en desktop -->
             <?php if (isset($_SESSION['user'])): ?> <!-- si l'utilisateur est connecté -->
                 <!-- Bouton panel admin/owner selon le rôle -->
-                <?php if ($_SESSION['user']['role'] === 'owner'): ?> <!-- bouton super-admin pour l'owner -->
+                <?php if ($_SESSION['user']['role'] === 'superadmin'): ?> <!-- bouton super-admin -->
                     <a href="/sharetime/public/?page=owner"
                        class="btn btn-sm"
                        style="background:var(--orange-pale);color:var(--orange);border:1.5px solid rgba(232,129,26,0.4);">

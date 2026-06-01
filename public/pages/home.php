@@ -102,7 +102,7 @@ $nb_cities     = $home_stats['nb_cities'];     // Nombre de villes distinctes o�
                 <div>
                     <p style="color:rgba(255,255,255,0.75);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Accès rapide</p>
                     <p style="color:white;font-size:1.15rem;font-weight:800;margin:0;">👑 Espace Super-Admin</p>
-                    <p style="color:rgba(255,255,255,0.7);font-size:0.82rem;margin:4px 0 0;">Gérer les administrateurs · Transférer la propriété</p>
+                    <p style="color:rgba(255,255,255,0.7);font-size:0.82rem;margin:4px 0 0;">Gérer les administrateurs · Transférer les prérogatives</p>
                 </div>
                 <span style="color:white;font-size:1.8rem;opacity:0.6;">→</span> <!-- Flèche indicative de navigation -->
             </div>

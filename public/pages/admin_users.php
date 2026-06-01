@@ -66,10 +66,10 @@ $connected_user_id = (int)$_SESSION['user']['id'];
             <span style="font-size:1.5rem;">👑</span>
             <div>
                 <!-- Titre du bandeau en orange pour attirer l'attention -->
-                <p style="margin:0;font-weight:700;color:var(--orange);font-size:0.9rem;">Vous êtes propriétaire</p>
+                <p style="margin:0;font-weight:700;color:var(--orange);font-size:0.9rem;">Vous êtes Super-Admin</p>
                 <!-- Explication des droits supplémentaires de l'owner avec avertissement sur le transfert -->
                 <p style="margin:2px 0 0;font-size:0.82rem;color:var(--gray-600);">
-                    Vous pouvez nommer ou révoquer des administrateurs, et transférer la propriété du site à un autre membre.
+                    Vous pouvez nommer ou révoquer des administrateurs, et transférer vos prérogatives Super-Admin à un autre membre.
                     Le transfert est <strong>irréversible</strong> sans intervention du nouveau super-admin.
                 </p>
             </div>
@@ -114,7 +114,7 @@ $connected_user_id = (int)$_SESSION['user']['id'];
                         $is_connected_user = $user_row_id === $connected_user_id;
 
                         // true si cette ligne est l'owner : l'owner est intouchable même par un admin
-                        $is_owner_account = $user_row['role'] === 'owner';
+                        $is_owner_account = $user_row['role'] === 'superadmin';
 
                         // true si le compte est suspendu (is_banned = 1 en BDD)
                         $is_user_banned = !empty($user_row['is_banned']);

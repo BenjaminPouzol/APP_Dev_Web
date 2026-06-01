@@ -83,7 +83,7 @@ if ($page === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST') { // déclenche 
                     // Rétrograde immédiatement le rôle en session :
                     // l'ex-owner est maintenant admin, ce qui doit être reflété dans la navbar
                     $_SESSION['user']['role'] = 'admin'; // met à jour le rôle de l'ex-owner en session sans attendre une nouvelle connexion
-                    $_SESSION['flash'] = "Propriété transférée avec succès."; // message de confirmation
+                    $_SESSION['flash'] = "Prérogatives Super-Admin transférées avec succès."; // message de confirmation
                     header('Location: /sharetime/public/?page=owner&tab=admins'); // redirige vers l'onglet admins
                     exit; // stoppe l'exécution après la redirection
                 }

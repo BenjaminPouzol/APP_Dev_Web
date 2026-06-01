@@ -58,12 +58,12 @@ function csrf_check(): void { // Déclare la fonction de vérification du token 
 /** Retourne true si l'utilisateur connecté est admin OU owner. */
 function is_admin(): bool { // Déclare la fonction qui teste si l'utilisateur courant possède des droits d'administration
     // L'owner hérite de tous les droits admin : on vérifie les deux rôles.
-    return isset($_SESSION['user']) && in_array($_SESSION['user']['role'], ['admin', 'owner']); // Retourne vrai si une session utilisateur existe et que son rôle est 'admin' ou 'owner'
+    return isset($_SESSION['user']) && in_array($_SESSION['user']['role'], ['admin', 'superadmin']); // Retourne vrai si une session utilisateur existe et que son rôle est 'admin' ou 'superadmin'
 }
 
 /** Retourne true si l'utilisateur connecté est exactement owner (pas seulement admin). */
 function is_owner(): bool { // Déclare la fonction qui teste si l'utilisateur courant est le super-administrateur owner
-    return isset($_SESSION['user']) && $_SESSION['user']['role'] === 'owner'; // Retourne vrai uniquement si le rôle en session vaut exactement 'owner'
+    return isset($_SESSION['user']) && $_SESSION['user']['role'] === 'superadmin'; // Retourne vrai uniquement si le rôle en session vaut exactement 'superadmin'
 }
 
 /**
@@ -161,7 +161,7 @@ function role_badge(string $role, bool $banned = false): string { // Déclare la
         return '<span style="background:#FEE2E2;color:#DC2626;padding:3px 12px;border-radius:99px;font-size:0.75rem;font-weight:700;">Suspendu</span>'; // Retourne un badge rouge 'Suspendu' avec un style pill arrondi
     }
     switch ($role) { // Sélectionne le badge à afficher selon la valeur du rôle
-        case 'owner': return '<span style="background:#FEF3E2;color:#E8811A;padding:3px 12px;border-radius:99px;font-size:0.75rem;font-weight:700;">Super-Admin</span>'; // Badge orange pour le rôle owner (super-administrateur)
+        case 'superadmin': return '<span style="background:#FEF3E2;color:#E8811A;padding:3px 12px;border-radius:99px;font-size:0.75rem;font-weight:700;">Super-Admin</span>'; // Badge orange pour le rôle superadmin
         case 'admin': return '<span style="background:#EBF0F8;color:#1E3A6E;padding:3px 12px;border-radius:99px;font-size:0.75rem;font-weight:700;">Admin</span>'; // Badge bleu navy pour le rôle admin
         default:      return '<span style="background:#F3F4F6;color:#6B7280;padding:3px 12px;border-radius:99px;font-size:0.75rem;font-weight:700;">Membre</span>'; // Badge gris neutre pour les utilisateurs standards
     }
