@@ -459,13 +459,13 @@ if ($page === 'home') {
         FROM (
             SELECT
                 CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END AS other_id,
-                MAX(id) AS last_id
+                MAX(idmessage) AS last_id
             FROM messages
             WHERE sender_id = ? OR receiver_id = ?
             GROUP BY other_id
         ) conv
         JOIN users u ON u.idusers = conv.other_id
-        JOIN messages m ON m.id = conv.last_id
+        JOIN messages m ON m.idmessage = conv.last_id
         ORDER BY conv.last_id DESC
     ");
     // Les quatre paramètres positionnels (?) correspondent dans l'ordre aux quatre occurrences
