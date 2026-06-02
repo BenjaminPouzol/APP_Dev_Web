@@ -198,9 +198,14 @@ if ($page === 'home') {
     $category_filter = isset($CATEGORY_MAP[$raw_category]) ? $raw_category : '';  // whitelist via $CATEGORY_MAP
     $title_filter    = trim($_GET['search']   ?? '');   // recherche textuelle sur titre et description
 
-    // Whitelist sur le filtre statut
-    $valid_statut_values = ['active', 'en_cours', 'annulee', 'terminee'];
+    // Whitelist sur le filtre statut : les terminées ne sont accessibles qu'aux admins et superadmins
+    $valid_statut_values = (is_admin() || is_owner())
+        ? ['active', 'en_cours', 'annulee', 'terminee']
+        : ['active', 'en_cours', 'annulee'];
     $status_filter = in_array($_GET['statut'] ?? '', $valid_statut_values) ? $_GET['statut'] : '';
+
+    // Pour les utilisateurs non-admin, exclure les activités terminées du catalogue par défaut
+    $exclude_terminated = !is_admin() && !is_owner();
 
     // Calcul de la pagination
     $activities_per_page = 12;  // nombre d'activités par page dans le catalogue
@@ -212,7 +217,8 @@ if ($page === 'home') {
         $_SESSION['user']['id'] ?? null,
         $category_filter,
         $status_filter,
-        $title_filter
+        $title_filter,
+        $exclude_terminated
     );
     $total_pages  = max(1, (int)ceil($total_count / $activities_per_page));  // au moins 1 page
     $current_page = min($current_page, $total_pages);  // évite de dépasser la dernière page disponible
@@ -225,7 +231,8 @@ if ($page === 'home') {
         $status_filter,
         $title_filter,
         $current_page,
-        $activities_per_page
+        $activities_per_page,
+        $exclude_terminated
     );
 
 } elseif ($page === 'detail') {

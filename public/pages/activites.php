@@ -112,7 +112,10 @@
         'category' => $category_filter,  // Conserve le filtre catégorie
     ]));
     // Libellés des états possibles (clé vide = afficher tous les statuts)
-    $status_filter_options = ['' => '🗂 Toutes', 'active' => '✅ À venir', 'en_cours' => '🔴 En cours', 'terminee' => '🏁 Terminées', 'annulee' => '❌ Annulées']; // Tableau associatif : slug de statut → libellé affiché sur la chip
+    // La chip "Terminées" n'est visible que pour les admins et superadmins
+    $status_filter_options = ['' => '🗂 Toutes', 'active' => '✅ À venir', 'en_cours' => '🔴 En cours'];
+    if (is_admin() || is_owner()) { $status_filter_options['terminee'] = '🏁 Terminées'; }
+    $status_filter_options['annulee'] = '❌ Annulées';
     ?>
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;">
         <?php foreach ($status_filter_options as $status_slug => $status_chip_label): // Parcourt chaque option de statut pour créer une chip ?>

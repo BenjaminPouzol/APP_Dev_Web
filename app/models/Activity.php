@@ -31,7 +31,7 @@ class Activity {
      * @param int      $per_page      Nombre de résultats par page (0 = tous)
      * @return array   Tableau d'activités avec nb_inscrits calculé
      */
-    public function getAll($city = '', $user_id = null, $category = '', $status_filter = '', $title = '', $page = 0, $per_page = 0) { // méthode principale de lecture, tous les filtres sont optionnels
+    public function getAll($city = '', $user_id = null, $category = '', $status_filter = '', $title = '', $page = 0, $per_page = 0, $exclude_terminated = false) { // méthode principale de lecture, tous les filtres sont optionnels
         $params = []; // tableau des paramètres PDO, rempli dynamiquement selon les filtres actifs
 
         // Visibilité : un utilisateur connecté peut voir ses propres activités privées ;
@@ -68,6 +68,8 @@ class Activity {
         if ($status_filter !== '') { // filtre par statut activé si un statut est choisi
             $sql .= " AND a.status = :status_filter"; // comparaison exacte sur le statut de l'activité
             $params['status_filter'] = $status_filter; // ex. 'active', 'terminee', 'annulee'
+        } elseif ($exclude_terminated) { // aucun filtre statut explicite + utilisateur non-admin : masque les terminées
+            $sql .= " AND a.status != 'terminee'";
         }
         if ($title !== '') { // filtre par titre activé si un terme de recherche est saisi
             // Recherche dans le titre ET la description pour plus de pertinence
@@ -95,7 +97,7 @@ class Activity {
      * Utilisé pour calculer le nombre de pages de pagination.
      * Les paramètres sont identiques à getAll() sauf page/per_page (inutiles pour un COUNT).
      */
-    public function countAll($city = '', $user_id = null, $category = '', $status_filter = '', $title = '') { // même logique de filtres que getAll() mais retourne uniquement un entier
+    public function countAll($city = '', $user_id = null, $category = '', $status_filter = '', $title = '', $exclude_terminated = false) { // même logique de filtres que getAll() mais retourne uniquement un entier
         $params = []; // tableau de paramètres PDO, construit de la même façon que dans getAll()
         if ($user_id) { // applique la même clause de visibilité que getAll()
             $visibility_clause = "(a.visibility = 'publique' OR a.creator_id = :user_id)"; // l'utilisateur connecté voit aussi ses activités privées
@@ -116,6 +118,8 @@ class Activity {
         if ($status_filter !== '') { // filtre statut identique à getAll()
             $sql .= " AND a.status = :status_filter"; // correspondance exacte sur le statut
             $params['status_filter'] = $status_filter; // ex. 'active', 'annulee'
+        } elseif ($exclude_terminated) { // aucun filtre statut + utilisateur non-admin : exclut les terminées du compte
+            $sql .= " AND a.status != 'terminee'";
         }
         if ($title !== '') { // filtre titre/description identique à getAll()
             $sql .= " AND (a.title LIKE :title OR a.description LIKE :title_desc)"; // recherche dans le titre ou la description
