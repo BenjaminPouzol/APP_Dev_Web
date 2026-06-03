@@ -72,7 +72,7 @@
 
             <!-- Formulaire d'inscription : POST vers handlers/auth.php (page=inscription) -->
             <!-- Formulaire soumis en POST vers l'URL d'inscription, organisé en colonne avec 16px d'espacement -->
-            <form method="POST" action="/sharetime/public/?page=inscription" style="display:flex; flex-direction:column; gap:16px;">
+            <form method="POST" action="/sharetime/public/?page=inscription" autocomplete="off" style="display:flex; flex-direction:column; gap:16px;">
                 <!-- Token CSRF obligatoire sur tous les formulaires POST -->
                 <!-- Champ caché avec le jeton CSRF pour protéger le formulaire contre les attaques cross-site -->
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
@@ -127,6 +127,7 @@
                     <label>Adresse e-mail *</label>
                     <!-- Champ de type email avec validation HTML5 et pré-remplissage depuis $_POST -->
                     <input type="email" name="email" placeholder="ton@email.com" required
+                           autocomplete="off"
                            value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
                 </div>
 
@@ -138,14 +139,14 @@
                         <!-- Label obligatoire pour le mot de passe -->
                         <label>Mot de passe *</label>
                         <!-- Champ password qui masque les caractères, avec id pour le JS de validation -->
-                        <input type="password" name="password" id="reg-password" placeholder="••••••••" required>
+                        <input type="password" name="password" id="reg-password" placeholder="••••••••" required autocomplete="new-password">
                     </div>
                     <!-- Groupe de champ pour la confirmation du mot de passe -->
                     <div class="form-group">
                         <!-- Label obligatoire pour la confirmation du mot de passe -->
                         <label>Confirmer *</label>
                         <!-- Champ de confirmation du mot de passe avec id pour la comparaison JS -->
-                        <input type="password" name="confirm-password" id="reg-confirm" placeholder="••••••••" required>
+                        <input type="password" name="confirm-password" id="reg-confirm" placeholder="••••••••" required autocomplete="new-password">
                         <!-- Paragraphe caché par défaut affichant le résultat de la correspondance des mots de passe -->
                         <p id="match-msg" style="font-size:0.78rem;margin:4px 0 0;display:none;"></p>
                     </div>
