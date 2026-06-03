@@ -126,14 +126,18 @@
 .msg-bubble-row      { display: flex; align-items: flex-end; gap: 8px; }
 .msg-bubble-row.sent { flex-direction: row-reverse; }  /* retourne la ligne pour les messages envoyés */
 
+/* Conteneur de la bulle + heure : limité à 65 % de la zone pour ne pas déborder */
+.msg-bubble-row > div { max-width: 65%; }
+
 /* Bulle de message */
 .msg-bubble {
-    max-width: 65%;          /* pas toute la largeur pour laisser respirer l'œil */
     padding: 10px 14px;
     border-radius: 16px;
     font-size: 0.88rem;
     line-height: 1.5;
     word-break: break-word;  /* coupe les mots très longs (URLs collées, etc.) */
+    width: fit-content;      /* s'étend jusqu'au contenu, dans la limite du conteneur parent */
+    min-width: 48px;         /* plancher pour les messages très courts (ex : "ok") */
 }
 /* Reçus : fond gris clair, coin gauche bas aplati (queue de bulle côté gauche) */
 .msg-bubble.received { background: var(--gray-100); color: var(--gray-900); border-bottom-left-radius: 4px; }
